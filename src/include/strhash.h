@@ -1,7 +1,7 @@
 /***************************************************************************
                                   strhash.h
                              -------------------
-	revision             : $Id: strhash.h,v 1.1.1.1 2002-10-10 09:59:18 tellini Exp $
+	revision             : $Id: strhash.h,v 1.2 2002-11-18 17:46:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,11 +38,15 @@ public:
 					StrHash( unsigned int size );
 					~StrHash();
 
+	void			Clear( void );
+
 	unsigned int 	ComputeHash( const char *str ) const;
 
 	bool			Add( const char *str, void *data );
 	void			Replace( const char *str, void *data );
+
 	void			Remove( const char *str );
+
 	HashItem 		*Find( const char *str ) const;
 	void			*FindData( const char *str ) const; // returns the Data field
 

@@ -10,7 +10,7 @@ pkglib_LTLIBRARIES = mod_http.la
 
 mod_http_la_SOURCES = mod_http.cpp url.cpp connectionmgr.cpp netdate.cpp \
 					  http.cpp md5.c cache.cpp cacheobj.cpp \
-					  gzipcodec.cpp
+					  gzipcodec.cpp hostmapper.cpp
 mod_http_la_LDFLAGS = -no-undefined -module -avoid-version
 mod_http_la_LIBADD  =
 
