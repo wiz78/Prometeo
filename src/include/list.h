@@ -1,7 +1,7 @@
 /***************************************************************************
                                    list.h
                              -------------------
-	revision             : $Id: list.h,v 1.1.1.1 2002-10-10 09:59:12 tellini Exp $
+	revision             : $Id: list.h,v 1.2 2002-11-15 16:26:45 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -28,6 +28,7 @@ public:
 	void 			*operator[]( int index ) const;
 
 	void			*Get( int index ) const;
+	void			Set( int index, void *item );
 	void			Add( void *item );
 	void			*Remove( int index );
 	void			*Remove( void *item );

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 stringlist.h
                              -------------------
-    revision             : $Id: stringlist.h,v 1.2 2002-10-29 18:01:14 tellini Exp $
+    revision             : $Id: stringlist.h,v 1.3 2002-11-15 16:26:45 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -35,12 +35,17 @@ public:
 
 	char				*Get( int index ) const { return((char *)List::Get( index )); }
 
+	void				Set( int index, const char *str );
+	void				Set( int index, const string str ) { Set( index, str.c_str() ); }
+
 	char				*operator[]( int index ) const { return( Get( index )); }
 
 	virtual void		Clear( void );
 
 	// splits the string with 'separator'
 	void				Explode( const string& str, const char *separator );
+	// the opposite...
+	string				Implode( const char *separator );
 };
 
 #endif
