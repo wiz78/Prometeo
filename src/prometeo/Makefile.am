@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.5 2002-11-07 14:49:40 tellini Exp $
+# $Id: Makefile.am,v 1.6 2003-01-06 12:30:26 tellini Exp $
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -11,7 +11,7 @@ INCLUDES			= -I$(top_srcdir) @INCLTDL@
 
 prometeo_SOURCES	= main.cpp api.cpp core.cpp registry.cpp logger.cpp \
 				      regnode.cpp regkey.cpp reginteger.cpp regstring.cpp regnote.cpp \
-					  list.cpp stringlist.cpp mystring.cpp \
+					  list.cpp stringlist.cpp \
 					  loader.cpp module.cpp ctrlipc.cpp \
 					  resolver.cpp dnscache.cpp setproctitle.cpp \
 					  acl.cpp process.cpp processgroup.cpp \
