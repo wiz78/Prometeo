@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.2 2002-10-12 14:33:16 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.3 2002-10-22 14:31:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -104,17 +104,20 @@ void Cache::Delete( const char *id )
 {
 	CacheObj	*obj = (CacheObj *)Hash.FindData( id );
 
-	if( obj ) {
+	if( obj )
+		Delete( obj );
+}
+//---------------------------------------------------------------------------
+void Cache::Delete( CacheObj *obj )
+{
+	Store.Delete( obj->GetFileName() );
+	Store.UpdateSize( -obj->GetSize() );
 
-		Store.Delete( obj->GetFileName() );
-		Store.UpdateSize( -obj->GetSize() );
+	Hash.Remove( obj->GetID() );
 
-		Hash.Remove( id );
+	obj->Delete();
 
-		obj->Delete();
-
-		Modified = true;
-	}
+	Modified = true;
 }
 //---------------------------------------------------------------------------
 bool Cache::Prune( void )
@@ -136,10 +139,14 @@ bool Cache::Prune( void )
 			while( Objects.IsNode( obj ) && ( obj->IsInUse() || obj->IsDeleted() ))
 				obj = (CacheObj *)obj->GetSucc();
 
+			DBG( App->Log->Log( LOG_INFO, "obj = %08x", obj ));
+			
 			if( Objects.IsNode( obj )) {
 				CacheObj	*next = (CacheObj *)obj->GetSucc();
 
+				DBG( App->Log->Log( LOG_INFO, "deleting %08x", obj ));
 				Delete( obj );
+				DBG( App->Log->Log( LOG_INFO, "next = %08x", next ));
 
 				deleted = true;
 				loop    = true;
@@ -149,9 +156,6 @@ bool Cache::Prune( void )
 		} while( loop && ( Store.GetSize() > MaxSize ));
 	}
 	
-	if( deleted )
-		Modified = true;
-
 	DBG( App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() returns %d", deleted ));
 	
 	return( deleted );
@@ -196,15 +200,18 @@ void Cache::WriteIndex( void )
 {
 	if( Modified ) {
 		StoreObj	*sto = Store.Open( "cache.idx", true, false );
-
+		
 		if( sto ) {
 			CacheObj	*obj = (CacheObj *)Objects.GetHead();
 			int			ver = INDEX_VERSION, num = 0;
+			bool		allsaved = true;
 
 			while( Objects.IsNode( obj )) {
 
 				if( obj->IsComplete() && !obj->IsDeleted() )
 					num++;
+				else
+					allsaved = false;
 
 				obj = (CacheObj *)obj->GetSucc();
 			}
@@ -226,10 +233,11 @@ void Cache::WriteIndex( void )
 
 			Store.Close( sto );
 
+			if( allsaved )
+				Modified = false;
+
 		} else
 			App->Log->Log( LOG_ERR, "mod_http: failed to create the cache index file - %s", strerror( errno ));
-
-		Modified = false;
 	}
 }
 //---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /***************************************************************************
                                linkedlist.cpp
                              -------------------
-	revision             : $Id: linkedlist.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: linkedlist.cpp,v 1.2 2002-10-22 14:31:27 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -41,9 +41,6 @@ LinkedList::~LinkedList()
 //---------------------------------------------------------------------------
 void LinkedList::AddHead( LinkedListNode *node )
 {
-if( node->IsInList() )
-	throw "AddHead() - node already in a list!";
-		
 	node->Unlink();
 		
 	Succ->SetPred( node );
@@ -56,9 +53,6 @@ if( node->IsInList() )
 //---------------------------------------------------------------------------
 void LinkedList::AddTail( LinkedListNode *node )
 {
-if( node->IsInList() )
-	throw "AddTail() - node already in a list!";
-		
 	node->Unlink();
 		
 	Pred->SetSucc( node );
