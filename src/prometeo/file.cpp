@@ -1,7 +1,7 @@
 /***************************************************************************
                                   file.cpp
                              -------------------
-	revision             : $Id: file.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: file.cpp,v 1.2 2003-02-16 20:31:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,14 @@ File::File( const char *name, int flags )
 	AsyncUserData = NULL;
 
 	Open( name, flags );
+}
+//---------------------------------------------------------------------------
+File::File( int fd )
+{
+	AsyncCallback = NULL;
+	AsyncUserData = NULL;
+		
+	FD = fd;	
 }
 //---------------------------------------------------------------------------
 File::~File()
@@ -138,12 +146,14 @@ int File::Read( void *buf, int len )
 
 		Callback( PROM_FILE_READ, nread );
 			
-	} else {
+	} else if( Flags.IsSet( PROM_FILEF_NONBLOCK )) {
 
 		if(( errno == EAGAIN ) || ( errno == EWOULDBLOCK )) {
 
 			ReadBuf    = buf;
 			ReadBufLen = len;
+
+			Flags.Set( PROM_FILEF_READING );
 
 			if( Dispatcher )
 				Dispatcher->AddFD( this, PROM_IOF_READ );
@@ -241,31 +251,43 @@ unsigned int File::GetSize( void )
 //---------------------------------------------------------------------------
 void File::HandleRead( void )
 {
-	int	nr = read( FD, ReadBuf, ReadBufLen );
+	if( Flags.IsSet( PROM_FILEF_READING )) {
+		int	nr = read( FD, ReadBuf, ReadBufLen );
 
-	if( Dispatcher )
-		Dispatcher->RemFD( this, PROM_IOF_READ );
-
-	if( nr == 0 )
-		Callback( PROM_FILE_READ, 0 );
-
-	else if( nr > 0 ) {
-
-		ReadBuf     = (void *)((char *)ReadBuf + nr );
-		ReadBufLen -= nr;
-
-		if( ReadBufLen && Dispatcher )
-			Dispatcher->AddFD( this, PROM_IOF_READ );
-		else if( !ReadBufLen )
-			Callback( PROM_FILE_READ, nr );
-
-	} else if(( errno == EAGAIN ) || ( errno == EWOULDBLOCK )) {
+		Flags.Clear( PROM_FILEF_READING );
 
 		if( Dispatcher )
-			Dispatcher->AddFD( this, PROM_IOF_READ );
+			Dispatcher->RemFD( this, PROM_IOF_READ );
+
+		if( nr == 0 )
+			Callback( PROM_FILE_READ, 0 );
+
+		else if( nr > 0 ) {
+
+			ReadBuf     = (void *)((char *)ReadBuf + nr );
+			ReadBufLen -= nr;
+
+			if( ReadBufLen && Dispatcher ) {
+					
+				Dispatcher->AddFD( this, PROM_IOF_READ );
+
+				Flags.Set( PROM_FILEF_READING );
+				
+			} else if( !ReadBufLen )
+				Callback( PROM_FILE_READ, nr );
+
+		} else if(( errno == EAGAIN ) || ( errno == EWOULDBLOCK )) {
+
+			Flags.Set( PROM_FILEF_READING );
+	
+			if( Dispatcher )
+				Dispatcher->AddFD( this, PROM_IOF_READ );
+
+		} else
+			Callback( PROM_FILE_ERROR, errno );
 
 	} else
-		Callback( PROM_FILE_ERROR, errno );
+		Callback( PROM_FILE_READ, -1 );
 }
 //---------------------------------------------------------------------------
 void File::HandleWrite( void )

@@ -1,7 +1,7 @@
 /***************************************************************************
                                    core.h
                              -------------------
-	revision             : $Id: core.h,v 1.3 2002-11-03 17:28:46 tellini Exp $
+	revision             : $Id: core.h,v 1.4 2003-02-16 20:31:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -26,6 +26,7 @@ class CtrlIPC;
 class Loader;
 class DNSCache;
 class IODispatcher;
+class File;
 class Acl;
 
 class Core
@@ -66,6 +67,7 @@ public:
 
 private:
 	CtrlIPC			*IPC;
+	File			*ErrFile;
 	bool			Running;
 	sigset_t		NewMask;
 	sigset_t		OldMask;
