@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.cpp
                              -------------------
-    revision             : $Id: sslsocket.cpp,v 1.4 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: sslsocket.cpp,v 1.5 2003-01-18 21:58:23 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -115,30 +115,10 @@ int SSLSocket::Recv( void *buffer, int size, int flags, int timeout )
 {
 	int nread;
 
-	// first check whether we already have some data
-	if( TmpData.GetSize() > 0 ) {
-
-		nread = TmpData.GetSize();
-
-		if( size < nread )
-			nread = size;
-
-		memcpy( buffer, TmpData.GetData(), nread );
-
-		if( nread < TmpData.GetSize() )
-			TmpData.SetContent( TmpData.GetData() + nread, TmpData.GetSize() - nread );
-		else
-			TmpData.Clear();
-
-	} else {
-
-		SetNonBlocking( false );
-
-		nread = SSL_read( Ssl, buffer, size );
-	}
-
 	if( flags & MSG_PEEK )
-		TmpData.SetContent((char *)buffer, nread );
+		nread = SSL_peek( Ssl, buffer, size );
+	else
+		nread = SSL_read( Ssl, buffer, size );
 
 	return( nread );
 }
