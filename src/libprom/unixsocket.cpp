@@ -1,7 +1,7 @@
 /***************************************************************************
                                unixsocket.cpp
                              -------------------
-	revision             : $Id: unixsocket.cpp,v 1.2 2002-10-13 23:22:08 tellini Exp $
+	revision             : $Id: unixsocket.cpp,v 1.3 2002-10-14 19:36:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -248,8 +248,7 @@ int UnixSocket::RecvFD( void )
 	msg.msg_controllen = sizeof( tmp );
 #endif
 
-	if ((n = recvmsg( FD, &msg, 0 )) == -1)
-		fatal("%s: recvmsg: %s", __func__, strerror(errno));
+	n = recvmsg( FD, &msg, 0 );
 
 	if( n == 1 ) {
 
@@ -258,12 +257,12 @@ int UnixSocket::RecvFD( void )
 			fd = -1;
 #else
 		cmsg = CMSG_FIRSTHDR( &msg );
-		
+
 		if( cmsg->cmsg_type == SCM_RIGHTS )
 			fd = (*(int *)CMSG_DATA( cmsg ));
 #endif
 	}
-	
+
 #endif
 
 	return( fd );

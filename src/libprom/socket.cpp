@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.1.1.1 2002-10-10 09:59:21 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.2 2002-10-14 19:36:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -65,7 +65,7 @@ void Socket::Init( void )
 	AsyncReadBuffer = NULL;
 }
 //---------------------------------------------------------------------------
-bool Socket::Connect( char *host )
+bool Socket::Connect( const char *host )
 {
 	bool			ret = false;
 	struct sockaddr	*addr;
@@ -118,6 +118,65 @@ int Socket::Recv( void *buffer, int size, int flags, int timeout )
 	SetNonBlocking( false );
 
 	return( recv( FD, buffer, size, flags | MSG_NOSIGNAL ));
+}
+//---------------------------------------------------------------------------
+int Socket::RecvLine( char *buffer, int size, int timeout )
+{
+	int read = 0;
+
+	buffer[0] = '\0';
+	size--;             // ending '\0'
+
+	while( size ) {
+		int num;
+
+		num = Recv( buffer, size, MSG_PEEK, timeout );
+
+		if( num == 0 ) {
+
+			size = 0; // connection has been closed
+
+		} else if( num > 0 ) {
+			int     left = num;
+			char   *ptr = buffer;
+
+			while( size && left ) {
+
+				switch( *ptr++ ) {
+
+					case '\n':
+					case '\0':
+						num  = ptr - buffer;
+						size = 0;
+						break;
+
+					default:
+						left--;
+						size--;
+						break;
+				}
+			}
+
+			Recv( buffer, num ); // remove data from the input queue
+
+			buffer += num;
+			read   += num;
+
+		} else {
+
+			if( read > 0 )
+				buffer[ -1 ] = '\0';
+
+			read = num;
+			size = 0;
+		}
+	}
+
+	// make sure to terminate the string
+	if( read > 0 )
+		buffer[ (( read >= 2 ) && ( buffer[ -2 ] == '\r' )) ? -2 : -1 ] = '\0';
+
+	return( read );
 }
 //---------------------------------------------------------------------------
 void Socket::SetAsyncCallback( Prom_SockCallback callback, void *userdata )
