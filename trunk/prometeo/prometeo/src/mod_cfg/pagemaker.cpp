@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.5 2002-11-15 16:26:45 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.6 2002-11-15 20:22:25 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -470,6 +470,9 @@ void PageMaker::BuildPage( const string& page, string& result )
 	else if( page == "listitem" )
 		BuildListItemPage( result );
 
+	else if( page == "listitem/del" )
+		DeleteListItem( result );
+
 	else if( ParseDoc() ) {
 		string			query;
 		SDOM_NodeList	queryres;
@@ -769,7 +772,7 @@ void PageMaker::BuildListEditPage( string& result )
 	AddPageHeader( "listedit", result );
 	BeginOptionsTable( data.Descr, result );
 
-	result += "<tr><td colspan=2><table width=\"100%\">";
+	result += "</form><tr><td colspan=2><table width=\"100%\">";
 
 	sprintf( span, "%d", AddListHeaders( data, result ));
 
@@ -789,7 +792,6 @@ void PageMaker::BuildListEditPage( string& result )
 
 	result +=	"<tr>"
 				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
-				"    </form>"
 				"    <form action=\"/listitem\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
 				"      <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
@@ -920,7 +922,7 @@ void PageMaker::AddListRow( const char *item, const ListData& data, string& resu
 				"    </form>"
 				"  </td>"
 				"  <td>"
-				"    <form action=\"listitemdel\" method=\"POST\">"
+				"    <form action=\"listitem/del\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"item\" value=\"" + string( item ) + "\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
 				"      <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
@@ -974,12 +976,27 @@ void PageMaker::BuildListItemPage( string& result )
 
 	result += 	"      <div align=\"center\"><input type=\"submit\" value=\"Save\"></div>"
 				"    </form>"
-				"<form action=\"/listedit?page=" + UrlEncode( data.Page ) +
-				"&list=" + UrlEncode( data.List ) + "\" method=\"GET\">"
+				"<form action=\"/listedit\" method=\"GET\">"
+				"  <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
+				"  <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
 				"  <input type=\"submit\" value=\"Back to the list page\">"
 				"</form>";
 
 	AddPageFooter( result, false );
+}
+//---------------------------------------------------------------------------
+void PageMaker::DeleteListItem( string& result )
+{
+	ListData	data;
+	string		key;
+
+	GetListData( data );
+
+	key = data.BaseKey + "/" + Cfg->DecodeArg( data.KeyName.c_str() );
+	
+	App->Cfg->DeleteKey( key.c_str() );
+			
+	BuildListEditPage( result );
 }
 //---------------------------------------------------------------------------
 void PageMaker::SaveListItem( const ListData& data )

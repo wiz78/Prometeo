@@ -1,7 +1,7 @@
 /***************************************************************************
                                  pagemaker.h
                              -------------------
-    revision             : $Id: pagemaker.h,v 1.5 2002-11-15 16:26:46 tellini Exp $
+    revision             : $Id: pagemaker.h,v 1.6 2002-11-15 20:22:25 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -92,6 +92,7 @@ private:
 	int				AddListHeaders( const ListData& data, string& result );
 	void			AddListRow( const char *item, const ListData& data, string& result );
 	void			SaveListItem( const ListData& data );
+	void			DeleteListItem( string& result );
 
 	string			UrlEncode( const string& str );
 };
