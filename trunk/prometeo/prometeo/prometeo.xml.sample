@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <Key name="root">
 	<Note>
-		$Id: prometeo.xml,v 1.1 2002-12-06 17:06:59 tellini Exp $
+		$Id: prometeo.xml.sample,v 1.1 2003-05-09 18:48:49 tellini Exp $
 				
 		Nothing should appear outside the root Key.
 
