@@ -1,7 +1,7 @@
 /***************************************************************************
                                    url.cpp
                              -------------------
-    revision             : $Id: url.cpp,v 1.1.1.1 2002-10-10 09:59:53 tellini Exp $
+    revision             : $Id: url.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -16,6 +16,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+using namespace std;
 
 #include <strings.h>
 #include <stdio.h>

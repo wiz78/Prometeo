@@ -1,7 +1,7 @@
 /***************************************************************************
                                 regstring.cpp
                              -------------------
-	revision             : $Id: regstring.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: regstring.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -15,9 +15,11 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "main.h"
+
 #include <string.h>
 #include <stdlib.h>
-#include <fstream.h>
+#include <fstream>
 
 #include "regstring.h"
 

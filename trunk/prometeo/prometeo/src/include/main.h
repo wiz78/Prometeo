@@ -1,7 +1,7 @@
 /***************************************************************************
                                    main.h
                              -------------------
-	revision             : $Id: main.h,v 1.1.1.1 2002-10-10 09:59:13 tellini Exp $
+	revision             : $Id: main.h,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -27,6 +27,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+using namespace std;
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
