@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.12 2003-02-13 11:11:31 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.13 2003-03-01 19:45:45 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -849,47 +849,56 @@ void HTTPProxy::Connected( HTTPData *data )
 //---------------------------------------------------------------------------
 void HTTPProxy::StartTunneling( HTTPData *data )
 {
-	int			i = 0;
-	const char	*ptr;
-
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::StartTunneling( %08x )", data ));
 
-	data->State       = S_TUNNELING;
-	data->ServerState = S_TUNNELING;
+	if( data->ClientSock ) {
+		int			i = 0;
+		const char	*ptr;
 
-	data->ServerSock->AsyncPrintf( "%s %s %s\r\n",
-								   data->Client.GetMethodStr(),
-								   data->Client.GetURL().GetRest(),
-								   data->Client.GetProtocol() );
+		data->State       = S_TUNNELING;
+		data->ServerState = S_TUNNELING;
 
-	while( const char *hdr = data->Client.GetHeader( i++ )) {
-		char		buffer[512], *to = buffer;
-		const char	*from = hdr;
-		int			n = 0;
+		data->ServerSock->AsyncPrintf( "%s %s %s\r\n",
+									   data->Client.GetMethodStr(),
+									   data->Client.GetURL().GetRest(),
+									   data->Client.GetProtocol() );
 
-		while(( n < sizeof( buffer ) - 1 ) && *from && ( *from != ':' )) {
-			*to++ = tolower( *from++ );
-			n++;
+		while( const char *hdr = data->Client.GetHeader( i++ )) {
+			char		buffer[ 512 ], *to = buffer;
+			const char	*from = hdr;
+			int			n = 0;
+
+			while(( n < sizeof( buffer ) - 1 ) && *from && ( *from != ':' )) {
+				*to++ = tolower( *from++ );
+				n++;
+			}
+
+			*to = '\0';
+
+			if( strcmp( buffer, "connection" ) &&
+				strcmp( buffer, "proxy-connection" ) &&
+				strcmp( buffer, "keep-alive" ))
+				data->ServerSock->AsyncPrintf( "%s\r\n", hdr );
 		}
 
-		*to = '\0';
+		data->ServerSock->AsyncPrintf( "Connection: close\r\n"
+									   "\r\n" );
 
-		if( strcmp( buffer, "connection" ) &&
-			strcmp( buffer, "proxy-connection" ) &&
-			strcmp( buffer, "keep-alive" ))
-			data->ServerSock->AsyncPrintf( "%s\r\n", hdr );
+		ptr = data->Client.GetDecodedData( &i );
+
+		if( i > 0 )
+			data->ServerSock->AsyncSend( ptr, i );
+
+		data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf ));
+		data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
+
+	} else {
+		// the client must have dropped the connection while we were
+		// waiting to connect to the origin server, so just clean up
+
+		if( !CloseServerSocket( data )) 
+			CloseClientSocket( data );
 	}
-
-	data->ServerSock->AsyncPrintf( "Connection: close\r\n"
-								   "\r\n" );
-
-	ptr = data->Client.GetDecodedData( &i );
-
-	if( i > 0 )
-		data->ServerSock->AsyncSend( ptr, i );
-
-	data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf ));
-	data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::Handle_GET_HEAD( HTTPData *data )
