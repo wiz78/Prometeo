@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.8 2002-11-21 18:36:55 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.9 2003-01-06 12:30:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,8 +20,8 @@
 #include "main.h"
 #include "registry.h"
 #include "buffer.h"
-#include "mystring.h"
 #include "loader.h"
+#include "stringlist.h"
 #include "pagemaker.h"
 #include "option.h"
 #include "option_string.h"

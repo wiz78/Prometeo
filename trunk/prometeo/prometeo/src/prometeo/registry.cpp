@@ -1,7 +1,7 @@
 /***************************************************************************
                                  Registry.cpp
                              -------------------
-	revision             : $Id: registry.cpp,v 1.2 2002-11-08 14:32:31 tellini Exp $
+	revision             : $Id: registry.cpp,v 1.3 2003-01-06 12:30:27 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -238,7 +238,7 @@ void Registry::EndElement( const char *name )
 		switch( CurrentValue->GetType() ) {
 
 			case REG_INTEGER:
-				((RegInteger *)CurrentValue )->SetValue( Buffer.ToInt() );
+				((RegInteger *)CurrentValue )->SetValue( atoi( Buffer.c_str() ));
 				break;
 
 			case REG_STRING:
@@ -268,7 +268,7 @@ void Registry::EndElement( const char *name )
 		Clear(); // reject everything in case of malformed config
 	}
 
-	Buffer = "";
+	Buffer.erase();
 }
 //--------------------------------------------------------------------------
 void Registry::CharHandler( char *str, int len )

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  registry.h
                              -------------------
-	revision             : $Id: registry.h,v 1.2 2002-11-08 14:32:30 tellini Exp $
+	revision             : $Id: registry.h,v 1.3 2003-01-06 12:30:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -18,10 +18,13 @@
 #ifndef REGISTRY_H
 #define REGISTRY_H
 
+#include <string>
+
+using namespace std;
+
 #include "regkey.h"
 #include "regstring.h"
 #include "reginteger.h"
-#include "mystring.h"
 
 class Core;
 
@@ -64,7 +67,7 @@ private:
 	RegKey			*Tree;
 	RegKey			*CurrentKey;
 	RegNode			*CurrentValue;
-	MyString		Buffer;
+	string			Buffer;
 	void			*Parser;
 	bool			Parsing;
 
