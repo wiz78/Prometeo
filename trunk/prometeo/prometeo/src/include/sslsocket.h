@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.h
                              -------------------
-    revision             : $Id: sslsocket.h,v 1.4 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: sslsocket.h,v 1.5 2003-01-18 21:58:23 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -27,7 +27,6 @@
 #include "tcpsocket.h"
 #include "bitfield.h"
 #include "sslctx.h"
-#include "buffer.h"
 
 class SSLSocket : public TcpSocket
 {
@@ -57,7 +56,6 @@ private:
 	BitField		SSLFlags;
 	SSL				*Ssl;
 	SSLCtx			*SslCtx;
-	Buffer			TmpData;
 
 	void			Setup( void );
 };
