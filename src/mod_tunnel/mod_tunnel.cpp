@@ -1,7 +1,7 @@
 /***************************************************************************
                                 mod_tunnel.cpp
                              -------------------
-	revision             : $Id: mod_tunnel.cpp,v 1.1.1.1 2002-10-10 09:59:55 tellini Exp $
+	revision             : $Id: mod_tunnel.cpp,v 1.2 2002-10-10 16:09:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -134,7 +134,7 @@ void Tunnel::ReloadCfg( void )
 {
 	if( App->Cfg->OpenKey( Key.c_str(), false )) {
 
-		TargetHost = strdup( App->Cfg->GetString( "dsthost", "" ));
+		TargetHost = App->Cfg->GetString( "dsthost", "" );
 		TargetPort = App->Cfg->GetInteger( "dstport", 0 );
 		SrcPort    = App->Cfg->GetInteger( "srcport", 0 );
 
