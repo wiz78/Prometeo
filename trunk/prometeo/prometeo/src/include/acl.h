@@ -1,7 +1,7 @@
 /***************************************************************************
                                     acl.h
                              -------------------
-    revision             : $Id: acl.h,v 1.1 2002-11-03 17:28:46 tellini Exp $
+    revision             : $Id: acl.h,v 1.2 2002-12-10 15:28:41 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -22,8 +22,13 @@
 
 using namespace std;
 
+#include "config.h"
+
 #include <string>
+
+#if HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
+#endif
 
 class Registry;
 
@@ -43,8 +48,10 @@ public:
 private:
 	Registry	*Reg;
 	string		BaseKey;
+#if HAVE_SECURITY_PAM_APPL_H
 	string		Pwd;
 	pam_conv	PAM_Conv;
+#endif
 };
 
 #endif

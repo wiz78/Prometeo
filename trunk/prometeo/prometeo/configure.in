@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.8 2002-11-13 15:42:10 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.9 2002-12-10 15:28:40 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -64,7 +64,12 @@ AC_HEADER_TIME
 
 AC_CHECK_HEADERS(string.h strings.h unistd.h syslog.h sys/syslog.h sys/pstat.h libutil.h zlib.h)
 
-AC_CHECK_HEADER(security/pam_appl.h, [], [required PAM header missing])
+AC_CHECK_HEADER(security/pam_appl.h, 
+				[AC_DEFINE(HAVE_SECURITY_PAM_APPL_H, 1, [Define to 1 if you have the <security/pam_appl.h> header file])],
+				[AC_CHECK_HEADER(bsd_auth.h, 
+				 [AC_DEFINE(HAVE_BSD_AUTH_H, 1, [Define to 1 if you have the <bsd_auth.h> header file])], 
+				 [AC_MSG_ERROR(No usable authentication library found!)])
+				])
 
 AC_CHECK_HEADERS(netinet/ip.h netinet/ip_fil.h netinet/ip_nat.h)
 AC_CHECK_HEADERS(netinet/ip_compat.h netinet/ip_fil_compat.h)

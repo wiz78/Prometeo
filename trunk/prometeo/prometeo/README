@@ -1,4 +1,4 @@
-$Id: README,v 1.4 2002-12-08 16:54:09 tellini Exp $
+$Id: README,v 1.5 2002-12-10 15:28:40 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -44,7 +44,7 @@ Compulsory:
 - autoconf 2.52+
 - expat
 - sablotron
-- PAM
+- PAM or BSD Auth
 
 Optional:
 
