@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.17 2003-04-06 10:57:37 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.18 2003-05-08 13:58:38 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -824,6 +824,7 @@ void HTTPProxy::Resolved( HTTPData *data, int addrlen )
 			data->ServerSock->SetAsyncCallback( SocketCB, data->Proxy );
 			data->ServerSock->SetUserData( data, NULL );
 
+App->Log->Log( LOG_INFO, "Connecting to port %d", data->Client.GetURL().GetPort() );
 			data->ServerSock->AsyncConnect( &data->Addr, data->Client.GetURL().GetPort(), TIMEOUT_CONNECT );
 
 		} else {
