@@ -1,7 +1,7 @@
 /***************************************************************************
                                  netdate.cpp
                              -------------------
-    revision             : $Id: netdate.cpp,v 1.1.1.1 2002-10-10 09:59:51 tellini Exp $
+    revision             : $Id: netdate.cpp,v 1.2 2002-12-02 16:22:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -139,6 +139,8 @@ bool NetDate::ParseRFC( char *buffer, struct tm *dt )
 
 					if( dt->tm_year > 1900 )
 						dt->tm_year -= 1900;
+					else if( dt->tm_year < 78 )
+						dt->tm_year += 100;
 
 					if( ptr = strtok( NULL, ":" )) {
 
@@ -234,8 +236,10 @@ bool NetDate::ParseLame( char *buffer, struct tm *dt )
 		if( ptr = strtok( NULL, " " ))
 			dt->tm_year = atoi( ptr );
 
-		if( dt->tm_year < 1900 )
-			dt->tm_year += 1900;
+		if( dt->tm_year < 78 )
+			dt->tm_year += 100;
+		else if( dt->tm_year > 1900 )
+			dt->tm_year -= 1900;
 
 		ok = true;
 	}

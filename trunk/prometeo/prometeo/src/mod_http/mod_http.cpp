@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.10 2002-11-22 16:53:24 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.11 2002-12-02 16:22:49 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -1070,7 +1070,7 @@ void HTTPProxy::DownloadAndCache( HTTPData *data )
 	StringList	headers;
 
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::DownloadAndCache( %08x )", data ));
-	
+
 	if( data->Cached ) {
 		CacheMgr.Delete( data->Cached );
 		data->Cached->Release();
@@ -1125,9 +1125,9 @@ static void CacheObjListener( void *userdata, char *data, int len )
 //---------------------------------------------------------------------------
 void HTTPProxy::CacheObjListener( HTTPData *data, char *buf, int len )
 {
-	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::CacheObjListener( %08x, -, %d ) - data->Cached = %08x", 
+	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::CacheObjListener( %08x, -, %d ) - data->Cached = %08x",
 						data, len, data->Cached ));
-	
+
 	if( len >= 0 ) {
 
 		if( data->ClientSock )
