@@ -1,12 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
-## $Id: Makefile.am,v 1.4 2002-12-08 16:54:09 tellini Exp $
+## $Id: Makefile.am,v 1.5 2003-05-09 18:48:49 tellini Exp $
 
 auxdir			= @ac_aux_dir@
 AUX_DIST		= $(auxdir)/install-sh $(auxdir)/missing \
 			      $(auxdir)/mkinstalldirs
 AUX_DIST_EXTRA	= $(auxdir)/expat.m4
 
-EXTRA_DIST			= bootstrap
+EXTRA_DIST		= bootstrap
 AUTOMAKE_OPTIONS 	= foreign
 
 SUBDIRS 		= libltdl src
@@ -14,8 +14,8 @@ SUBDIRS 		= libltdl src
 MAINTAINERCLEANFILES 	= Makefile.in aclocal.m4 configure src/include/config-h.in \
 						  $(AUX_DIST)
 
-sysconf_DATA	= prometeo.xml
-ACLOCAL			= aclocal -I $(auxdir)
+sysconf_DATA	= prometeo.xml.sample
+ACLOCAL		= aclocal -I $(auxdir)
 LIBTOOL_DEPS	= @LIBTOOL_DEPS@
 
 libtool: $(LIBTOOL_DEPS)
@@ -28,4 +28,4 @@ dist-hook:
 	  cp $$file $(distdir)/$$file; \
 	done
 
-	cp prometeo.xml $(distdir)
+	cp prometeo.xml.sample $(distdir)
