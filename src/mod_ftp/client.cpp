@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.7 2002-11-01 22:23:47 tellini Exp $
+    revision             : $Id: client.cpp,v 1.8 2002-11-02 17:19:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -107,6 +107,18 @@ void Client::OnFork( void )
 	Socket = NULL;
 }
 //---------------------------------------------------------------------------
+void Client::Setup( void )
+{
+	if( App->Cfg->OpenKey( CfgKey.c_str(), false )) {
+
+		FTPFlags.Set( FTPF_CFG_TRY_TLS,     App->Cfg->GetInteger( "trytls", true ));
+		FTPFlags.Set( FTPF_CFG_REQUIRE_TLS, App->Cfg->GetInteger( "requiretls", false ));
+		FTPFlags.Set( FTPF_CFG_DATA_TLS,    App->Cfg->GetInteger( "datatls", false ));
+
+		App->Cfg->CloseKey();
+	}
+}
+//---------------------------------------------------------------------------
 void Client::Cleanup( void )
 {
 	delete User;
@@ -124,18 +136,6 @@ void Client::ReloadCfg( void )
 {
 	App->Cfg->Load();
 	Setup();
-}
-//---------------------------------------------------------------------------
-void Client::Setup( void )
-{
-	if( App->Cfg->OpenKey( CfgKey.c_str(), false )) {
-
-		FTPFlags.Set( FTPF_CFG_TRY_TLS,     App->Cfg->GetInteger( "trytls", true ));
-		FTPFlags.Set( FTPF_CFG_REQUIRE_TLS, App->Cfg->GetInteger( "requiretls", false ));
-		FTPFlags.Set( FTPF_CFG_DATA_TLS,    App->Cfg->GetInteger( "datatls", false ));
-			
-		App->Cfg->CloseKey();
-	}
 }
 //---------------------------------------------------------------------------
 void Client::Serve( TcpSocket *sock, bool forked )
@@ -166,7 +166,7 @@ void Client::WaitRequest( void )
 		
 	FD_ZERO( &fds );
 	FD_SET( FD, &fds );
-	
+
 	Prom_set_ps_display( "idle" );
 
 	// loop until we recv some requests or we get killed
@@ -384,6 +384,23 @@ void Client::AcceptUserData( TcpSocket *sock )
 
 	delete UserData;
 
+#if USE_SSL
+	if( sock->IsValid() && FTPFlags.IsSet( FTPF_CLI_DATA_TLS )) {
+		SSLSocket	*ssl = new SSLSocket( ServerCtx, sock );
+
+		sock->SetFD( -1 );
+
+		if( ssl->SSLInitSession( SSLCtx::SERVER )) {
+
+			delete sock;
+
+			sock = ssl;
+
+		} else
+			delete ssl;
+	}
+#endif
+
 	if( sock->IsValid() ) {
 
 		sock->UseDispatcher( App->IO );
@@ -391,8 +408,14 @@ void Client::AcceptUserData( TcpSocket *sock )
 
 		UserData = sock;
 
-	} else
+		App->IO->AddFD( UserData, PROM_IOF_READ );
+
+	} else {
+
+		delete sock;
+
 		UserData = NULL;
+	}
 }
 //---------------------------------------------------------------------------
 void Client::AcceptServerData( TcpSocket *sock )
@@ -401,6 +424,23 @@ void Client::AcceptServerData( TcpSocket *sock )
 
 	delete ServerData;
 
+#if USE_SSL
+	if( sock->IsValid() && FTPFlags.IsSet( FTPF_SRV_DATA_TLS )) {
+		SSLSocket	*ssl = new SSLSocket( ClientCtx, sock );
+
+		sock->SetFD( -1 );
+
+		if( ssl->SSLInitSession( SSLCtx::CLIENT )) {
+
+			delete sock;
+
+			sock = ssl;
+
+		} else
+			delete ssl;
+	}
+#endif
+
 	if( sock->IsValid() ) {
 
 		sock->UseDispatcher( App->IO );
@@ -408,8 +448,14 @@ void Client::AcceptServerData( TcpSocket *sock )
 
 		ServerData = sock;
 
-	} else
+		App->IO->AddFD( ServerData, PROM_IOF_READ );
+
+	} else {
+
+		delete sock;
+
 		ServerData = NULL;
+	}
 }
 //---------------------------------------------------------------------------
 void Client::ConnectToServer( void )
@@ -508,7 +554,20 @@ bool Client::AttemptTLSLogin( void )
 			Server = (TcpSocket *)ssl;
 			ret    = true;
 
-			Flags.Set( FTPF_TLS );
+			FTPFlags.Set( FTPF_SRV_TLS );
+
+			if( FTPFlags.IsSet( FTPF_CFG_DATA_TLS )) {
+
+				Server->Printf( "PBSZ 0\r\n" );
+
+				if( RecvStatus() == 200 ) {
+
+					Server->Printf( "PROT P\r\n" );
+
+					if( RecvStatus() == 200 )
+						FTPFlags.Set( FTPF_SRV_DATA_TLS );
+				}
+			}
 
 		} else {
 
@@ -522,14 +581,14 @@ bool Client::AttemptTLSLogin( void )
 	}
 
 	if( !ret ) {
-		
+
 		if( FTPFlags.IsSet( FTPF_CFG_REQUIRE_TLS ))
 			User->Printf( "421 Cannot setup TLS connection to the remote server, give up.\r\n" );
 		else
 			ret = true;
 	}
 #else
-	
+
 	ret = true;
 
 #endif /* USE_SSL */
@@ -652,7 +711,7 @@ void Client::CmdProt( void )
 {
 	if( FTPFlags.IsSet( FTPF_PBSZ )) {
 
-		FTPFlags.Set( FTPF_DATA_TLS, toupper( Args.c_str()[0] ) == 'P' );
+		FTPFlags.Set( FTPF_CLI_DATA_TLS, toupper( Args.c_str()[0] ) == 'P' );
 		FTPFlags.Clear( FTPF_PBSZ );
 
 		User->Printf( "200 Yessir.\r\n" );
@@ -952,6 +1011,30 @@ bool Client::OpenClientDataConnection( void )
 		 UserData->IsValid() &&
 		 UserData->Connect( &addr, PortPort );
 
+#if USE_SSL
+	if( ok && FTPFlags.IsSet( FTPF_CLI_DATA_TLS )) {
+		SSLSocket	*ssl = new SSLSocket( ServerCtx, UserData );
+
+		UserData->SetFD( -1 );
+
+		if( ssl->SSLInitSession( SSLCtx::SERVER )) {
+
+			delete UserData;
+
+			UserData = ssl;
+
+		} else {
+
+			ok = false;
+
+			delete ssl;
+		}
+	}
+#endif
+
+	if( ok )
+		App->IO->AddFD( UserData, PROM_IOF_READ );
+
 	return( ok );
 }
 //---------------------------------------------------------------------------
@@ -1022,11 +1105,6 @@ bool Client::DataConnectionCmd( void )
 
 					User->Printf( "150 Data connection open\r\n" );
 
-					if( dir == TO_CLIENT )
-						ServerData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
-					else
-						UserData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
-
 				} else {
 
 					Server->Printf( "ABOR\r\n" );
@@ -1051,7 +1129,14 @@ bool Client::DataConnectionCmd( void )
 //---------------------------------------------------------------------------
 void Client::ForwardData( TcpSocket *sock, int len )
 {
-	if( len == 0 ) {
+	char	DataBuffer[ 4096 ];
+
+	if( sock == ServerData )
+		len = ServerData->Recv( DataBuffer, sizeof( DataBuffer ));
+	else
+		len = UserData->Recv( DataBuffer, sizeof( DataBuffer ));
+
+	if( len <= 0 ) {
 
 		delete ServerData;
 		delete UserData;
@@ -1062,16 +1147,10 @@ void Client::ForwardData( TcpSocket *sock, int len )
 		ServerData = NULL;
 		UserData   = NULL;
 
-	} else if( sock == ServerData ) {
-
+	} else if( sock == ServerData )
 		UserData->Send( DataBuffer, len );
-		ServerData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
-
-	} else {
-
+	else
 		ServerData->Send( DataBuffer, len );
-		UserData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
-	}
 }
 //---------------------------------------------------------------------------
 void Client::HandleError( TcpSocket *sock, int err )
