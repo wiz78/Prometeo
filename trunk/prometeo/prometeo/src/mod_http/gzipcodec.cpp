@@ -1,7 +1,7 @@
 /***************************************************************************
                                 gzipcodec.cpp
                              -------------------
-    revision             : $Id: gzipcodec.cpp,v 1.1.1.1 2002-10-10 09:59:36 tellini Exp $
+    revision             : $Id: gzipcodec.cpp,v 1.2 2003-02-14 15:50:33 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -22,13 +22,14 @@
 #if HAVE_ZLIB_H
 
 #include <strings.h>
-#include <zutil.h>
 
 #include "gzipcodec.h"
 
 #ifndef OS_CODE
 #define OS_CODE 0
 #endif
+
+#define DEF_MEM_LEVEL 8
 
 #define MAGIC1	'\037'
 #define MAGIC2	'\213'
