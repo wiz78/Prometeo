@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.4 2002-10-22 17:43:22 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.5 2002-10-30 14:48:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -142,14 +142,10 @@ bool Cache::Prune( void )
 			while( Objects.IsNode( obj ) && ( obj->IsInUse() || obj->IsDeleted() ))
 				obj = (CacheObj *)obj->GetSucc();
 
-			DBG( App->Log->Log( LOG_INFO, "obj = %08x", obj ));
-			
 			if( Objects.IsNode( obj )) {
 				CacheObj	*next = (CacheObj *)obj->GetSucc();
 
-				DBG( App->Log->Log( LOG_INFO, "deleting %08x", obj ));
 				Delete( obj );
-				DBG( App->Log->Log( LOG_INFO, "next = %08x", next ));
 
 				deleted = true;
 				loop    = true;

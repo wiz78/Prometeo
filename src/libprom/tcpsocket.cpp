@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.3 2002-10-29 18:01:17 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.1 2002-10-30 14:48:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 

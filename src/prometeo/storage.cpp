@@ -1,7 +1,7 @@
 /***************************************************************************
                                  storage.cpp
                              -------------------
-    revision             : $Id: storage.cpp,v 1.2 2002-10-22 14:31:28 tellini Exp $
+    revision             : $Id: storage.cpp,v 1.3 2002-10-30 14:48:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -110,8 +110,6 @@ void Storage::Delete( const char *name )
 {
 	string file = Directory + name;
 
-	DBG( App->Log->Log( LOG_INFO, "Storage::Delete( %s )", file.c_str() ));
-	
 	unlink( file.c_str() );
 }
 //---------------------------------------------------------------------------
