@@ -1,7 +1,7 @@
 /***************************************************************************
                                  loader.cpp
                              -------------------
-	revision             : $Id: loader.h,v 1.1.1.1 2002-10-10 09:59:12 tellini Exp $
+	revision             : $Id: loader.h,v 1.2 2002-11-13 16:45:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,6 +26,8 @@
 
 #include <string>
 
+class Module;
+
 class Loader
 {
 public:
@@ -43,7 +45,8 @@ public:
 	void		OnTimer( time_t now );
 
 	const char	*EnumNames( int index );
-	bool		IsRunning( const char *mod );
+	Module		*FindModule( const char *mod );
+	bool		IsRunning( const char *mod ) { return( FindModule( mod ) != NULL ); }
 
 	const char	*GetManifest( const char *mod );
 

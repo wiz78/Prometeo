@@ -1,12 +1,12 @@
 /***************************************************************************
                                  loader.cpp
                              -------------------
-	revision             : $Id: loader.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+    revision             : $Id: loader.cpp,v 1.2 2002-11-13 16:45:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : this class contains everything is needed to
-	                       load/unload an external module
+    description          : this class contains everything is needed to
+                           load/unload an external module
  ***************************************************************************/
 
 /***************************************************************************
@@ -246,14 +246,14 @@ const char *Loader::EnumNames( int index )
 	return( ret );
 }
 //---------------------------------------------------------------------------
-bool Loader::IsRunning( const char *mod )
+Module *Loader::FindModule( const char *mod )
 {
-	bool	ret = false;
+	Module	*ret = NULL;
 	int		i = 0;
 
 	while( !ret && ( i < Modules.Count() ))
 		if( ((Module *)Modules[ i++ ])->GetFileName() == mod )
-			ret = true;
+			ret = (Module *)Modules[ i - 1 ];
 
 	return( ret );
 }

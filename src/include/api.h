@@ -1,7 +1,7 @@
 /***************************************************************************
                                     api.h
                              -------------------
-    revision             : $Id: api.h,v 1.2 2002-11-13 15:42:12 tellini Exp $
+    revision             : $Id: api.h,v 1.3 2002-11-13 16:45:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -113,7 +113,7 @@ typedef struct prometeo_module
 
 	// handle custom commands sent via prometeoctl/mod_cfg
 	// can be NULL
-	void			( *ParseCmd )( HANDLE mod, const char *cmd );
+	void			( *ParseCmd )( HANDLE mod, const char *cmd, char *result, int reslen );
 
 } Prom_Module;
 
