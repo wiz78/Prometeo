@@ -1,7 +1,7 @@
 /***************************************************************************
                                     fd.h
                              -------------------
-	revision             : $Id: fd.h,v 1.1.1.1 2002-10-10 09:59:10 tellini Exp $
+	revision             : $Id: fd.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,7 @@ public:
 						~Fd();
 
 	int					GetFD( void ) const { return( FD ); }
+	void				SetFD( int fd ) { FD = fd; }
 
 	bool				IsValid( void ) const { return( FD >= 0 ); }
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                unixsocket.cpp
                              -------------------
-	revision             : $Id: unixsocket.cpp,v 1.3 2002-10-14 19:36:16 tellini Exp $
+	revision             : $Id: unixsocket.cpp,v 1.4 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -156,7 +156,7 @@ uid_t UnixSocket::GetPeerUID( void )
 	return( PeerUID );
 }
 //---------------------------------------------------------------------------
-// the following functions are derived from OpenSSH - monitor_fdpass.c
+// the following 2 functions derive from OpenSSH - monitor_fdpass.c
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -188,11 +188,12 @@ bool UnixSocket::SendFD( int fd )
 	struct msghdr	msg;
 	struct iovec	vec;
 	char			ch = '\0';
-	int				n;
 #ifndef HAVE_ACCRIGHTS_IN_MSGHDR
 	char			tmp[ CMSG_SPACE( sizeof( int )) ];
 	struct cmsghdr *cmsg;
 #endif
+
+	SetNonBlocking( false );
 
 	memset( &msg, 0, sizeof( msg ));
 #ifdef HAVE_ACCRIGHTS_IN_MSGHDR
@@ -213,9 +214,7 @@ bool UnixSocket::SendFD( int fd )
 	msg.msg_iov    = &vec;
 	msg.msg_iovlen = 1;
 
-	n = sendmsg( FD, &msg, 0 );
-
-	ret = n == 1;
+	ret = sendmsg( FD, &msg, 0 ) == 1;
 #endif
 
 	return( ret );
@@ -234,8 +233,10 @@ int UnixSocket::RecvFD( void )
 	struct cmsghdr *cmsg;
 #endif
 
+	SetNonBlocking( false );
+
 	memset( &msg, 0, sizeof( msg ));
-	
+
 	vec.iov_base   = &ch;
 	vec.iov_len    = 1;
 	msg.msg_iov    = &vec;

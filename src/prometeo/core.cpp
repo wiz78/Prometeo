@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-	revision             : $Id: core.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: core.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -72,10 +72,9 @@ void Core::Run( void )
 
 		Log->Log( LOG_INFO, PACKAGE" "VERSION" starting" );
 
-//		IPC  = new CtrlIPC();
+		IPC  = new CtrlIPC();
 		DNS  = new DNSCache( IO );
 		Mods = new Loader();
-		IPC  = new CtrlIPC();
 
 		Mods->LoadModules();
 
@@ -86,7 +85,7 @@ void Core::Run( void )
 		Log->Log( LOG_INFO, PACKAGE" "VERSION" quitting" );
 
 		IPC->Cleanup();
-		
+
 		unlink( PROM_PID_FILE );
 	}
 }
@@ -182,9 +181,7 @@ pid_t Core::Fork( char *ident )
 
 	if( pid == 0 ) {			// child
 
-		// avoid that the child inherits some listening
-		// sockets and stuff
-
+		// avoid that the child inherits some listening sockets and stuff
 		if( Mods )
 			Mods->OnFork();
 
@@ -194,9 +191,9 @@ pid_t Core::Fork( char *ident )
 		delete IPC;
 
 		// at this point, we can unblock the parent
-		kill( getppid(), SIGUSR1 );
+		WakeUpParent();
 
-		IPC  = NULL;
+		IPC = NULL;
 
 		Prom_init_ps_display( ident );
 
@@ -228,6 +225,13 @@ void Core::Wait( void )
 {
 	while( LastSig == -1 )
 		sigsuspend( &ZeroMask );
+
+	sigprocmask( SIG_SETMASK, &OldMask, NULL );
+}
+//--------------------------------------------------------------------------
+void Core::WakeUpParent( void )
+{
+	kill( getppid(), SIGUSR1 );
 
 	sigprocmask( SIG_SETMASK, &OldMask, NULL );
 }

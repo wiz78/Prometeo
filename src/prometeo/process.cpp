@@ -1,7 +1,7 @@
 /***************************************************************************
                                  process.cpp
                              -------------------
-	revision             : $Id: process.cpp,v 1.2 2002-10-14 19:36:17 tellini Exp $
+	revision             : $Id: process.cpp,v 1.3 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -91,9 +91,9 @@ bool Process::Spawn( char *ident )
 				Socket->SetAsyncCallback( AsyncCallback, this );
 				Flags.Set( PROM_PROCF_RUNNING );
 			}
-		}
 
-		if( !ok ) {
+		} else {
+
 			close( fd[0] );
 			close( fd[1] );
 		}
@@ -144,6 +144,8 @@ void Process::SocketEvent( Prom_SC_Reason reason, int data )
 	}
 
 	if( done ) {
+
+		time( &LastReqTime );
 
 		DataLen = 0;
 		Data.Clear();
@@ -199,8 +201,6 @@ void Process::SendRequest( Buffer *req, Prom_IPC_Callback callback, void *userda
 
 	Flags.Set( PROM_PROCF_BUSY );
 
-	time( &LastReqTime );
-	
 	Callback     = callback;
 	CallbackData = userdata;
 	len          = req->GetSize();

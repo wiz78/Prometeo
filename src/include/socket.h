@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.h
                              -------------------
-	revision             : $Id: socket.h,v 1.2 2002-10-14 19:36:15 tellini Exp $
+	revision             : $Id: socket.h,v 1.3 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -44,6 +44,8 @@ public:
 						Socket( int fd );
 						~Socket();
 
+	bool				Shutdown( int how = 2 );
+
 	// synchronous functions
 	bool				Connect( const char *host );	// host is a dotted form name
 														// no name resolution is performed
@@ -57,7 +59,7 @@ public:
 	// asynchronous ones
 	// in case of error they return false AND the
 	// callback is called with PROM_SOCK_ERROR reason
-	bool				AsyncConnect( char *host, int timeout = -1 ); // see comment on Connect( char *host )
+	bool				AsyncConnect( const char *host, int timeout = -1 ); // see comment on Connect( char *host )
 	bool				AsyncConnect( struct sockaddr *addr, socklen_t len, int timeout = -1 );
 	bool				AsyncSend( const void *data, int size, int flags = 0 );
 	bool				AsyncRecv( void *data, int size, int flags = 0, int timeout = -1 );

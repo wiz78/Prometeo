@@ -1,7 +1,7 @@
 /***************************************************************************
                                  procpool.h
                              -------------------
-    revision             : $Id: procpool.h,v 1.1 2002-10-14 19:36:17 tellini Exp $
+    revision             : $Id: procpool.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -28,11 +28,12 @@ using namespace std;
 #include "processgroup.h"
 
 class TcpSocket;
+class IODispatcher;
 
 class ProcPool : public ProcessGroup
 {
 public:
-					ProcPool( string key );
+					ProcPool( string key, IODispatcher *io );
 
 	void			Setup();
 	void			OnFork();
