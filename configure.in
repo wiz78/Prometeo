@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl							 -------------------
 dnl	copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.4 2002-10-31 19:04:12 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.5 2002-11-01 19:01:00 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -146,20 +146,16 @@ AC_ARG_WITH( openssl,
 					;;
 					yes)
 						openssl_prefix="/usr/local/ssl"
+						AC_DEFINE( USE_SSL, 1, [Define to build with OpenSSL support] )
 					;;
 					*)
 						openssl_prefix=$withval
-						if test "x$openssl_prefix" = "x" ; then
-							openssl_prefix="/usr/local/ssl"
-						fi
+						AC_DEFINE( USE_SSL, 1, [Define to build with OpenSSL support] )
 				esac
 			],
 			[openssl_prefix=""]
 )
 if test "x$openssl_prefix" != "x" ; then
-
-	AC_DEFINE( USE_SSL, 1, [Define to build with OpenSSL support] )
-
 	LDFLAGS="-L${openssl_prefix}/lib ${LDFLAGS}"
 	CPPFLAGS="-I${openssl_prefix}/include ${CPPFLAGS}"
 fi
