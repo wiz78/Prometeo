@@ -1,7 +1,7 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.3 2002-11-14 18:14:00 tellini Exp $
+    revision             : $Id: http.h,v 1.4 2002-11-22 16:53:24 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -76,6 +76,8 @@ public:
 
 	void				ErrorMsg( int code, const char *text );
 	const char			*GetCodeMsg( int code ) const;
+
+	void				Redirect( const char *url );
 
 	void				SendHeader( int code, const char *type, bool closecon, StringList *ExtraHeaders );
 	void				SendMethod( const char *method, const char *uri, StringList *headers );
