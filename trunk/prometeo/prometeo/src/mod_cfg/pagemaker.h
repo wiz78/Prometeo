@@ -1,7 +1,7 @@
 /***************************************************************************
                                  pagemaker.h
                              -------------------
-    revision             : $Id: pagemaker.h,v 1.2 2002-11-07 14:49:40 tellini Exp $
+    revision             : $Id: pagemaker.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,6 +26,15 @@
 
 #include "cfgdata.h"
 #include "stringlist.h"
+
+class ListData
+{
+public:
+	string			KeyType;
+	string			KeyName;
+	string			KeyDescr;
+	StringList		Fields;
+};
 
 class PageMaker
 {
@@ -52,6 +61,7 @@ private:
 	bool			ParseDoc( void );
 
 	string			ValueOf( const string query, SDOM_Node context );
+	void			GetOptionList( const string query, StringList& list );
 
 	void			AddPageHeader( const string page, string& result );
 	void			AddPageFooter( string& result, bool closeform = true );
@@ -59,14 +69,23 @@ private:
 	void			BeginOptionsTable( const string caption, string& result );
 	void			EndOptionsTable( string& result );
 
+	void			AddOption( const string& page, const char *opt, string& result );
 	void			AddTextOption( const StringList& args, string& result );
+	void			AddTextAreaOption( const StringList& args, string& result );
 	void			AddIntegerOption( const StringList& args, string& result );
 	void			AddBoolOption( const StringList& args, string& result );
 	void			AddListOption( const StringList& args, string& result, const string& page );
 
 	void			BuildModsPage( string& result );
 	void			BuildApplyPage( string& result );
+	void			BuildAclPage( string& result );
+	void			BuildAclUserPage( string& result );
 	void			BuildListEditPage( string& result );
+
+	int				AddListHeaders( const string path, const ListData& data, string& result );
+	void			AddListRow( const string page, const string list,
+								const char *item, const string path,
+								const ListData& data, string& result );
 
 	string			UrlEncode( const string& str );
 };

@@ -1,7 +1,7 @@
 /***************************************************************************
                                    acl.cpp
                              -------------------
-    revision             : $Id: acl.cpp,v 1.2 2002-11-07 14:49:40 tellini Exp $
+    revision             : $Id: acl.cpp,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -64,11 +64,12 @@ void Acl::SetUserPermission( const char *user, const char *perm, bool granted )
 //---------------------------------------------------------------------------
 void Acl::RemoveUserPermission( const char *user, const char *perm )
 {
-	string	key = BaseKey +
-				  string( "/Users/" ) + string( user ) +
-				  string( "/" ) + string( perm );
+	string	key = BaseKey + string( "/Users/" ) + string( user );
 
-	Reg->DeleteKey( key.c_str() );
+	if( Reg->OpenKey( key.c_str(), true )) {
+		Reg->DeleteValue( perm );
+		Reg->CloseKey();
+	}
 }
 //---------------------------------------------------------------------------
 bool Acl::AuthenticateUser( const char *user, const char *pwd, const char *host )

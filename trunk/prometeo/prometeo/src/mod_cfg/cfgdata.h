@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.h
                              -------------------
-    revision             : $Id: cfgdata.h,v 1.2 2002-11-07 14:49:40 tellini Exp $
+    revision             : $Id: cfgdata.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -95,6 +95,12 @@ private:
 	void			AddMod( void );
 	void			EnableMod( bool enable );
 	void			LoadMod( bool load );
+
+	void			AclDeleteUser( void );
+	void			AclAddUser( void );
+	void			AclUserPermAdd( void );
+	void			AclUserPermToggle( void );
+	void			AclUserPermRemove( void );
 };
 
 #endif

@@ -1,7 +1,7 @@
 /***************************************************************************
                                   regnode.h
                              -------------------
-	revision             : $Id: regnode.h,v 1.2 2002-10-13 15:40:12 tellini Exp $
+	revision             : $Id: regnode.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -22,7 +22,8 @@
 
 class RegKey;
 
-typedef enum { REG_KEY, REG_INTEGER, REG_STRING, REG_NOTE } RegType;
+typedef enum { REG_KEY, REG_INTEGER, REG_STRING, REG_NOTE,
+			   REG_ANY } RegType;
 
 class RegNode
 {

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 regnodee.cpp
                              -------------------
-	revision             : $Id: regnode.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
+	revision             : $Id: regnode.cpp,v 1.3 2002-11-08 14:32:32 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -21,10 +21,8 @@
 #include <string.h>
 #include <fstream>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include "regnode.h"
+#include "regkey.h"
 
 //--------------------------------------------------------------------------
 RegNode::RegNode( const char *name, RegType type )
@@ -37,6 +35,9 @@ RegNode::RegNode( const char *name, RegType type )
 RegNode::~RegNode()
 {
 	free( Name );
+
+	if( Parent )
+		Parent->RemoveChild( this );
 }
 //--------------------------------------------------------------------------
 void RegNode::WriteTabs( ofstream& fh, int indent )

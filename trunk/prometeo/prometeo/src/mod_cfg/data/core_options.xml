@@ -35,31 +35,3 @@
 		<Key name="root/DNSCache/ttl"/>
 	</Option>
 </Page>
-
-<Page name="acl">
-	<Label>Access Control</Label>
-
-	<Option type="list" name="users">
-		<Label>Users</Label>
-		<Descr>Users' permissions</Descr>
-		<Key name="root/ACL/Users"/>
-
-		<ListKey type="string" name="user">
-			<Label>User name</Label>
-		</ListKey>
-
-		<Fields>
-			<Option type="string" name="perm" show="yes">
-				<Label>Permission</Label>
-				<Descr/>
-				<Key/>
-			</Option>
-
-			<Option type="bool" name="grant" show="yes">
-				<Label>Granted</Label>
-				<Descr/>
-				<Key/>
-			</Option>
-		</Fields>
-	</Option>
-</Page>

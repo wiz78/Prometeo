@@ -1,7 +1,7 @@
 /***************************************************************************
                                  registry.h
                              -------------------
-	revision             : $Id: registry.h,v 1.1.1.1 2002-10-10 09:59:15 tellini Exp $
+	revision             : $Id: registry.h,v 1.2 2002-11-08 14:32:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -42,7 +42,9 @@ public:
 
 	bool			OpenKey( const char *path, bool create );
 	void			CloseKey( void );
+
 	void			DeleteKey( const char *path );
+	void			DeleteValue( const char *name );
 
 	// enumerates the keys contained in the current context
 	// returns NULL when index is out of bounds
