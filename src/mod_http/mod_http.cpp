@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.14 2003-03-02 17:08:47 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.15 2003-03-19 20:31:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -417,7 +417,7 @@ void HTTPProxy::Error( HTTPData *data, int err, TcpSocket *sock )
 				StoreObj *obj;
 
 				if( data->Cached && ( obj = data->Cached->GetStoreObj( false )))
-					obj->WriteComplete( false );
+					obj->WriteComplete( false ); // this will also trigger a call to CloseServerSocket()
 				else
 					closeit = !CloseServerSocket( data );
 				break;
@@ -889,8 +889,10 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 		if( i > 0 )
 			data->ServerSock->AsyncSend( ptr, i );
 
-		data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf ));
-		data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
+		// an error in the first AsyncRecv() would trigger a destruction of ServerSock
+		// and possibly of data as well - see HTTPProxy::Error()
+		if( data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf )))
+			data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
 
 	} else {
 		// the client must have dropped the connection while we were
