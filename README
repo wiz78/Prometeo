@@ -1,4 +1,4 @@
-$Id: README,v 1.5 2002-12-10 15:28:40 tellini Exp $
+$Id: README,v 1.6 2002-12-11 14:18:49 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -76,3 +76,16 @@ the configuration panel.
 
 Have fun. :)
 
+
+Some notes
+----------
+
+I've had a small problem when trying to compile prometeo on OpenBSD 3.2: the
+configure script gave an error when trying to run configure in libltdl. This
+might be due to the fact that I had to set the LDFLAGS and CPPFLAGS env vars
+in order to have some includes and libraries found (namely, expat in
+/usr/local/lib and /usr/local/include, which were not part of the standard
+include path): configure put LDFLAGS=... and CPPFLAGS=... in the command
+line of the second configure, making it fail. If that happens to you too,
+just 'cd libltdl' and invoke configure without those parameters, but
+preserving the other ones, as reported in the error message.
