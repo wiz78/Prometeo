@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.1 2003-05-24 12:28:53 tellini Exp $
+    revision             : $Id: client.cpp,v 1.2 2003-05-24 12:31:09 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -271,7 +271,7 @@ void Client::ConnectToServer( void )
 	pos    = Args.find( "%" );
 	server = Args.substr( 0, pos );
 	user   = Args.substr( pos + 1 );
-	pos    = server.find( ":" );
+	pos    = server.rfind( ":" );
 
 	if( pos != string::npos ) {
 
