@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.22 2003-06-02 17:20:02 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.23 2003-11-02 12:50:50 tellini Exp $
     copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -869,6 +869,8 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 
 		data->ServerSock = Connections.FindConnection( url.GetHostPort() );
 
+		DBG( App->Log->Log( LOG_ERR, "ConnectToServer() - reusing connection? %s", data->ServerSock ? "yes" : "no" ));
+
 		if( data->ServerSock )
 			Connected( data );
 		else {
@@ -979,7 +981,8 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 				data->ServerSock->AsyncPrintf( "%s\r\n", hdr );
 		}
 		
-		data->ServerSock->AsyncPrintf( "\r\n" );
+		data->ServerSock->AsyncPrintf( "Connection: close\r\n"
+									   "\r\n" );
 
 		InitTunnel( data );
 
@@ -1051,6 +1054,8 @@ void HTTPProxy::Handle_GET_HEAD( HTTPData *data )
 
 		} else
 			SendFromCache( data );
+
+		DBG( App->Log->Log( LOG_ERR, "notmod: %d, pre: %d", notmod, pre ));
 
 		if( notmod || pre )
 			ResetConnection( data );
