@@ -1,7 +1,7 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.4 2002-11-22 16:53:24 tellini Exp $
+    revision             : $Id: http.h,v 1.5 2003-03-25 13:27:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -53,6 +53,7 @@
 #define HTTPF_BODY_ERROR			(1 << 19)
 #define HTTPF_DEFLATE				(1 << 20)
 #define HTTPF_GZIP					(1 << 21)
+#define HTTPF_NO_CACHE				(1 << 22)
 
 class GZipCodec;
 
@@ -115,6 +116,7 @@ public:
 	bool				IsExpiresValid( void ) const         { return( Flags.IsSet( HTTPF_EXPIRES )); }
 	bool				IsCacheable( void ) const            { return( !Flags.IsSet( HTTPF_DONT_CACHE )); }
 	bool				Validate( void ) const               { return( Flags.IsSet( HTTPF_VALIDATE )); }
+	bool				NotFromCache( void ) const			 { return( Flags.IsSet( HTTPF_NO_CACHE )); }
 	bool				CanCompress( void ) const            { return( Flags.IsSet( HTTPF_DEFLATE | HTTPF_GZIP )); }
 
 private:

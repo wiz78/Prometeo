@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.15 2003-03-19 20:31:31 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.16 2003-03-25 13:27:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -995,7 +995,7 @@ void HTTPProxy::SendRequest( const char *method, HTTPData *data )
 		}
     }
 
-	if( cond && data->Cached ) {
+	if( cond && data->Cached && !data->Client.NotFromCache() ) {
 		const char *etag = data->Cached->GetETag();
 
 		if( etag[0] )

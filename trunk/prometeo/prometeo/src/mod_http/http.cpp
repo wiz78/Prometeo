@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.7 2003-02-13 11:11:31 tellini Exp $
+    revision             : $Id: http.cpp,v 1.8 2003-03-25 13:27:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -175,6 +175,8 @@ void HTTP::ParseMethod( char *str )
 {
 	char *ptr;
 
+	DBG( App->Log->Log( LOG_ERR, "HTTP::ParseMethod( %s )", str ));
+
 	if( strncmp( str, "HTTP/", 5 ) == 0 ) {
 
 		Method = M_RESPONSE;
@@ -308,11 +310,14 @@ void HTTP::ParseHeader( char *str )
 	} else if( !strcmp( str, "pragma" )) {
 
 		if( strstr( args, "no-cache" ))
-			Flags.Set( HTTPF_VALIDATE );
+			Flags.Set( HTTPF_VALIDATE | HTTPF_NO_CACHE );
 
 	} else if( !strcmp( str, "cache-control" )) {
 
-		if(( ptr = strstr( args, "no-cache" )) || strstr( args, "must-revalidate" ))
+		if( ptr = strstr( args, "no-cache" ))
+			Flags.Set( HTTPF_VALIDATE | HTTPF_NO_CACHE );
+
+		if( strstr( args, "must-revalidate" ))
 			Flags.Set( HTTPF_VALIDATE );
 
 		if( ptr ||
@@ -544,18 +549,25 @@ void HTTP::SendHeader( int code, const char *type, bool closecon, StringList *Ex
 //---------------------------------------------------------------------------
 void HTTP::SendMethod( const char *method, const char *uri, StringList *headers )
 {
+	DBG( App->Log->Log( LOG_INFO, "HTTP::SendMethod() - %s %s HTTP/1.1", method, uri ));
+		
 	Sock->AsyncPrintf( "%s %s HTTP/1.1\r\n", method, uri );
 
 	if( headers )
-		for( int i = 0; i < headers->Count(); i++ )
+		for( int i = 0; i < headers->Count(); i++ ) {
 			Sock->AsyncPrintf( "%s\r\n", headers->Get( i ));
+			DBG( App->Log->Log( LOG_INFO, "%s", headers->Get( i )));
+		}
 
 #if HAVE_ZLIB_H
 	Sock->AsyncPrintf( "Accept-Encoding: gzip, deflate\r\n" );
+	DBG( App->Log->Log( LOG_INFO, "Accept-Encoding: gzip, deflate" ));
 #endif
 
 	Sock->AsyncPrintf( "Via: 1.1 prometeo (prometeo-mod_http/"MOD_VERSION")\r\n"
 					   "\r\n" );
+
+	DBG( App->Log->Log( LOG_INFO, "HTTP::SendMethod() - END" ));
 }
 //---------------------------------------------------------------------------
 const char *HTTP::GetHeader( int index ) const

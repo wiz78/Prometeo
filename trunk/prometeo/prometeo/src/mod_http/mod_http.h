@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.4 2002-11-22 16:53:24 tellini Exp $
+	revision             : $Id: mod_http.h,v 1.5 2003-03-25 13:27:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,7 +20,7 @@
 #ifndef MOD_HTTP_H
 #define MOD_HTTP_H
 
-#define MOD_VERSION	"1.0"
+#define MOD_VERSION	"1.2"
 
 #include <sys/types.h>
 #include <string>
