@@ -1,8 +1,8 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.6 2003-04-06 10:57:37 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+	revision             : $Id: mod_http.h,v 1.7 2003-06-01 10:02:28 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
 	description          : caching HTTP proxy
@@ -20,7 +20,7 @@
 #ifndef MOD_HTTP_H
 #define MOD_HTTP_H
 
-#define MOD_VERSION	"1.2"
+#define MOD_VERSION	"1.3"
 
 #include <sys/types.h>
 #include <string>
@@ -72,6 +72,8 @@ private:
 	unsigned int	MaxObjectSize;
 	HostMapper		*HostMap;
 	FilterMgr		*Filters;
+	int				*CONNECTPorts;
+	int				CONNECTNumPorts;
 
 	void			Setup( void );
 
@@ -93,10 +95,12 @@ private:
 
 	void			ConnectToServer( HTTPData *data );
 	void			StartTunneling( HTTPData *data );
+	void			InitTunnel( HTTPData *data );
 
 	bool			FilterRequest( HTTPData *data );
 	void			HandleRequest( HTTPData *data );
 	void			HandleResponse( HTTPData *data );
+	void			Handle_CONNECT( HTTPData *data );
 	void			Handle_GET_HEAD( HTTPData *data );
 	void			HandleBody( HTTPData *data, int len );
 
@@ -127,6 +131,7 @@ private:
 #define MODF_LOG_REQUESTS		(1 << 1)
 #define MODF_BLOCK_POPUPS		(1 << 2)
 #define MODF_BLOCK_RESIZE		(1 << 3)
+#define MODF_ALLOW_CONNECT		(1 << 4)
 
 class HTTPData : public LinkedListNode
 {
