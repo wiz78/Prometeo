@@ -1,7 +1,7 @@
 /***************************************************************************
                                option_list.cpp
                              -------------------
-    revision             : $Id: option_list.cpp,v 1.1 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: option_list.cpp,v 1.2 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,6 +21,7 @@
 #include "registry.h"
 
 #include "option_list.h"
+#include "option_select.h"
 #include "misc.h"
 
 //---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ void ListOption::Render( string& result )
 {
 	string	url;
 
-	url = "/listedit?page=" + UrlEncode( Page ) + "&list=" + UrlEncode( Name );
+	url = "/listedit?page=" + UrlEncode( Page ) + "&list=" + UrlEncode( GetPathName() );
 
 	result += "<tr>"
 			  "  <td class=\"label\">" + Label + "</td>"
@@ -54,6 +55,13 @@ void ListOption::ReadParams( SablotSituation sit, SDOM_Node ctx )
 	KeyDescr = ValueOf( "ListKey/Descr", ctx, sit );
 
 	GetOptionList( sit, ctx, "Fields/Option", Fields, Page );
+
+	for( int i = 0; i < Fields.Count(); i++ ) {
+		Option	*opt = GetField( i );
+
+		if( opt->GetType() == T_LIST )
+			((ListOption *)opt )->SetParentName( GetPathName() );
+	}
 }
 //---------------------------------------------------------------------------
 Option *ListOption::GetField( int i )
@@ -96,7 +104,7 @@ void ListOption::PrintListTable( string& result )
 				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
 				"    <form action=\"/listitem\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + Page + "\">"
-				"      <input type=\"hidden\" name=\"list\" value=\"" + Name + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + GetPathName() + "\">"
 				"      <input type=\"hidden\" name=\"" + KeyName + "\" value=\"\">"
 				"      <input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\">"
 				"    </form>"
@@ -169,7 +177,13 @@ void ListOption::AddListRow( const char *item, string& result )
 					break;
 
 				case T_LIST:
-					value = "(nested lists not supported yet, edit the config manually)";
+					value = "<a href=\"/listedit?page=" + UrlEncode( Page ) +
+							"&list=" + UrlEncode(((ListOption *)opt )->GetPathName() ) + 
+							"\">edit this list</a>";
+					break;
+
+				case T_SELECT:
+					value = ((SelectOption *)opt )->GetValueLabel( App->Cfg->GetString( key, "" ));
 					break;
 
 				default:
@@ -185,7 +199,7 @@ void ListOption::AddListRow( const char *item, string& result )
 				"    <form action=\"listitem\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"" + KeyName + "\" value=\"" + string( item ) + "\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + Page + "\">"
-				"      <input type=\"hidden\" name=\"list\" value=\"" + Name + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + GetPathName() + "\">"
 				"      <input type=\"submit\" value=\"Edit\" class=\"maxwidth\">"
 				"    </form>"
 				"  </td>"
@@ -193,10 +207,29 @@ void ListOption::AddListRow( const char *item, string& result )
 				"    <form action=\"listitem/del\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"item\" value=\"" + string( item ) + "\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + Page + "\">"
-				"      <input type=\"hidden\" name=\"list\" value=\"" + Name + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + GetPathName() + "\">"
 				"      <input type=\"submit\" value=\"Delete\" class=\"maxwidth\">"
 				"    </form>"
 				"  </td>"
 				"</tr>";
+}
+//---------------------------------------------------------------------------
+ListOption *ListOption::FindList( string name )
+{
+	ListOption *ret = NULL;
+
+	for( int i = 0; !ret && ( i < Fields.Count() ); i++ ) {
+		ListOption	*opt = (ListOption *)Fields[ i ];
+
+		if( opt->GetType() == T_LIST ) {
+
+			if( opt->GetPathName() == name )
+				ret = opt;
+			else
+				ret = opt->FindList( name );
+		}
+	}
+
+	return( ret );
 }
 //---------------------------------------------------------------------------

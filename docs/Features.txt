@@ -1,4 +1,4 @@
-$Id: Features.txt,v 1.1 2002-11-13 16:45:58 tellini Exp $
+$Id: Features.txt,v 1.2 2002-11-21 18:36:55 tellini Exp $
 
 ---------------------------------------------------------------------------
 Core
@@ -36,9 +36,12 @@ mod_http
 Caching http proxy.
 
  - single threaded
- - HTTP/1.1 suppost
+ - HTTP/1.1 support
  - outgoing connections cache
  - gzip/deflate content encoding support
+ - transparent proxy support
+ - can be configured as an IPv4 gateway to IPv6 servers
+ - URL filtering
  
 TODO:
  
@@ -47,9 +50,7 @@ TODO:
  - jpg downsampling
  - pictures rescaling
  - regex-based html/text rewriting engine
- - filters
  - redirectors
- - forward requests to specific servers depending on the Host: value
  - more options
 
 
@@ -61,10 +62,6 @@ Allow the user to configure prometeo with a web browser.
 
  - extensible: can automagically configure every other modules as well
  - administration can be delegated to any authenticated user
-
-TODO:
-
- - more datatypes (at least a "list" type)
  
 
 ---------------------------------------------------------------------------

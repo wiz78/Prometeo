@@ -1,7 +1,7 @@
 /***************************************************************************
                               option_select.cpp
                              -------------------
-    revision             : $Id: option_select.cpp,v 1.1 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: option_select.cpp,v 1.2 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,15 +43,14 @@ void SelectOption::Render( string& result )
 	result += "<tr>"
 			  "  <td class=\"label\">" + Label + "</td>"
 			  "  <td class=\"value\">"
-			  "    <select name=\"" + Name + "\">";
+			  "    <select name=\"" + Name + "\" class=\"maxwidth\">";
 
 	for( int i = 0; i < NumItems; i++ ) {
 		SelectItem	*item = &Items[ i ];
-		bool		sel = item->Value == value;
 
 		result += "<option value=\"" + item->Value + "\"";
 
-		if( sel )
+		if( item->Value == value )
 			result += " selected";
 
 		result += ">" + item->Label + "</option>";
@@ -91,5 +90,21 @@ void SelectOption::ReadParams( SablotSituation sit, SDOM_Node ctx )
 
 		SDOM_disposeNodeList( sit, list );
 	}
+}
+//---------------------------------------------------------------------------
+string SelectOption::GetValueLabel( string value )
+{
+	string	ret;
+
+	for( int i = 0; i < NumItems; i++ ) {
+		SelectItem	*item = &Items[ i ];
+
+		if( item->Value == value ) {
+			ret = item->Label;
+			break;
+		}
+	}
+
+	return( ret );
 }
 //---------------------------------------------------------------------------
