@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.8 2002-11-02 17:19:11 tellini Exp $
+    revision             : $Id: client.cpp,v 1.9 2002-12-06 20:13:05 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -243,16 +243,16 @@ int Client::RecvStatus( void )
 			LastReply += buf;
 			LastReply += "\r\n";
 
-			if( info ) {
+			if(( len >= 4 ) && ( buf[3] == '-' ))
+				info = true;
+			else if( info ) {
 
 				if( buf[0] != ' ' ) {
 					status = atoi( buf );
 					loop   = false;
 				}
-
-			} else if(( len >= 4 ) && ( buf[3] == '-' ))
-				info = true;
-			else {
+					
+			} else {
 				status = atoi( buf );
 				loop   = false;
 			}
@@ -631,7 +631,12 @@ bool Client::ForwardCmd( void )
 
 	if( ok ) {
 
-		Server->Printf( "%s %s\r\n", Command.c_str(), Args.c_str() );
+		Server->Printf( "%s", Command.c_str() );
+		
+		if( !Args.empty() )
+			Server->Printf( " %s", Args.c_str() );
+		
+		Server->Send( "\r\n", 2 );
 
 		ForwardReply();
 	}
