@@ -1,7 +1,7 @@
 /***************************************************************************
                                 mod_pop3.cpp
                              -------------------
-    revision             : $Id: mod_pop3.cpp,v 1.1 2003-05-24 12:28:53 tellini Exp $
+    revision             : $Id: mod_pop3.cpp,v 1.2 2003-06-20 20:13:41 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -116,7 +116,7 @@ static const char *GetManifest( const char *key, const char *name )
 //---------------------------------------------------------------------------
 static HANDLE SetupModule( const char *key )
 {
-	return( new Proxy( key ));
+	return( new mod_pop3::Proxy( key ));
 }
 //---------------------------------------------------------------------------
 static BOOL CleanupModule( HANDLE mod )
@@ -124,7 +124,7 @@ static BOOL CleanupModule( HANDLE mod )
 	BOOL ret = TRUE;
 
 	if( mod ) {
-		Proxy *cfg = (Proxy *)mod;
+		Proxy *cfg = (mod_pop3::Proxy *)mod;
 
 		ret = cfg->Cleanup();
 
@@ -138,19 +138,19 @@ static BOOL CleanupModule( HANDLE mod )
 static void CfgChanged( HANDLE mod )
 {
 	if( mod )
-		((Proxy *)mod )->ReloadCfg();
+		((mod_pop3::Proxy *)mod )->ReloadCfg();
 }
 //---------------------------------------------------------------------------
 static void OnFork( HANDLE mod )
 {
 	if( mod )
-		((Proxy *)mod )->OnFork();
+		((mod_pop3::Proxy *)mod )->OnFork();
 }
 //---------------------------------------------------------------------------
 static void OnTimer( HANDLE mod, time_t now )
 {
 	if( mod )
-		((Proxy *)mod )->OnTimer( now );
+		((mod_pop3::Proxy *)mod )->OnTimer( now );
 }
 //---------------------------------------------------------------------------
 namespace mod_pop3
