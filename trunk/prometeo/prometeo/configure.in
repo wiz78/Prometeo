@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002-2003 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.16 2003-05-24 12:29:53 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.17 2003-06-20 20:19:17 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -17,7 +17,7 @@ AC_INIT(src/Makefile.am)
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(src/include/config.h:src/include/config-h.in)
 
-AM_INIT_AUTOMAKE(prometeo, 1.3)
+AM_INIT_AUTOMAKE(prometeo, 1.4)
 
 dnl this doesn't work as I'd like it to
 dnl AC_PREFIX_DEFAULT(/usr/local/prometeo)

@@ -1,6 +1,68 @@
+2003-06-20 22:13  tellini
+
+	* src/mod_pop3/: client.cpp, mod_pop3.cpp: Implemented the explicit
+	proxy part
+
+2003-06-01 12:37  tellini
+
+	* ChangeLog: Release 1.3
+
+2003-06-01 12:02  tellini
+
+	* src/mod_http/: http.cpp, http.h, mod_http.cpp, mod_http.h:
+	Implemented the CONNECT method (aka SSL proxying)
+
+2003-06-01 12:01  tellini
+
+	* src/mod_http/: url.cpp, url.h: Fixed parsing when no schema is
+	specified.
+
+2003-05-24 14:47  tellini
+
+	* docs/Features.txt: Added note about mod_pop3
+
+2003-05-24 14:44  tellini
+
+	* Makefile.am: Added docs dir to the distribution
+
+2003-05-24 14:42  tellini
+
+	* docs/mod_pop3.txt: Added mod_pop3 docs
+
+2003-05-24 14:28  tellini
+
+	* src/Makefile.am, src/mod_pop3/.cvsignore,
+	src/mod_pop3/Makefile.am, src/mod_pop3/client.cpp,
+	src/mod_pop3/client.h, src/mod_pop3/mod_pop3.cpp,
+	src/mod_pop3/mod_pop3.h, src/mod_pop3/procpool.cpp,
+	src/mod_pop3/procpool.h, src/prometeo/core.cpp, configure.in: Added
+	POP3 module
+
+2003-05-23 20:10  tellini
+
+	* src/libprom/tcpsocket.cpp: Added lacking ntohs()'s in
+	GetOriginalDest()
+
+2003-05-09 20:48  tellini
+
+	* Makefile.am, configure.in, prometeo.xml, prometeo.xml.sample,
+	config/config.guess, config/config.sub, config/install-sh,
+	config/ltmain.sh, config/mkinstalldirs: Matched installation of
+	prometeo.xml.sample with the README
+
+2003-05-08 16:50  tellini
+
+	* src/mod_http/: http.cpp, mod_http.cpp, url.cpp: Fixed parsing of
+	the Host header, causing all requests not directed towards port 80
+	to fail.
+
+2003-04-11 14:30  tellini
+
+	* ChangeLog: Release 1.2
+
 2003-04-11 14:25  tellini
 
-	Release 1.2
+	* ChangeLog, configure.in: Updated copyright year
 
 2003-04-11 14:23  tellini
 
