@@ -1,6 +1,10 @@
-2003-04-11
+2003-04-11 14:25  tellini
 
-	* Release 1.2
+	Release 1.2
+
+2003-04-11 14:23  tellini
+
+	* src/prometeo/main.cpp: Added general catch()
 
 2003-04-06 12:57  tellini
 
@@ -14,10 +18,10 @@
 
 2003-03-25 14:27  tellini
 
-	* src/mod_http/: http.cpp, http.h, mod_http.cpp, mod_http.h: 
-	- Cache objects won't ever be used to satify requests with  
-  	  "Cache-Control: no-cache" set (before it would send a	conditional
-	  request to the origin server, now it just asks for   the object). 
+	* src/mod_http/: http.cpp, http.h, mod_http.cpp, mod_http.h: -
+	Cache objects won't ever be used to satify requests with  
+	"Cache-Control: no-cache" set (before it would send a conditional
+	request to the origin server, now it just asks for the object). 
 	- Bumped the version reported by the module.
 
 2003-03-19 21:36  tellini
