@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-    revision             : $Id: core.cpp,v 1.5 2002-11-03 17:28:46 tellini Exp $
+    revision             : $Id: core.cpp,v 1.6 2003-02-11 19:04:09 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -165,6 +165,9 @@ bool Core::Daemonize( void )
 			signal( SIGINT,  SigQuit      );
 			signal( SIGTERM, SigQuit      );
 			signal( SIGSEGV, SigDie       );
+#ifdef SIGBUS
+			signal( SIGBUS,  SigDie       );
+#endif
 			signal( SIGABRT, SigDie       );
 			signal( SIGFPE,  SigDie       );
 			signal( SIGUSR1, SigNoAction  );
@@ -318,6 +321,11 @@ static void SigDie( int signum )
 			
 		case SIGSEGV:
 			throw "segmentation violation";
+
+#ifdef SIGBUS
+		case SIGBUS:
+			throw "bus fault";
+#endif
 
 		case SIGABRT:
 			throw "abnormal termination";
