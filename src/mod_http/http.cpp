@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.11 2003-06-01 10:02:28 tellini Exp $
+    revision             : $Id: http.cpp,v 1.12 2003-11-24 16:20:48 tellini Exp $
     copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -271,7 +271,7 @@ void HTTP::ParseHeader( char *str )
 		MethodURL.SetHost( args );
 
 		if(( Method != M_CONNECT ) && !MethodURL.GetScheme()[0] )
-			MethodURL.SetScheme( "http://" );
+			MethodURL.SetScheme( "http" );
 
 	} else if( !strcmp( str, "content-type" )) {
 
