@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002-2003 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.15 2003-05-09 18:48:49 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.16 2003-05-24 12:29:53 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -310,6 +310,6 @@ AC_OUTPUT([Makefile src/Makefile src/libprom/Makefile src/prometeo/Makefile
            src/include/Makefile src/prometeoctl/Makefile src/mod_tunnel/Makefile
 		   src/mod_http/Makefile src/mod_ftp/Makefile
 		   src/mod_cfg/Makefile src/mod_cfg/data/Makefile
-		   src/mod_ssl/Makefile],
+		   src/mod_ssl/Makefile src/mod_pop3/Makefile],
 		  [test -z "$CONFIG_HEADERS" || echo timestamp > src/include/stamp-h.in])
 
