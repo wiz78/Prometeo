@@ -1,4 +1,4 @@
-$Id: Features.txt,v 1.2 2002-11-21 18:36:55 tellini Exp $
+$Id: Features.txt,v 1.3 2002-12-04 16:32:11 tellini Exp $
 
 ---------------------------------------------------------------------------
 Core
@@ -44,7 +44,8 @@ Caching http proxy.
  - URL filtering
  
 TODO:
- 
+
+ - filters: match against user's IP as well
  - listen on more than one port - each port should get its own
    settings set
  - jpg downsampling
