@@ -1,7 +1,7 @@
 /***************************************************************************
                                  process.cpp
                              -------------------
-	revision             : $Id: process.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: process.cpp,v 1.2 2002-10-14 19:36:17 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,8 +38,9 @@ static void AsyncCallback( Socket *sock, Prom_SC_Reason reason, int data, void *
 //---------------------------------------------------------------------------
 Process::Process()
 {
-	Group  = NULL;
-	Socket = NULL;
+	Group    = NULL;
+	Socket   = NULL;
+	Callback = NULL;
 }
 //---------------------------------------------------------------------------
 Process::~Process()
@@ -136,7 +137,9 @@ void Process::SocketEvent( Prom_SC_Reason reason, int data )
 
 		case PROM_SOCK_ERROR:
 			App->Log->Log( LOG_ERR, "process: error on IPC socket - %d: %s", data, strerror( data ));
-			( *Callback )( NULL, data, CallbackData );
+
+			if( Callback )
+				( *Callback )( NULL, data, CallbackData );
 			break;
 	}
 
@@ -172,7 +175,7 @@ bool Process::ReadAnswer( int len )
 
 		Socket->AsyncRecv( Data.GetData() + DataLen, left );
 
-	} else
+	} else if( Callback )
 		( *Callback )( Data.GetData() + sizeof( int ),
 					   DataLen - sizeof( int ),
 					   CallbackData );
