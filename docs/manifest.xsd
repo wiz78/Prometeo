@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: manifest.xsd,v 1.1 2003-01-20 20:28:15 tellini Exp $ -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<xs:element name="Descr" type="xs:string"/>
+	<xs:element name="Label" type="xs:string"/>
+	<xs:element name="Key">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Item" type="xs:string"/>
+	<xs:element name="Items">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Item" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ListKey">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Label"/>
+				<xs:element ref="Descr"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Fields">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Option" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Page">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Label"/>
+				<xs:element ref="Option" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Option">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Items" minOccurs="0"/>
+				<xs:element ref="Label"/>
+				<xs:element ref="Descr"/>
+				<xs:element ref="Key"/>
+				<xs:element ref="ListKey" minOccurs="0"/>
+				<xs:element ref="Fields" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="type" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="bool"/>
+						<xs:enumeration value="integer"/>
+						<xs:enumeration value="list"/>
+						<xs:enumeration value="select"/>
+						<xs:enumeration value="string"/>
+						<xs:enumeration value="text"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="default" type="xs:string"/>
+			<xs:attribute name="show">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="no"/>
+						<xs:enumeration value="yes"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Manifest">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Page" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
