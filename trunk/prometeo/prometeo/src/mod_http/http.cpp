@@ -1,8 +1,8 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.10 2003-05-08 14:50:06 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+    revision             : $Id: http.cpp,v 1.11 2003-06-01 10:02:28 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
     description          : HTTP protocol implementation
@@ -219,7 +219,13 @@ void HTTP::ParseMethod( char *str )
 			Method = M_POST;
 		else if( MethodStr == "PUT" )
 			Method = M_PUT;
-		else
+		else if( MethodStr == "CONNECT" ) {
+			
+			Method = M_CONNECT;
+
+			Flags.Clear( HTTPF_KEEP_ALIVE );
+			
+		} else
 			Method = M_UNKNOWN;
 	}
 }
@@ -264,7 +270,7 @@ void HTTP::ParseHeader( char *str )
 
 		MethodURL.SetHost( args );
 
-		if( !MethodURL.GetScheme()[0] )
+		if(( Method != M_CONNECT ) && !MethodURL.GetScheme()[0] )
 			MethodURL.SetScheme( "http://" );
 
 	} else if( !strcmp( str, "content-type" )) {

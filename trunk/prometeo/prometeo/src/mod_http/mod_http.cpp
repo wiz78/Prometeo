@@ -1,8 +1,8 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.19 2003-05-08 14:50:06 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+    revision             : $Id: mod_http.cpp,v 1.20 2003-06-01 10:02:28 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
     description          : caching HTTP proxy
@@ -118,6 +118,20 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Key name=\"" + basekey + "blockresize\"/>"
 				"	</Option>"
 
+				"	<Option type=\"bool\" name=\"allowconnect\" default=\"1\">"
+				"		<Label>Allow the CONNECT method</Label>"
+				"		<Descr>Set to enable the CONNECT method, used to proxy https:// requests.</Descr>"
+				"		<Key name=\"" + basekey + "allowconnect\"/>"
+				"	</Option>"
+
+				"	<Option type=\"text\" name=\"connectports\" default=\"443\">"
+				"		<Label>Restrict CONNECT to these ports</Label>"
+				"		<Descr>The CONNECT method can be used to open undesired connections unless it's limited to"
+				" the needed ports. Enter the ports you want to enable it for, one per line. Enter 0 if you really wish"
+				" not to restrict it.</Descr>"
+				"		<Key name=\"" + basekey + "connectports\"/>"
+				"	</Option>"
+
 				"	<Option type=\"list\" name=\"hostmap\">"
 				"		<Label>Host map</Label>"
 				"		<Descr>Hosts mapping table.</Descr>"
@@ -225,12 +239,14 @@ HTTPProxy::HTTPProxy( const char *key )
 	MaxObjectSize   = 600 * 1024;
 	HostMap         = new HostMapper( Key + "/HostMap" );
 	Filters         = new FilterMgr( Key + "/Filters" );
+	CONNECTPorts	= NULL;
+	CONNECTNumPorts = 0;
 
 	time( &LastPruneTime );
 
 	LastIndexTime = LastPruneTime;
 
-	Flags.Set( MODF_COMPRESS | MODF_LOG_REQUESTS );
+	Flags.Set( MODF_COMPRESS | MODF_LOG_REQUESTS | MODF_ALLOW_CONNECT );
 
 	ReloadCfg();
 }
@@ -239,6 +255,7 @@ HTTPProxy::~HTTPProxy()
 {
 	delete ListeningSocket;
 	delete HostMap;
+	delete[] CONNECTPorts;
 
 	CacheMgr.WriteIndex();
 }
@@ -248,15 +265,55 @@ void HTTPProxy::ReloadCfg( void )
 	unsigned long maxcache = CacheMgr.GetMaxSize();
 
 	if( App->Cfg->OpenKey( Key.c_str(), false )) {
+		string				tmp;
+		string::size_type	pos;
 
 		Port          = App->Cfg->GetInteger( "port", Port );
 		maxcache      = App->Cfg->GetInteger( "maxcachesize", maxcache );
 		MaxObjectSize = App->Cfg->GetInteger( "maxobjectsize", MaxObjectSize );
 
-		Flags.Set( MODF_COMPRESS,     App->Cfg->GetInteger( "gzipencoding", Flags.IsSet( MODF_COMPRESS     )));
-		Flags.Set( MODF_LOG_REQUESTS, App->Cfg->GetInteger( "logrequests",  Flags.IsSet( MODF_LOG_REQUESTS )));
-		Flags.Set( MODF_BLOCK_POPUPS, App->Cfg->GetInteger( "blockpopups",  Flags.IsSet( MODF_BLOCK_POPUPS )));
-		Flags.Set( MODF_BLOCK_RESIZE, App->Cfg->GetInteger( "blockresize",  Flags.IsSet( MODF_BLOCK_RESIZE )));
+		Flags.Set( MODF_COMPRESS,      App->Cfg->GetInteger( "gzipencoding", Flags.IsSet( MODF_COMPRESS      )));
+		Flags.Set( MODF_LOG_REQUESTS,  App->Cfg->GetInteger( "logrequests",  Flags.IsSet( MODF_LOG_REQUESTS  )));
+		Flags.Set( MODF_BLOCK_POPUPS,  App->Cfg->GetInteger( "blockpopups",  Flags.IsSet( MODF_BLOCK_POPUPS  )));
+		Flags.Set( MODF_BLOCK_RESIZE,  App->Cfg->GetInteger( "blockresize",  Flags.IsSet( MODF_BLOCK_RESIZE  )));
+		Flags.Set( MODF_ALLOW_CONNECT, App->Cfg->GetInteger( "allowconnect", Flags.IsSet( MODF_ALLOW_CONNECT )));
+
+		delete[] CONNECTPorts;
+
+		tmp = App->Cfg->GetString( "connectports", "443" );
+
+		if(( pos = tmp.find_first_not_of( " " )) != string::npos )
+			tmp.erase( 0, pos );
+
+		if( tmp == "0" )
+			CONNECTPorts = NULL;
+		else {
+			int	num = 1;
+
+			pos = tmp.find( "\n" );
+
+			while( pos != string::npos ) {
+				num++;
+				pos = tmp.find( "\n", pos + 1 );
+			}
+			
+			CONNECTPorts    = new int[ num ];
+			CONNECTNumPorts = num;
+
+			pos = tmp.find( "\n" );
+			num = 0;
+
+			CONNECTPorts[ 0 ] = atoi( tmp.c_str() );
+
+			while( pos != string::npos ) {
+
+				tmp.erase( 0, pos + 1 );
+				
+				CONNECTPorts[ num++ ] = atoi( tmp.c_str() );
+				
+				pos = tmp.find( "\n" );
+			}
+		}
 
 		App->Cfg->CloseKey();
 	}
@@ -564,6 +621,10 @@ void HTTPProxy::HandleRequest( HTTPData *data )
 				ConnectToServer( data );
 				break;
 
+			case HTTP::M_CONNECT:
+				Handle_CONNECT( data );
+				break;
+
 			case HTTP::M_GET:
 			case HTTP::M_HEAD:
 				Handle_GET_HEAD( data );
@@ -599,6 +660,28 @@ bool HTTPProxy::FilterRequest( HTTPData *data )
 		}
 
 	return( ret );
+}
+//---------------------------------------------------------------------------
+void HTTPProxy::Handle_CONNECT( HTTPData *data )
+{
+	bool	ok = false;
+		
+	if( Flags.IsSet( MODF_ALLOW_CONNECT )) {
+
+		if( !CONNECTPorts )
+			ok = true;
+		else {
+				
+			for( int i = 0; !ok && ( i < CONNECTNumPorts ); i++ )
+				if( data->Client.GetURL().GetPort() == CONNECTPorts[ i ] )
+					ok = true;
+		}
+	}
+	
+	if( ok )
+		ConnectToServer( data );
+	else
+		SendError( data, HTTP_FORBIDDEN, "Sorry, you can't perform this operation." );
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::SendError( HTTPData *data, int code, const char *text )
@@ -769,7 +852,8 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 		} else
 			SendError( data, HTTP_FORBIDDEN, "This is just a proxy, you can't request local resources!" );
 
-	} else if( strcmp( url.GetScheme(), "http" )) {
+	} else if(( data->Client.GetMethod() != HTTP::M_CONNECT ) && 
+				strcmp( url.GetScheme(), "http" )) {
 
 		SendError( data, HTTP_NOT_IMPLEMENTED, "Unsupported scheme." );
 
@@ -856,6 +940,11 @@ void HTTPProxy::Connected( HTTPData *data )
 			SendRequest( "HEAD", data );
 			break;
 
+		case HTTP::M_CONNECT:
+			data->Client.SendHeader( HTTP_OK, NULL, true, NULL );
+			InitTunnel( data );
+			break;
+
 		default:
 			StartTunneling( data );
 			break;
@@ -867,11 +956,7 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::StartTunneling( %08x )", data ));
 
 	if( data->ClientSock && data->ServerSock ) {
-		int			i = 0;
-		const char	*ptr;
-
-		data->State       = S_TUNNELING;
-		data->ServerState = S_TUNNELING;
+		int i = 0;
 
 		data->ServerSock->AsyncPrintf( "%s %s %s\r\n",
 									   data->Client.GetMethodStr(),
@@ -896,18 +981,7 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 				data->ServerSock->AsyncPrintf( "%s\r\n", hdr );
 		}
 
-		data->ServerSock->AsyncPrintf( "Connection: close\r\n"
-									   "\r\n" );
-
-		ptr = data->Client.GetDecodedData( &i );
-
-		if( i > 0 )
-			data->ServerSock->AsyncSend( ptr, i );
-
-		// an error in the first AsyncRecv() would trigger a destruction of ServerSock
-		// and possibly of data as well - see HTTPProxy::Error()
-		if( data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf )))
-			data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
+		InitTunnel( data );
 
 	} else {
 		// the client must have dropped the connection while we were
@@ -916,6 +990,25 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 		if( !CloseServerSocket( data )) 
 			CloseClientSocket( data );
 	}
+}
+//---------------------------------------------------------------------------
+void HTTPProxy::InitTunnel( HTTPData *data )
+{	
+	int			i;
+	const char	*ptr;
+	
+	data->State       = S_TUNNELING;
+	data->ServerState = S_TUNNELING;
+
+	ptr = data->Client.GetDecodedData( &i );
+
+	if( i > 0 )
+		data->ServerSock->AsyncSend( ptr, i );
+
+	// an error in the first AsyncRecv() would trigger a destruction of ServerSock
+	// and possibly of data as well - see HTTPProxy::Error()
+	if( data->ClientSock->AsyncRecv( data->ClientBuf, sizeof( data->ClientBuf )))
+		data->ServerSock->AsyncRecv( data->ServerBuf, sizeof( data->ServerBuf ));
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::Handle_GET_HEAD( HTTPData *data )

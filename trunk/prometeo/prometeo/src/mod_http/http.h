@@ -1,8 +1,8 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.6 2003-04-06 10:57:37 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+    revision             : $Id: http.h,v 1.7 2003-06-01 10:02:28 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
     description          : HTTP protocol implementation
@@ -62,7 +62,7 @@ class StreamFilter;
 class HTTP
 {
 public:
-	typedef enum { M_NONE = 0, M_UNKNOWN, M_RESPONSE, M_GET, M_HEAD, M_POST, M_PUT } HTTPMethod;
+	typedef enum { M_NONE = 0, M_UNKNOWN, M_RESPONSE, M_GET, M_HEAD, M_POST, M_PUT, M_CONNECT } HTTPMethod;
 
 						HTTP();
 						~HTTP();
