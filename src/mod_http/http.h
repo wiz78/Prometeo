@@ -1,7 +1,7 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.1.1.1 2002-10-10 09:59:40 tellini Exp $
+    revision             : $Id: http.h,v 1.2 2002-10-15 14:53:08 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -104,6 +104,7 @@ public:
 	bool				Is11( void ) const                   { return( Flags.IsSet( HTTPF_1_1 )); }
 	bool				HasEntityBody( void ) const          { return( Flags.IsSet( HTTPF_ENTITY_BODY )); }
 	bool				IsDateValid( void ) const            { return( Flags.IsSet( HTTPF_DATE )); }
+	bool				IsAuthValid( void ) const            { return( Flags.IsSet( HTTPF_AUTHORIZATION )); }
 	bool				IsLastModifiedValid( void ) const    { return( Flags.IsSet( HTTPF_LAST_MODIFIED )); }
 	bool				IsModifiedSinceValid( void ) const   { return( Flags.IsSet( HTTPF_IFMODIFIED )); }
 	bool				IsUnmodifiedSinceValid( void ) const { return( Flags.IsSet( HTTPF_IFUNMODIFIED )); }
