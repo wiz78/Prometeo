@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.h
                              -------------------
-	revision             : $Id: tcpsocket.h,v 1.4 2002-11-13 15:42:12 tellini Exp $
+	revision             : $Id: tcpsocket.h,v 1.5 2003-10-23 17:28:33 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -31,6 +31,7 @@ class TcpSocket : public Socket
 {
 public:
 						TcpSocket();
+						TcpSocket( int type, int protocol );
 						TcpSocket( int fd );
 
 #if HAVE_IPV6
@@ -56,6 +57,10 @@ public:
 	static bool			NameToAddr( const char *name, Prom_Addr *addr );
 
 	bool				GetOriginalDest( Prom_Addr *addr, short *port );
+
+#if HAVE_IPV6
+	static void			MapIPv4toIPv6( struct in_addr *v4, struct in6_addr *v6 );
+#endif
 
 protected:
 #if HAVE_IPV6

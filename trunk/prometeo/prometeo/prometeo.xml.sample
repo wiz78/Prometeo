@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <Key name="root">
 	<Note>
-		$Id: prometeo.xml.sample,v 1.1 2003-05-09 18:48:49 tellini Exp $
+		$Id: prometeo.xml.sample,v 1.2 2003-10-23 17:28:32 tellini Exp $
 				
 		Nothing should appear outside the root Key.
 
@@ -73,6 +73,16 @@
 			<Value type="integer" name="trytls">1</Value>
 			<Value type="integer" name="requiretls">0</Value>
 			<Value type="integer" name="datatls">1</Value>
+		</Key>
+
+		<Key name="pop3">
+			<Value type="string" name="module">mod_pop3</Value>
+			<Value type="integer" name="enabled">0</Value>
+		</Key>
+
+		<Key name="socks5">
+			<Value type="string" name="module">mod_socks5</Value>
+			<Value type="integer" name="enabled">0</Value>
 		</Key>
 
 		<Key name="sfnews">
