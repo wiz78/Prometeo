@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_ftp.cpp
                              -------------------
-    revision             : $Id: mod_ftp.cpp,v 1.1 2002-10-17 18:06:35 tellini Exp $
+    revision             : $Id: mod_ftp.cpp,v 1.2 2002-11-01 22:23:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -80,6 +80,26 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Descr>The lifetime of idle children, in seconds.</Descr>"
 				"		<Key name=\"" + basekey + "childrenttl\"/>"
 				"	</Option>"
+				
+				"	<Option type=\"bool\" name=\"trytls\" default=\"1\">"
+				"		<Label>Try TLS/SSL auth</Label>"
+				"		<Descr>If set, mod_ftp will try to setup a TLS connection to remote sites.</Descr>"
+				"		<Key name=\"" + basekey + "trytls\"/>"
+				"	</Option>"
+				
+				"	<Option type=\"bool\" name=\"requiretls\" default=\"0\">"
+				"		<Label>Require TLS/SSL</Label>"
+				"		<Descr>If set (and if the above switch is set too), you won't be able to connect"
+				" to servers which don't support the TLS/SSL authorization method.</Descr>"
+				"		<Key name=\"" + basekey + "requiretls\"/>"
+				"	</Option>"
+				
+				"	<Option type=\"bool\" name=\"datatls\" default=\"0\">"
+				"		<Label>Secure data channel</Label>"
+				"		<Descr>If TLS is in use and this is set, the data channel will be secured. Otherwise"
+				" only the control channel will use TLS.</Descr>"
+				"		<Key name=\"" + basekey + "datatls\"/>"
+				"	</Option>"
 
 				"</Page>";
 
@@ -144,6 +164,8 @@ void Proxy::ReloadCfg( void )
 	}
 
 	Setup();
+
+	Children.ReloadCfg();
 }
 //---------------------------------------------------------------------------
 void Proxy::Setup( void )

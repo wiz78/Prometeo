@@ -1,7 +1,7 @@
 /***************************************************************************
                               processgroup.cpp
                              -------------------
-	revision             : $Id: processgroup.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: processgroup.cpp,v 1.3 2002-11-01 22:23:53 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -22,6 +22,8 @@
  ***************************************************************************/
 
 #include "main.h"
+
+#include <sys/signal.h>
 
 #include "processgroup.h"
 #include "process.h"
@@ -119,6 +121,16 @@ void ProcessGroup::RunQueue( void )
 		proc->SendRequest( req->Request, req->Callback, req->UserData );
 
 		delete req;
+	}
+}
+//---------------------------------------------------------------------------
+void ProcessGroup::ReloadCfg( void )
+{
+	for( int i = 0; i < Children.Count(); i++ ) {
+		Process	*p = (Process *)Children[ i ];
+
+		if( p->IsRunning() )
+			kill( p->GetChildPid(), SIGHUP );
 	}
 }
 //---------------------------------------------------------------------------

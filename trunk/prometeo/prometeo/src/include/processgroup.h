@@ -1,7 +1,7 @@
 /***************************************************************************
                                processgroup.ch
                              -------------------
-	revision             : $Id: processgroup.h,v 1.1.1.1 2002-10-10 09:59:14 tellini Exp $
+	revision             : $Id: processgroup.h,v 1.2 2002-11-01 22:23:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -48,6 +48,8 @@ public:
 	// if more than MinChildren are present, it terminates those
 	// that have been idle longer than ChildrenDecayTime seconds
 	void			Flush( time_t now );
+	
+	void			ReloadCfg( void );
 	
 protected:
 	IODispatcher 	*IO;

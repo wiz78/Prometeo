@@ -1,7 +1,7 @@
 /***************************************************************************
                                  process.cpp
                              -------------------
-	revision             : $Id: process.cpp,v 1.3 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: process.cpp,v 1.4 2002-11-01 22:23:52 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -35,6 +35,15 @@
 
 static void AsyncCallback( Socket *sock, Prom_SC_Reason reason, int data, void *userdata );
 
+//---------------------------------------------------------------------------
+static Process *Proc;
+//---------------------------------------------------------------------------
+static void SigHup( int signum )
+{
+	Proc->ReloadCfg();
+		
+	signal( SIGHUP, SigHup );
+}
 //---------------------------------------------------------------------------
 Process::Process()
 {
@@ -74,7 +83,10 @@ bool Process::Spawn( char *ident )
 							   ident, ChildPid );
 
 				Socket = new UnixSocket( fd[1] );
+				Proc   = this;
 
+				signal( SIGHUP, SigHup );
+				
 				WaitRequest();
 
 				delete Socket;
