@@ -1,7 +1,7 @@
 /***************************************************************************
                                   list.cpp
                              -------------------
-	revision             : $Id: list.cpp,v 1.2 2002-11-15 16:26:46 tellini Exp $
+	revision             : $Id: list.cpp,v 1.3 2003-12-29 22:24:54 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -109,6 +109,16 @@ void *List::Remove( void *item )
 			it = Remove( i );
 
 	return( it );
+}
+//--------------------------------------------------------------------------
+void *List::RemoveLast( void )
+{
+	void *ret = NULL;
+
+	if( ItemsCount > 0 )
+		ret = Remove( ItemsCount - 1 );
+
+	return( ret );
 }
 //--------------------------------------------------------------------------
 void List::Clear( void )
