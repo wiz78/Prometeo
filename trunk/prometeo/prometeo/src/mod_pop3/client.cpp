@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.4 2003-07-20 12:05:20 tellini Exp $
+    revision             : $Id: client.cpp,v 1.5 2003-07-20 13:23:08 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -373,6 +373,9 @@ void Client::ForwardCmd( void )
 				multiline = true;
 	
 		ForwardReply( multiline );
+
+		if( Command == "QUIT" )
+			CFlags.Clear( POPF_CONNECTED | POPF_CONNECTED_TO_ORIGIN );
 		
 	} else
 		User->Printf( "-ERR not connected to the server\r\n" );
