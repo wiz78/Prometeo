@@ -1,8 +1,8 @@
 /***************************************************************************
                                    list.h
                              -------------------
-	revision             : $Id: list.h,v 1.2 2002-11-15 16:26:45 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+	revision             : $Id: list.h,v 1.3 2003-12-29 22:24:41 tellini Exp $
+    copyright            : (C) 2002-2004 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
 
@@ -29,10 +29,15 @@ public:
 
 	void			*Get( int index ) const;
 	void			Set( int index, void *item );
+	
 	void			Add( void *item );
+	
 	void			*Remove( int index );
 	void			*Remove( void *item );
+	void			*RemoveLast( void );
+	
 	unsigned int	Count( void ) const { return( ItemsCount ); }
+	
 	virtual void	Clear( void );
 
 	void			SetAllocBy( unsigned int a ) { AllocBy = a; }
