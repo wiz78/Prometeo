@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.2 2002-11-07 14:49:40 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -151,35 +151,41 @@ StringList& PageMaker::GetOptions( const string& page )
 
 	if( ParseDoc() ) {
 		string			query;
-		SDOM_NodeList	options;
 
 		query = "//Page[ @name = '" + page + "' ]/Option";
 
-		if( SDOM_xql( Situation, query.c_str(), (SDOM_Node)DocDOM, &options ) == SDOM_OK ) {
-			SDOM_NodeList	types;
-			int				numopts = 0;
-
-			SDOM_getNodeListLength( Situation, options, &numopts );
-
-			for( int i = 0; i < numopts; i++ ) {
-				SDOM_Node	option;
-
-				SDOM_getNodeListItem( Situation, options, i, &option );
-
-				Options.Add( "%s|%s|%s|%s|%s|%s",
-							 ValueOf( "@type", option ).c_str(),
-							 ValueOf( "@name", option ).c_str(),
-							 ValueOf( "Key/@name", option ).c_str(),
-							 ValueOf( "Label", option ).c_str(),
-							 ValueOf( "Descr", option ).c_str(),
-							 ValueOf( "@default", option ).c_str() );
-			}
-
-			SDOM_disposeNodeList( Situation, options );
-		}
+		GetOptionList( query, Options );
 	}
 
 	return( Options );
+}
+//---------------------------------------------------------------------------
+void PageMaker::GetOptionList( const string query, StringList& list )
+{
+	SDOM_NodeList	options;
+
+	if( SDOM_xql( Situation, query.c_str(), (SDOM_Node)DocDOM, &options ) == SDOM_OK ) {
+		SDOM_NodeList	types;
+		int				numopts = 0;
+
+		SDOM_getNodeListLength( Situation, options, &numopts );
+
+		for( int i = 0; i < numopts; i++ ) {
+			SDOM_Node	option;
+
+			SDOM_getNodeListItem( Situation, options, i, &option );
+
+			list.Add( "%s|%s|%s|%s|%s|%s",
+					  ValueOf( "@type", option ).c_str(),
+					  ValueOf( "@name", option ).c_str(),
+					  ValueOf( "Key/@name", option ).c_str(),
+					  ValueOf( "Label", option ).c_str(),
+					  ValueOf( "Descr", option ).c_str(),
+					  ValueOf( "@default", option ).c_str() );
+		}
+
+		SDOM_disposeNodeList( Situation, options );
+	}
 }
 //---------------------------------------------------------------------------
 void PageMaker::AddPageHeader( const string page, string& result )
@@ -272,6 +278,64 @@ void PageMaker::AddTextOption( const StringList& args, string& result )
 			  "</tr>";
 }
 //---------------------------------------------------------------------------
+void PageMaker::AddTextAreaOption( const StringList& args, string& result )
+{
+	string				value, key = args[ OP_KEY ];
+	string::size_type	pos;
+
+	pos = key.rfind( "/" );
+
+	if( pos != string::npos ) {
+
+		if( App->Cfg->OpenKey( key.substr( 0, pos - 1 ).c_str(), false )) {
+
+			value = App->Cfg->GetString( key.substr( pos + 1 ).c_str(), args[ OP_DEFAULT ] );
+
+			App->Cfg->CloseKey();
+		}
+	}
+
+	pos = value.find( "<" );
+
+	while( pos != string::npos ) {
+
+		value.insert( pos + 1, "&lt;" );
+		value.erase( pos, 1 );
+
+		pos = value.find( "<", pos );
+	}
+
+	pos = value.find( ">" );
+
+	while( pos != string::npos ) {
+
+		value.insert( pos + 1, "&gt;" );
+		value.erase( pos, 1 );
+
+		pos = value.find( ">", pos );
+	}
+
+	pos = value.find( "\n" );
+
+	while( pos != string::npos ) {
+
+		value.insert( pos + 1, "<br>" );
+		value.erase( pos, 1 );
+
+		pos = value.find( "\n", pos );
+	}
+
+	result += "<tr>"
+			  "  <td class=\"label\">" + string( args[ OP_LABEL ]) + "</td>"
+			  "  <td class=\"value\">"
+			  "    <textarea rows=5 name=\"" + string( args[ OP_NAME ]) + "\">" + value + "</textarea>"
+			  "  </td>"
+			  "</tr>"
+			  "<tr>"
+			  "  <td colspan=\"2\" class=\"help\">" + string( args[ OP_DESCR ]) + "</td>"
+			  "</tr>";
+}
+//---------------------------------------------------------------------------
 void PageMaker::AddIntegerOption( const StringList& args, string& result )
 {
 	string				value, key = args[ OP_KEY ];
@@ -356,9 +420,37 @@ void PageMaker::AddListOption( const StringList& args, string& result, const str
 			  "</tr>";
 }
 //---------------------------------------------------------------------------
+void PageMaker::AddOption( const string& page, const char *opt, string& result )
+{
+	StringList	tmp;
+
+	tmp.Explode( opt, "|" );
+
+	if( !strcmp( tmp[ OP_TYPE ], "string" ))
+		AddTextOption( tmp, result );
+
+	else if( !strcmp( tmp[ OP_TYPE ], "text" ))
+		AddTextAreaOption( tmp, result );
+
+	else if( !strcmp( tmp[ OP_TYPE ], "integer" ))
+		AddIntegerOption( tmp, result );
+
+	else if( !strcmp( tmp[ OP_TYPE ], "bool" ))
+		AddBoolOption( tmp, result );
+
+	else if( !strcmp( tmp[ OP_TYPE ], "list" ))
+		AddListOption( tmp, result, page );
+}
+//---------------------------------------------------------------------------
 void PageMaker::BuildPage( const string& page, string& result )
 {
-	if( page == "mods" )
+	if( page == "acl" )
+		BuildAclPage( result );
+
+	else if( page == "acl/user" )
+		BuildAclUserPage( result );
+
+	else if( page == "mods" )
 		BuildModsPage( result );
 
 	else if( page == "apply" )
@@ -390,20 +482,8 @@ void PageMaker::BuildPage( const string& page, string& result )
 				AddPageHeader( page, result );
 				BeginOptionsTable( ValueOf( "Label", node ).c_str(), result );
 
-				for( int i = 0; i < options.Count(); i++ ) {
-					StringList	tmp;
-
-					tmp.Explode( options[ i ], "|" );
-
-					if( !strcmp( tmp[ OP_TYPE ], "string" ))
-						AddTextOption( tmp, result );
-					else if( !strcmp( tmp[ OP_TYPE ], "integer" ))
-						AddIntegerOption( tmp, result );
-					else if( !strcmp( tmp[ OP_TYPE ], "bool" ))
-						AddBoolOption( tmp, result );
-					else if( !strcmp( tmp[ OP_TYPE ], "list" ))
-						AddListOption( tmp, result, page );
-				}
+				for( int i = 0; i < options.Count(); i++ )
+					AddOption( page, options[ i ], result );
 
 				EndOptionsTable( result );
 				AddPageFooter( result );
@@ -439,7 +519,9 @@ void PageMaker::BuildModsPage( string& result )
 	result += "<tr>"
 			  "  <td colspan=2 align=\"center\">"
 		      "    <input type=\"submit\" value=\"Save\">"
-			  "    </form>";
+			  "    </form>"
+			  "  </td>"
+			  "</tr>";
 
 	result += "<tr>"
 			  "  <td colspan=2>"
@@ -536,9 +618,142 @@ void PageMaker::BuildApplyPage( string& result )
 	AddPageFooter( result, false );
 }
 //---------------------------------------------------------------------------
+void PageMaker::BuildAclPage( string& result )
+{
+	StringList	args;
+
+	AddPageHeader( "acl", result );
+	BeginOptionsTable( "Access control", result );
+
+	result += "<tr>"
+			  "  <td colspan=2>"
+			  "    </form>"
+			  "    <table class=\"acl\" width=\"100%\">"
+			  "      <tr>"
+			  "        <th> User </th>"
+			  "        <th> &nbsp; </th>"
+			  "        <th> &nbsp; </th>"
+			  "      </tr>";
+
+	if( App->Cfg->OpenKey( "root/ACL/Users", false )) {
+		const char	*name;
+		int			num = 0;
+
+		while( name = App->Cfg->EnumKeys( num )) {
+
+			result += "<tr>"
+					  "  <td>" + string( name ) + "</td>"
+					  "  <td align=\"center\">"
+					  "    <form action=\"/acl/user\" method=\"POST\">"
+					  "      <input type=\"hidden\" name=\"user\" value=\"" + name + "\">"
+					  "      <input type=\"submit\" value=\"EDIT\" class=\"maxwidth\">"
+					  "    </form>"
+					  "  </td>"
+					  "  <td align=\"center\">"
+					  "    <form action=\"/acl/user/del\" method=\"POST\">"
+					  "      <input type=\"hidden\" name=\"user\" value=\"" + name + "\">"
+					  "      <input type=\"submit\" value=\"DELETE\" class=\"maxwidth\">"
+					  "    </form>"
+					  "  </td>"
+					  "</tr>";
+
+			num++;
+		}
+
+		App->Cfg->CloseKey();
+	}
+
+	result += 	"<form action=\"/acl/user/add\" method=\"POST\">"
+				"  <tr>"
+				"    <td><input type=\"text\" name=\"user\" class=\"maxwidth\"></td>"
+				"    <td align=\"center\"><input type=\"submit\" value=\"ADD\" class=\"maxwidth\"></td>"
+				"    <td> &nbsp; </td>"
+				"  </tr>"
+				"</form>";
+
+	result += "  </td>"
+			  "</tr>";
+
+	EndOptionsTable( result );
+	AddPageFooter( result, false );
+}
+//---------------------------------------------------------------------------
+void PageMaker::BuildAclUserPage( string& result )
+{
+	string	user, key;
+	 
+	user = Cfg->DecodeArg( "user" );
+	key  = "root/ACL/Users/" + user;
+
+	AddPageHeader( "acl", result );
+	BeginOptionsTable( "Access control - User: " + user, result );
+
+	result += "<tr>"
+			  "  <td colspan=2>"
+			  "    </form>"
+			  "    <table class=\"acl\" width=\"100%\">"
+			  "      <tr>"
+			  "        <th> Permission </th>"
+			  "        <th> Granted? </th>"
+			  "        <th> &nbsp; </th>"
+			  "        <th> &nbsp; </th>"
+			  "      </tr>";
+
+	if( App->Cfg->OpenKey( key.c_str(), false )) {
+		const char	*name;
+		int			num = 0;
+
+		while( name = App->Cfg->EnumValues( num )) {
+			string	grant = App->Cfg->GetInteger( name, 0 ) ? "yes" : "no";
+
+			result += "<tr>"
+					  "  <td>" + string( name ) + "</td>"
+					  "  <td align=\"center\">" + grant + "</td>"
+					  "  <td align=\"center\">"
+					  "    <form action=\"/acl/user/perm/toggle\" method=\"POST\">"
+					  "      <input type=\"hidden\" name=\"user\" value=\"" + user + "\">"
+					  "      <input type=\"hidden\" name=\"perm\" value=\"" + name + "\">"
+					  "      <input type=\"submit\" value=\"TOGGLE\" class=\"maxwidth\">"
+					  "    </form>"
+					  "  </td>"
+					  "  <td align=\"center\">"
+					  "    <form action=\"/acl/user/perm/remove\" method=\"POST\">"
+					  "      <input type=\"hidden\" name=\"user\" value=\"" + user + "\">"
+					  "      <input type=\"hidden\" name=\"perm\" value=\"" + name + "\">"
+					  "      <input type=\"submit\" value=\"REMOVE\" class=\"maxwidth\">"
+					  "    </form>"
+					  "  </td>"
+					  "</tr>";
+
+			num++;
+		}
+
+		App->Cfg->CloseKey();
+	}
+
+	result += 	"<form action=\"/acl/user/perm/add\" method=\"POST\">"
+				"  <input type=\"hidden\" name=\"user\" value=\"" + user + "\">"
+				"  <tr>"
+				"    <td><input type=\"text\" name=\"perm\" class=\"maxwidth\"></td>"
+				"    <td><input type=\"checkbox\" name=\"grant\" class=\"maxwidth\"></td>"
+				"    <td><input type=\"submit\" value=\"ADD\" class=\"maxwidth\"></td>"
+				"    <td> &nbsp; </td>"
+				"  </tr>"
+				"</form>";
+
+	result += "  </td>"
+			  "</tr>";
+
+	EndOptionsTable( result );
+	AddPageFooter( result, false );
+}
+//---------------------------------------------------------------------------
 void PageMaker::BuildListEditPage( string& result )
 {
-	string	page, list, descr;
+	string		page, list, descr, key, query, path;
+	ListData	data;
+	char		span[ 32 ];
+	int			columns;
 
 	page = Cfg->DecodeArg( "page" );
 	list = Cfg->DecodeArg( "list" );
@@ -551,34 +766,142 @@ void PageMaker::BuildListEditPage( string& result )
 		tmp.Explode( options[ i ], "|" );
 
 		if( list == tmp[ OP_NAME ] ) {
-
 			descr = tmp[ OP_DESCR ];
-
+			key   = tmp[ OP_KEY   ];
 			break;
 		}
 	}
+
+	path  = "//Page[ @name = '" + page + "' ]/Option[ @name = '" + list + "' ]/";
+	query = path + "Fields/Option";
+
+	data.KeyType  = ValueOf( path + "ListKey/@type", (SDOM_Node)DocDOM );
+	data.KeyName  = ValueOf( path + "ListKey/@name", (SDOM_Node)DocDOM );
+	data.KeyDescr = ValueOf( path + "ListKey/Descr", (SDOM_Node)DocDOM );
+
+	GetOptionList( query, data.Fields );
 
 	AddPageHeader( "listedit", result );
 
 	BeginOptionsTable( descr, result );
 
+	result += "<tr><td colspan=2><table width=\"100%\">";
+
+	columns = AddListHeaders( path, data, result );
+
+	sprintf( span, "%d", columns );
+
 	result +=	"<tr>"
-				"  <td>"
+				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
 				"    <form action=\"/listitem\" method=\"POST\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + page + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + list + "\">"
 				"      <input type=\"hidden\" name=\"item\" value=\"\">"
-				"      <table class=\"modules\" width=\"100%\">"
-				"        <tr>"
-				"          <td align=\"center\"><input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\"></td>"
-				"          <td> &nbsp; </td>"
-				"        </tr>"
-				"      </table>"
+				"      <input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\">"
 				"    </form>";
 				"  </td>"
 				"</tr>";
 
+	if( App->Cfg->OpenKey( key.c_str(), false )) {
+		int num = 0;
+
+		while( const char *item = App->Cfg->EnumKeys( num++ ))
+			if( App->Cfg->OpenKey( item, false )) {
+
+				AddListRow( page, list, item, path, data, result );
+
+				App->Cfg->CloseKey();
+			}
+
+		App->Cfg->CloseKey();
+	}
+
+	result += "</table></td></tr>";
+
 	EndOptionsTable( result );
 	AddPageFooter( result, false );
+}
+//---------------------------------------------------------------------------
+int PageMaker::AddListHeaders( const string path, const ListData& data, string& result )
+{
+	int columns = 2;
+
+	result += "<tr>";
+
+	for( int i = 0; i < data.Fields.Count(); i++ ) {
+		StringList	tmp;
+
+		tmp.Explode( data.Fields[ i ], "|" );
+
+		if( ValueOf( path + "Fields/Option[ @name = '" +
+					 string( tmp[ OP_NAME ] ) + "' ]/@show",
+					 (SDOM_Node)DocDOM ) == "yes" ) {
+
+			result += "<th>" + string( tmp[ OP_LABEL ] ) + "</th>";
+			columns++;
+		}
+	}
+
+	result += "  <th width=\"2%\">&nbsp;</th>"
+			  "  <th width=\"2%\">&nbsp;</th>"
+			  "</tr>";
+
+	return( columns );
+}
+//---------------------------------------------------------------------------
+void PageMaker::AddListRow( const string page, const string list,
+							const char *item, const string path,
+							const ListData& data, string& result )
+{
+	result +=	"<tr>"
+				"  <td>" + string( item ) + "</td>";
+
+	for( int i = 0; i < data.Fields.Count(); i++ ) {
+		StringList	tmp;
+
+		tmp.Explode( data.Fields[ i ], "|" );
+
+		if( ValueOf( path + "Fields/Option[ @name = '" +
+					string( tmp[ OP_NAME ] ) + "' ]/@show",
+					(SDOM_Node)DocDOM ) == "yes" ) {
+			string value;
+
+			if( !strcmp( tmp[ OP_TYPE ], "string" ))
+				value = App->Cfg->GetString( tmp[ OP_NAME ], "" );
+
+			else if( !strcmp( tmp[ OP_TYPE ], "integer" )) {
+				char num[ 32 ];
+
+				sprintf( num, "%d", App->Cfg->GetInteger( tmp[ OP_NAME ], 0 ));
+				value = num;
+
+			} else if( !strcmp( tmp[ OP_TYPE ], "bool" ))
+				value = App->Cfg->GetInteger( tmp[ OP_NAME ], 0 ) ? "Yes" : "No";
+
+			else if( !strcmp( tmp[ OP_TYPE ], "list" ))
+				value = "(list)";
+
+			result += "<td>" + value + "</td>";
+		}
+	}
+
+	result +=	"  <td>"
+				"    <form action=\"listitem\" method=\"POST\">"
+				"      <input type=\"hidden\" name=\"item\" value=\"" + string( item ) + "\">"
+				"      <input type=\"hidden\" name=\"page\" value=\"" + page + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + list + "\">"
+				"      <input type=\"submit\" value=\"Edit\" class=\"maxwidth\">"
+				"    </form>"
+				"  </td>"
+				"  <td>"
+				"    <form action=\"listitemdel\" method=\"POST\">"
+				"      <input type=\"hidden\" name=\"item\" value=\"" + string( item ) + "\">"
+				"      <input type=\"hidden\" name=\"page\" value=\"" + page + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + list + "\">"
+				"      <input type=\"submit\" value=\"Delete\" class=\"maxwidth\">"
+				"    </form>"
+				"  </td>"
+				"</tr>";
 }
 //---------------------------------------------------------------------------
 string PageMaker::UrlEncode( const string& str )

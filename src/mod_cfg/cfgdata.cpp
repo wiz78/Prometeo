@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.4 2002-11-07 14:49:40 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.5 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -327,20 +327,6 @@ void CfgData::ParseRequest( void )
 			string::size_type	pos;
 			int					len;
 
-			// if there's a query string, move it to Body
-			pos = RequestedPage.find( "?" );
-
-			if( pos != string::npos ) {
-				string	query = RequestedPage.substr( pos );
-
-				if( Body.GetSize() > 0 )
-					Body.Append( "&", 1 );
-
-				Body.Append( query.c_str(), query.length() );
-
-				RequestedPage.erase( pos );
-			}
-
 			// if we're asked for a module configuration page, we need
 			// to load the right manifest
 			if( RequestedPage.substr( 0, 4 ) == "mod/" ) {
@@ -411,6 +397,21 @@ void CfgData::ProcessRequest( PageMaker& pg )
 
 	else if( RequestedPage == "unloadmod" )
 		LoadMod( false );
+
+	else if( RequestedPage == "acl/user/del" )
+		AclDeleteUser();
+
+	else if( RequestedPage == "acl/user/add" )
+		AclAddUser();
+
+	else if( RequestedPage == "acl/user/perm/add" )
+		AclUserPermAdd();
+
+	else if( RequestedPage == "acl/user/perm/toggle" )
+		AclUserPermToggle();
+
+	else if( RequestedPage == "acl/user/perm/remove" )
+		AclUserPermRemove();
 
 	else if( Method == M_POST )
 		UpdateSettings( pg );
@@ -551,11 +552,18 @@ string CfgData::DecodeArg( const char *arg )
 	string				val, a;
 	string::size_type	pos;
 
-	val  = Body.GetData();
-	a    = arg;
-	a   += "=";
+	if( Body.GetSize() > 0 )
+		val = Body.GetData();
+
+	a  = arg;
+	a += "=";
 
 	pos = val.find( a );
+
+	if( pos == string::npos ) {
+		val = QueryString;
+		pos = val.find( a );
+	}
 
 	if( pos != string::npos ) {
 
@@ -719,6 +727,66 @@ void CfgData::AddMod( void )
 	}
 
 	RequestedPage = "mods";
+}
+//---------------------------------------------------------------------------
+void CfgData::AclDeleteUser( void )
+{
+	string	key = "root/ACL/Users/" + DecodeArg( "user" );
+
+	App->Cfg->DeleteKey( key.c_str() );
+
+	RequestedPage = "acl";
+}
+//---------------------------------------------------------------------------
+void CfgData::AclAddUser( void )
+{
+	string	key = "root/ACL/Users/" + DecodeArg( "user" );
+
+	if( App->Cfg->OpenKey( key.c_str(), true ))
+		App->Cfg->CloseKey();
+
+	RequestedPage = "acl";
+}
+//---------------------------------------------------------------------------
+void CfgData::AclUserPermAdd( void )
+{
+	string	user = DecodeArg( "user" );
+
+	App->ACL->SetUserPermission( user.c_str(),
+								 DecodeArg( "perm" ).c_str(),
+								 DecodeArg( "grant" ) == "on" );
+
+	RequestedPage = "acl/user";
+
+	user.insert( 0, "user=" );
+	Body.SetContent( user.c_str(), user.length() + 1 );
+}
+//---------------------------------------------------------------------------
+void CfgData::AclUserPermToggle( void )
+{
+	string	user = DecodeArg( "user" );
+	string	perm = DecodeArg( "perm" );
+
+	App->ACL->SetUserPermission( user.c_str(), perm.c_str(),
+								 !App->ACL->UserPermission( user.c_str(), perm.c_str() ));
+
+	RequestedPage = "acl/user";
+
+	user.insert( 0, "user=" );
+	Body.SetContent( user.c_str(), user.length() + 1 );
+}
+//---------------------------------------------------------------------------
+void CfgData::AclUserPermRemove( void )
+{
+	string	user = DecodeArg( "user" );
+	string	perm = DecodeArg( "perm" );
+
+	App->ACL->RemoveUserPermission( user.c_str(), perm.c_str() );
+
+	RequestedPage = "acl/user";
+
+	user.insert( 0, "user=" );
+	Body.SetContent( user.c_str(), user.length() + 1 );
 }
 //---------------------------------------------------------------------------
 void CfgData::EnableMod( bool enable )

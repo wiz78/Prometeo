@@ -1,7 +1,7 @@
 /***************************************************************************
                                  Registry.cpp
                              -------------------
-	revision             : $Id: registry.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: registry.cpp,v 1.2 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -343,6 +343,12 @@ void Registry::CloseKey( void )
 void Registry::DeleteKey( const char *path )
 {
 	delete FindKey( path );
+}
+//--------------------------------------------------------------------------
+void Registry::DeleteValue( const char *name )
+{
+	if( CurrentKey )
+		 delete CurrentKey->FindValue( name, REG_ANY );
 }
 //--------------------------------------------------------------------------
 RegKey *Registry::FindKey( const char *path )

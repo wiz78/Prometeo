@@ -1,7 +1,7 @@
 /***************************************************************************
                                 resolver.cpp
                              -------------------
-	revision             : $Id: resolver.cpp,v 1.3 2002-10-29 18:01:16 tellini Exp $
+	revision             : $Id: resolver.cpp,v 1.4 2002-11-08 14:32:32 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,6 +21,7 @@
 #include "main.h"
 
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -38,6 +39,13 @@ void Resolver::OnFork( void )
 	delete Socket;
 
 	Socket = NULL;
+}
+//---------------------------------------------------------------------------
+void Resolver::WaitRequest( void )
+{
+	signal( SIGHUP, SIG_IGN );
+
+	Process::WaitRequest();
 }
 //---------------------------------------------------------------------------
 void Resolver::Dispatch( void )

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  RegKey.cpp
                              -------------------
-	revision             : $Id: regkey.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: regkey.cpp,v 1.2 2002-11-08 14:32:32 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -31,9 +31,6 @@ RegKey::~RegKey()
 {
 	for( int i = 0; i < Children.Count(); i++ )
 		delete (RegNode *)Children[ i ];
-
-	if( Parent )
-		Parent->RemoveChild( this );
 }
 //--------------------------------------------------------------------------
 void RegKey::AddChild( RegNode *key )
@@ -92,8 +89,12 @@ RegNode *RegKey::FindValue( const char *name, RegType type )
 
 	for( int i = 0; !key && ( i < Children.Count() ); i++ ) {
 		RegNode	*k = (RegNode *)Children[ i ];
+		bool	typeok;
 
-		if(( k->GetType() == type ) && !strcmp( name, k->GetName() ))
+		typeok = ( k->GetType() == type ) ||
+				 (( type == REG_ANY ) && ( k->GetType() != REG_KEY ));
+
+		if( typeok && !strcmp( name, k->GetName() ))
 			key = k;
 	}
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  resolver.h
                              -------------------
-	revision             : $Id: resolver.h,v 1.2 2002-10-29 18:01:14 tellini Exp $
+	revision             : $Id: resolver.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -37,6 +37,7 @@ public:
 	static bool		Resolve( const char *host, Prom_Addr *addr, int family );
 
 private:
+	virtual void	WaitRequest( void );
 	virtual void	Dispatch( void );
 };
 
