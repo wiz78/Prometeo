@@ -1,7 +1,7 @@
 /***************************************************************************
                                  module.cpp
                              -------------------
-	revision             : $Id: module.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+    revision             : $Id: module.cpp,v 1.2 2002-11-13 16:45:59 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -52,18 +52,26 @@ bool Module::Cleanup( void )
 //---------------------------------------------------------------------------
 void Module::CfgChanged( void )
 {
-	( *ModInfo->CfgChanged )( ModHandle );
+	if( ModInfo->CfgChanged )
+		( *ModInfo->CfgChanged )( ModHandle );
 }
 //---------------------------------------------------------------------------
 void Module::OnFork( void )
 {
-	( *ModInfo->OnFork )( ModHandle );
+	if( ModInfo->OnFork )
+		( *ModInfo->OnFork )( ModHandle );
 }
 //---------------------------------------------------------------------------
 void Module::OnTimer( time_t now )
 {
 	if( ModInfo->OnTimer )
 		( *ModInfo->OnTimer )( ModHandle, now );
+}
+//---------------------------------------------------------------------------
+void Module::ParseCmd( const char *cmd, char *result, int reslen )
+{
+	if( ModInfo->ParseCmd )
+		( *ModInfo->ParseCmd )( ModHandle, cmd, result, reslen );
 }
 //---------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                    ctrlipc.cpp
                              -------------------
-    revision             : $Id: ctrlipc.cpp,v 1.2 2002-11-03 17:28:46 tellini Exp $
+    revision             : $Id: ctrlipc.cpp,v 1.3 2002-11-13 16:45:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,9 +23,11 @@
 
 #include <sys/stat.h>
 #include <pwd.h>
+#include <cctype>
 
 #include "ctrlipc.h"
 #include "loader.h"
+#include "module.h"
 #include "registry.h"
 #include "acl.h"
 
@@ -154,7 +156,7 @@ void CtrlIPC::HandleRequest( UnixSocket *sock )
 
 		args = strchr( req, ' ' );
 
-		if( args )
+		while( isspace( *args ))
 			*args++ = '\0';
 
 		if( !strcmp( req, "stop" )) {
@@ -208,6 +210,48 @@ bool CtrlIPC::ReadLine( UnixSocket *sock, char *req, int maxlen )
 	return( ok );
 }
 //--------------------------------------------------------------------------
+bool CtrlIPC::SplitArgs( UnixSocket *sock, char *req, StringList& args )
+{
+	bool	ret = true, in = false;
+
+	while( *req ) {
+		char	delimiter = '\0', *end;
+
+		while( isspace( *req ))
+			req++;
+
+		switch( *req ) {
+
+			case '"':
+			case '\'':
+				delimiter = *req++;
+				in        = true;
+				break;
+		}
+
+		end = req;
+
+		while( *end && ( *end != delimiter ))
+			end++;
+
+		if( *end == delimiter )
+			in = false;
+
+		*end++ = '\0';
+
+		args.Add( "%s", req );
+
+		req = end;
+	}
+
+	if( in ) {
+		ret = false;
+		sock->Printf( "syntax error\n" );
+	}
+
+	return( ret );
+}
+//--------------------------------------------------------------------------
 void CtrlIPC::CmdLoad( UnixSocket *sock, char *req )
 {
 	if( req ) {
@@ -251,17 +295,44 @@ void CtrlIPC::CmdLsMod( UnixSocket *sock )
 	}
 }
 //--------------------------------------------------------------------------
+void CtrlIPC::CmdMod( UnixSocket *sock, char *req )
+{
+	if( req ) {
+		StringList	args;
+
+		if( SplitArgs( sock, req, args )) {
+			Module		*mod;
+
+			mod = App->Mods->FindModule( args[0] );
+
+			if( mod ) {
+				char	result[ 4096 ];
+
+				mod->ParseCmd( args[1], result, sizeof( result ));
+
+				sock->Send( result, strlen( result ));
+				sock->Printf( "\n" );
+
+			} else
+				sock->Printf( "module %s isn't running.\n", args[0] );
+		}
+
+	} else
+		sock->Printf( "missing argument\n" );
+}
+//--------------------------------------------------------------------------
 void CtrlIPC::CmdHelp( UnixSocket *sock )
 {
 	sock->Printf( "Available commands:\n"
 				  "\n"
-				  "  load module     - load the module with the specified name\n"
-				  "                    (it must have already been defined in the\n"
-				  "                    configuration file)\n"
-				  "  unload module   - unload the module\n"
-				  "  lsmod           - list the configured modules\n"
-				  "  stop            - quit prometeo\n"
-				  "  help            - guess it?\n" );
+				  "  load <module>      - load the module with the specified name\n"
+				  "                       (it must have already been defined in\n"
+				  "                       the configuration file)\n"
+				  "  unload <module>    - unload the module\n"
+				  "  lsmod              - list the configured modules\n"
+				  "  mod <module> <cmd> - send <cmd> to <module>, if it's running\n"
+				  "  stop               - quit prometeo\n"
+				  "  help               - guess it?\n" );
 }
 //--------------------------------------------------------------------------
 

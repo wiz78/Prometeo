@@ -1,0 +1,85 @@
+$Id: Features.txt,v 1.1 2002-11-13 16:45:58 tellini Exp $
+
+---------------------------------------------------------------------------
+Core
+---------------------------------------------------------------------------
+
+The main program, prometeo, offers the common framework which can be
+exploited by all the modules.
+
+ - configuration support
+ - logging
+ - IP v4/v6 transparent support
+ - asynchronous socket/file operations
+ - SSL/TLS support
+ - DNS cache
+ - storage access
+ - runtime modules loading/unloading
+ - IPC support
+ - ACL
+ - transparent proxy support on Linux (ipchains, netfilter)
+   and BSD (ipnat). Only for IPv4.
+
+
+---------------------------------------------------------------------------
+mod_tunnel
+---------------------------------------------------------------------------
+
+Very simple module, mainly used to test the core during the development,
+although it might have some real uses (eg. ipv4->v6 tunneling)
+
+
+---------------------------------------------------------------------------
+mod_http
+---------------------------------------------------------------------------
+
+Caching http proxy.
+
+ - single threaded
+ - HTTP/1.1 suppost
+ - outgoing connections cache
+ - gzip/deflate content encoding support
+ 
+TODO:
+ 
+ - listen on more than one port - each port should get its own
+   settings set
+ - jpg downsampling
+ - pictures rescaling
+ - regex-based html/text rewriting engine
+ - filters
+ - redirectors
+ - forward requests to specific servers depending on the Host: value
+ - more options
+
+
+---------------------------------------------------------------------------
+mod_cfg
+---------------------------------------------------------------------------
+
+Allow the user to configure prometeo with a web browser.
+
+ - extensible: can automagically configure every other modules as well
+ - administration can be delegated to any authenticated user
+
+TODO:
+
+ - more datatypes (at least a "list" type)
+ 
+
+---------------------------------------------------------------------------
+mod_ftp
+---------------------------------------------------------------------------
+
+FTP proxy
+
+ - SSL/TLS authentication support
+ - IPv6 support (EPSV, EPRT)
+
+
+---------------------------------------------------------------------------
+mod_ssl
+---------------------------------------------------------------------------
+
+Like mod_tunnel with SSL transport.
+

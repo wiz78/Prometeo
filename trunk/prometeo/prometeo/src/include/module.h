@@ -1,7 +1,7 @@
 /***************************************************************************
                                    module.h
                              -------------------
-	revision             : $Id: module.h,v 1.1.1.1 2002-10-10 09:59:13 tellini Exp $
+    revision             : $Id: module.h,v 1.2 2002-11-13 16:45:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -37,6 +37,7 @@ public:
 	void 			CfgChanged( void );
 	void			OnFork( void );
 	void			OnTimer( time_t now );
+	void			ParseCmd( const char *cmd, char *result, int reslen );
 
 	string&			GetFileName( void )            { return( FileName ); }
 	const char		*GetModName( void ) const      { return( ModInfo->Name ); }
