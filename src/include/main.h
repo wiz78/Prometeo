@@ -1,7 +1,7 @@
 /***************************************************************************
                                    main.h
                              -------------------
-	revision             : $Id: main.h,v 1.2 2002-10-13 15:40:12 tellini Exp $
+	revision             : $Id: main.h,v 1.3 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,9 +20,6 @@
 
 #ifndef MAIN_H
 #define MAIN_H
-
-// XXX
-#define DEBUG	1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -43,6 +40,7 @@ using namespace std;
 #include <strings.h>
 #endif
 #include <errno.h>
+#include <stdio.h>
 
 #ifndef EWOULDBLOCK
 #define EWOULDBLOCK EAGAIN
