@@ -1,7 +1,7 @@
 /***************************************************************************
                               popupblocker.cpp
                              -------------------
-    revision             : $Id: popupblocker.cpp,v 1.1 2003-04-06 10:57:37 tellini Exp $
+    revision             : $Id: popupblocker.cpp,v 1.2 2003-04-07 13:44:30 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -48,7 +48,7 @@ bool PopupBlocker::Process( void )
 						"                     func += arguments[ i ];\n"
 						"               }\n"
 						"               return( eval( func + \");\" ));\n"
-						"        } else alert( event.type );\n"
+						"        }\n"
 						"    }\n"
 						"// --></script>\n" );
 
