@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-	revision             : $Id: mod_http.cpp,v 1.4 2002-11-12 13:10:29 tellini Exp $
+	revision             : $Id: mod_http.cpp,v 1.5 2002-11-12 13:17:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -239,6 +239,7 @@ bool HTTPProxy::Cleanup( void )
 	}
 
 	Connections.Clear();
+	CacheMgr.WriteIndex();
 
 	return( true );
 }
