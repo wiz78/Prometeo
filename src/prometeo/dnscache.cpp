@@ -1,7 +1,7 @@
 /***************************************************************************
                                 dnscache.cpp
                              -------------------
-	revision             : $Id: dnscache.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: dnscache.cpp,v 1.3 2002-10-29 18:01:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -29,7 +29,6 @@
 #define DNS_CHILDREN	4
 
 static void IPCCallback( void *answer, int len, void *userdata );
-static void ResolverCallback( int status, void *userdata );
 
 class PendingReq
 {
@@ -243,8 +242,6 @@ void DNSCache::IPCAnswer( void *answer, int len )
 	PendingReq	*req;
 	char		*host = (char *)answer + sizeof( int );
 
-	Resolving = false;
-
 	req = (PendingReq *)Pending.FindData( host );
 
 	if( req ) {
@@ -292,25 +289,15 @@ static void IPCCallback( void *answer, int len, void *userdata )
 //---------------------------------------------------------------------------
 bool DNSCache::Resolve( const char *hostname, Prom_Addr *addr )
 {
-	Resolving = true;
+	int	fam;
 
-	AsyncResolve( hostname, addr, ResolverCallback, this );
+#if HAVE_IPV6
+	fam = AF_INET6;
+#else
+	fam = AF_INET;
+#endif
 
-	while( Resolving )
-		pause();
-
-	return( ResolverStatus == 0 );
-}
-static void ResolverCallback( int status, void *userdata )
-{
-	((DNSCache *)userdata )->SetResolverStatus( status );
-}
-//---------------------------------------------------------------------------
-void DNSCache::SetResolverStatus( int status )
-{
-	ResolverStatus = status;
-
-	raise( SIGUSR1 );
+	return( Resolver::Resolve( hostname, addr, fam ));
 }
 //---------------------------------------------------------------------------
 void DNSCache::ReloadCfg( void )

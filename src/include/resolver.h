@@ -1,7 +1,7 @@
 /***************************************************************************
                                  resolver.h
                              -------------------
-	revision             : $Id: resolver.h,v 1.1.1.1 2002-10-10 09:59:16 tellini Exp $
+	revision             : $Id: resolver.h,v 1.2 2002-10-29 18:01:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -33,7 +33,9 @@ class Resolver : public Process
 {
 public:
 	virtual void	OnFork( void );
-		
+
+	static bool		Resolve( const char *host, Prom_Addr *addr, int family );
+
 private:
 	virtual void	Dispatch( void );
 };

@@ -1,7 +1,7 @@
 /***************************************************************************
                                stringlist.cpp
                              -------------------
-    revision             : $Id: stringlist.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
+    revision             : $Id: stringlist.cpp,v 1.3 2002-10-29 18:01:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -58,3 +58,18 @@ void StringList::Clear( void )
 	List::Clear();
 }
 //---------------------------------------------------------------------------
+void StringList::Explode( const string& str, const char *separator )
+{
+	const char	*cur = str.c_str(), *start = cur, *ptr;
+	int			len = strlen( separator );
+
+	while( ptr = strstr( cur, separator )) {
+
+		Add( "%s", str.substr( cur - start, ptr - cur ).c_str() );
+
+		cur = ptr + len;
+	}
+
+	Add( "%s", cur );
+}
+//--------------------------------------------------------------------------

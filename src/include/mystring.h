@@ -1,7 +1,7 @@
 /***************************************************************************
                                   mystring.h
                              -------------------
-	revision             : $Id: mystring.h,v 1.1.1.1 2002-10-10 09:59:14 tellini Exp $
+	revision             : $Id: mystring.h,v 1.2 2002-10-29 18:01:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -30,9 +30,7 @@ public:
 
 	int				ToInt( void ) const;
 
-	// splits the string with 'separator', putting the resulting
-	// pieces into 'list'
-	void			Explode( const char *separator, StringList& list );
+	void			Explode( const char *separator, StringList& list ) { list.Explode( *this, separator ); }
 
 private:
 };
