@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<Key name="root">
+	<Note>
+		$Id: prometeo.xml,v 1.1 2002-12-06 17:06:59 tellini Exp $
+				
+		Nothing should appear outside the root Key.
+
+		This XML file holds the complete configuration of prometeo.
+		You can edit it by hand: just remember to preserve the
+		well-formedness of the document.
+
+		Use Note elements to contain your comments: this way they
+		will be preserved by configuration editors.
+	</Note>
+	<Note> ---------- General settings ----------- </Note>
+	<Key name="General">
+		<Note>
+			spooldir  - where to place cache files
+		</Note>
+		<Value type="string" name="spooldir">/var/spool/prometeo</Value>
+	</Key>
+
+	<Note> --------------- Modules --------------- </Note>
+	<Key name="Modules">
+		<Note>
+			Each module has its own key, with an unique
+			name. Each module has its own set of configuration
+			values, although you need to specify at least
+			the "module" string value, containing the file name
+			of the module (with no path nor extension)
+		</Note>
+
+		<Key name="cfg">
+			<Value type="string" name="module">mod_cfg</Value>
+			<Value type="integer" name="enabled">1</Value>
+			<Value type="integer" name="port">8081</Value>
+		</Key>
+
+		<Key name="example tunnel">
+			<Value type="string" name="module">mod_tunnel</Value>
+			<Value type="integer" name="enabled">0</Value>
+			<Value type="integer" name="srcport">2048</Value>
+			<Value type="integer" name="dstport">110</Value>
+			<Value type="string" name="dsthost">host.destination.com</Value>
+		</Key>
+
+		<Key name="http">
+			<Value type="string" name="module">mod_http</Value>
+			<Value type="integer" name="enabled">0</Value>	
+			<Value type="integer" name="port">8080</Value>
+			<Value type="integer" name="logrequests">0</Value>
+			<Value type="integer" name="gzipencoding">0</Value>
+			<Value type="integer" name="maxcachesize">100</Value>
+			<Value type="integer" name="maxobjectsize">400000</Value>
+			<Key name="Filters">
+				<Key name="Banner - img">
+					<Value type="string" name="url">http://.*/banner.*\.(gif|jpg)</Value>
+					<Value type="string" name="action">redirect</Value>
+					<Value type="string" name="redirect">http://myhost/spacer.gif</Value>
+				</Key>
+
+			</Key>
+
+		</Key>
+
+		<Key name="ftp">
+			<Value type="string" name="module">mod_ftp</Value>
+			<Value type="integer" name="enabled">0</Value>
+			<Value type="integer" name="port">8021</Value>
+			<Value type="integer" name="minchildren">0</Value>
+			<Value type="integer" name="maxchildren">20</Value>
+			<Value type="integer" name="childrenttl">30</Value>
+			<Value type="integer" name="trytls">1</Value>
+			<Value type="integer" name="requiretls">0</Value>
+			<Value type="integer" name="datatls">1</Value>
+		</Key>
+
+		<Key name="sfnews">
+			<Value type="string" name="module">mod_ssl</Value>
+			<Value type="integer" name="enabled">0</Value>
+			<Value type="integer" name="srcport">8563</Value>
+			<Value type="integer" name="dstport">563</Value>
+			<Value type="integer" name="minchildren">0</Value>
+			<Value type="integer" name="maxchildren">5</Value>
+			<Value type="integer" name="childrenttl">10</Value>
+			<Value type="string" name="dsthost">nntp.sourceforge.net</Value>
+		</Key>
+
+	</Key>
+
+	<Note> --------------- Logging --------------- </Note>
+	<Key name="Log">
+		<Note>
+			ident   - the identification string used when logging
+		</Note>
+		<Value type="string" name="ident">prometeo</Value>
+	</Key>
+
+	<Note> --------------- DNS Cache ------------- </Note>
+	<Key name="DNSCache">
+		<Note>
+			children   - the number of helper processes to spawn
+			ttl        - lifetime of a cached query, in seconds
+			slots      - how many queries will be cached
+		</Note>
+		<Value type="integer" name="children">3</Value>
+		<Value type="integer" name="ttl">300</Value>
+		<Value type="integer" name="slots">512</Value>
+	</Key>
+
+	<Note> ------------------ ACL ---------------- </Note>
+	<Key name="ACL">
+		<Key name="Users">
+			<Note>
+				Each user has his own key in this section.
+				In that key there are all her permissions as
+				integer values: the name of the value is the
+				permission name; the value can be 1 to grant the
+				permission or 0 to forbid it.
+			</Note>
+			<Key name="root">
+				<Note>
+					This entry is actually useless, as root always
+					has access, but at least it serves as portable
+					example :-)
+				</Note>
+				<Value type="integer" name="mod_cfg/access">1</Value>
+			</Key>
+
+		</Key>
+
+	</Key>
+
+</Key>
+

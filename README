@@ -1,4 +1,4 @@
-$Id: README,v 1.2 2002-10-13 23:43:56 tellini Exp $
+$Id: README,v 1.3 2002-12-06 17:06:47 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -44,10 +44,12 @@ Compulsory:
 - autoconf 2.52+
 - expat
 - sablotron
+- PAM
 
 Optional:
 
 - zlib (for gzip/deflate support in mod_http)
+- OpenSSL (for mod_ssl, TLS support in mod_ftp)
 
 
 
@@ -58,10 +60,11 @@ Installation
 It follows the standard GNU guidelines, so read the INSTALL file for the
 generic install instructions.
 
-After you've compiled and installed prometeo, you can point your web browser
-to http://localhost:8081 to access the configuration panel (or you can
-manually edit the config file, prometeo.xml, which by default sits in
-/usr/local/prometeo/etc).
+After you've compiled and installed prometeo, rename prometeo.xml.sample
+to prometeo.xml (in <prefix>/etc) and invoke prometeo.
+
+Now you can point your web browser to http://localhost:8081 to access 
+the configuration panel.
 
 Have fun. :)
 
