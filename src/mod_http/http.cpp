@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.6 2002-12-02 16:22:47 tellini Exp $
+    revision             : $Id: http.cpp,v 1.7 2003-02-13 11:11:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -80,19 +80,27 @@ static const struct
 //---------------------------------------------------------------------------
 HTTP::HTTP()
 {
+#if HAVE_ZLIB_H
 	GZipper = NULL;
+#endif
 
 	Reset();
 }
 //---------------------------------------------------------------------------
 HTTP::~HTTP()
 {
+#if HAVE_ZLIB_H
 	delete GZipper;
+#endif
 }
 //---------------------------------------------------------------------------
 void HTTP::Reset( void )
 {
+#if HAVE_ZLIB_H
 	delete GZipper;
+
+	GZipper = NULL;
+#endif
 
 	Method       = M_NONE;
 	MethodStr    = "";
@@ -105,7 +113,6 @@ void HTTP::Reset( void )
 	Offset       = 0;
 	LastModified = (time_t)0;
 	MaxAge       = 0;
-	GZipper      = NULL;
 
 	EntityID.erase();
 
@@ -671,8 +678,10 @@ void HTTP::SendBodyData( const char *data, int len )
 //---------------------------------------------------------------------------
 void HTTP::CompressBody( void )
 {
+#if HAVE_ZLIB_H
 	if( CanCompress() )
 		GZipper = new GZipCodec();
+#endif
 }
 //---------------------------------------------------------------------------
 bool HTTP::DecodeFixedLenData( const char *data, int len )

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.11 2002-12-02 16:22:49 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.12 2003-02-13 11:11:31 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -95,6 +95,7 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Key name=\"" + basekey + "logrequests\"/>"
 				"	</Option>"
 
+#if HAVE_ZLIB_H
 				"	<Option type=\"bool\" name=\"gzipencoding\" default=\"1\">"
 				"		<Label>Enable gzip compression</Label>"
 				"		<Descr>If set, client which support gzip or deflate content "
@@ -102,6 +103,7 @@ static const char *GetManifest( const char *key, const char *name )
 				"you want to save some CPU power on the proxy machine.</Descr>"
 				"		<Key name=\"" + basekey + "gzipencoding\"/>"
 				"	</Option>"
+#endif
 
 				"	<Option type=\"list\" name=\"hostmap\">"
 				"		<Label>Host map</Label>"
@@ -1290,10 +1292,12 @@ void HTTPProxy::CopyServerHeaders( HTTPData *data, StringList& headers )
 			strcmp( str, "connection" ))
 			headers.Add( "%s", hdr );
 
+#if HAVE_ZLIB_H
 		// enable gzip encoding if the object is text
 		if( Flags.IsSet( MODF_COMPRESS ) && !strcmp( str, "content-type" ) &&
 			strstr( hdr, "text/" ))
 			data->Client.CompressBody();
+#endif
 	}
 
 	if( data->Server.HasEntityBody() && data->Client.Is11() )
@@ -1318,10 +1322,12 @@ void HTTPProxy::PrepareHeaders( HTTPData *data, StringList& headers )
 	if( data->Cached->GetAge() > ( 24 * 3600 ))
 		headers.Add( "Warning: 113 prometeo-mod_http \"Heuristic expiration\"" );
 
+#if HAVE_ZLIB_H
 	// enable gzip encoding if the object is text
 	if( Flags.IsSet( MODF_COMPRESS ) &&
 		!strncmp( data->Cached->GetMIMEType(), "text/", 5 ))
 		data->Client.CompressBody();
+#endif
 }
 //---------------------------------------------------------------------------
 bool HTTPProxy::IsCacheable( HTTPData *data )
