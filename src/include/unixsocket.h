@@ -1,7 +1,7 @@
 /***************************************************************************
                                 unixsocket.h
                              -------------------
-	revision             : $Id: unixsocket.h,v 1.2 2002-10-13 23:22:08 tellini Exp $
+	revision             : $Id: unixsocket.h,v 1.3 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -30,7 +30,7 @@ class UnixSocket : public Socket
 public:
 						UnixSocket();
 						UnixSocket( int fd );
-						~UnixSocket();
+	virtual				~UnixSocket();
 
 	bool				Bind( const char *name );
 	virtual Socket		*Accept( void );

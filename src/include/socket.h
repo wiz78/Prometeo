@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.h
                              -------------------
-	revision             : $Id: socket.h,v 1.5 2002-10-30 16:53:01 tellini Exp $
+	revision             : $Id: socket.h,v 1.6 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,7 +43,7 @@ class Socket : public Fd
 public:
 						Socket( int family, int type, int proto );
 						Socket( int fd );
-						~Socket();
+	virtual				~Socket();
 
 	bool				Shutdown( int how = 2 );
 

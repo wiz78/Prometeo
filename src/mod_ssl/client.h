@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.1 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: client.h,v 1.2 2003-02-07 14:10:59 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -35,7 +35,7 @@ class SSLClient : public Process
 {
 public:
 						SSLClient( const string& key );
-						~SSLClient();
+	virtual				~SSLClient();
 
 	virtual void		OnFork( void );
 	virtual void		ReloadCfg( void );

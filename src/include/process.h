@@ -1,7 +1,7 @@
 /***************************************************************************
                                   process.h
                              -------------------
-	revision             : $Id: process.h,v 1.2 2002-11-01 22:23:44 tellini Exp $
+	revision             : $Id: process.h,v 1.3 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -36,7 +36,7 @@ class Process
 {
 public:
 						Process();
-						~Process();
+	virtual				~Process();
 
 	bool				Spawn( char *ident );
 	void				Terminate( void );
