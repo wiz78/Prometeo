@@ -1,7 +1,7 @@
 /***************************************************************************
                                prometeoctl.cpp
                              -------------------
-	revision             : $Id: prometeoctl.cpp,v 1.1.1.1 2002-10-10 09:59:55 tellini Exp $
+	revision             : $Id: prometeoctl.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,9 +26,12 @@
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
+#include <iostream>
 #include <fstream>
 
 #include "unixsocket.h"
+
+using namespace std;
 
 //--------------------------------------------------------------------------
 int main( int argc, char *argv[] )

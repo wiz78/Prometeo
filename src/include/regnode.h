@@ -1,7 +1,7 @@
 /***************************************************************************
                                   regnode.h
                              -------------------
-	revision             : $Id: regnode.h,v 1.1.1.1 2002-10-10 09:59:15 tellini Exp $
+	revision             : $Id: regnode.h,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -18,8 +18,9 @@
 #ifndef REGNODE_H
 #define REGNODE_H
 
+#include <fstream>
+
 class RegKey;
-class ofstream;
 
 typedef enum { REG_KEY, REG_INTEGER, REG_STRING, REG_NOTE } RegType;
 

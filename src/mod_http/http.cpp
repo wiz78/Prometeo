@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.1.1.1 2002-10-10 09:59:40 tellini Exp $
+    revision             : $Id: http.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "http.h"
 #include "mod_http.h"

@@ -1,7 +1,7 @@
 /***************************************************************************
                                stringlist.cpp
                              -------------------
-    revision             : $Id: stringlist.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+    revision             : $Id: stringlist.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -16,6 +16,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+#include "main.h"
 
 #include <string.h>
 #include <stdarg.h>
