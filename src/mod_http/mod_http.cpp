@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.20 2003-06-01 10:02:28 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.21 2003-06-01 10:37:05 tellini Exp $
     copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -297,13 +297,11 @@ void HTTPProxy::ReloadCfg( void )
 				pos = tmp.find( "\n", pos + 1 );
 			}
 			
-			CONNECTPorts    = new int[ num ];
-			CONNECTNumPorts = num;
-
-			pos = tmp.find( "\n" );
-			num = 0;
-
+			CONNECTPorts      = new int[ num ];
+			CONNECTNumPorts   = num;
 			CONNECTPorts[ 0 ] = atoi( tmp.c_str() );
+			pos               = tmp.find( "\n" );
+			num               = 1;
 
 			while( pos != string::npos ) {
 
