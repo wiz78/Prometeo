@@ -1,4 +1,4 @@
-$Id: README,v 1.7 2003-02-09 11:23:20 tellini Exp $
+$Id: README,v 1.8 2003-02-09 11:36:11 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -76,7 +76,9 @@ system's pam directory (on Mandrake it's /etc/pam.d) and edit it if you
 like.
 
 Now you can point your web browser to http://localhost:8081 to access 
-the configuration panel.
+the configuration panel, using root's credentials, or the ones of the
+user who started prometeo, or another user if defined in the ACL section
+of the configuration file (see comments in it).
 
 Have fun. :)
 
