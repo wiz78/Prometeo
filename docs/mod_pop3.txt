@@ -1,0 +1,42 @@
+$Id: mod_pop3.txt,v 1.1 2003-05-24 12:42:40 tellini Exp $
+
+mod_pop3 implements a simple POP3 proxy able to filter emails with
+Spam Assassin.
+
+
+USAGE AS A TRANSPARENT PROXY
+----------------------------
+
+You can use it as a transparent proxy: just route all the traffic to
+POP3 through the proxy. For instance, if you're using Linux 2.4.x,
+you would achieve that with something like that:
+
+iptables -t nat -A PREROUTING -p tcp -i eth0 --dport 110 -j REDIRECT --to 8110
+
+BEWARE: if there's a POP3 server on the proxy machine you need to exclude it
+from the above rule not to create a loop! E.g.:
+
+iptables -t nat -A PREROUTING -p tcp -i eth0 --dest '!' 192.168.1.1 --dport 110 -j REDIRECT --to 8110
+
+(assuming that the POP3 server is listening on 192.168.1.1)
+
+
+USAGE AS AN EXPLICIT PROXY
+--------------------------
+
+If you don't want (or can't - like when compiling with IPv6 support) 
+to use mod_pop3 as transparent proxy, you'll need to specify which
+server to connect to using the username.
+
+In this case, mod_pop3 will expect to find this format in the USER 
+command:
+
+server:port%username
+
+
+SPAM ASSASSIN NOTES
+-------------------
+
+If you want to process mails with Spam Assassin you need to run the
+spamd daemon. Then, you can enable the filtering option in mod_pop3's
+settings page.
