@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.1 2002-10-17 18:06:35 tellini Exp $
+    revision             : $Id: client.cpp,v 1.2 2002-10-23 17:54:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 
+#include "iodispatcher.h"
 #include "unixsocket.h"
 #include "tcpsocket.h"
 #include "dnscache.h"
@@ -40,6 +41,11 @@ static const char *ForwardableCmds[] = {
 
 #define NUM_FWD_CMDS	( sizeof( ForwardableCmds ) / sizeof( ForwardableCmds[0] ))
 
+//---------------------------------------------------------------------------
+static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userdata )
+{
+	((Client *)userdata )->SocketEvent( sock, reason, data );
+}
 //---------------------------------------------------------------------------
 Client::Client() : Process()
 {
@@ -189,12 +195,33 @@ void Client::Dispatch( void )
 {
 	User->Printf( "220 Welcome\r\n" );
 
+	User->UseDispatcher( App->IO );
+	User->SetAsyncCallback( SocketCB, this );
+
+	App->IO->AddFD( User, PROM_IOF_READ );
+
 	Flags.Set( FTPF_CONNECTED );
 
-// XXX RecvCommand() va sostituito con un metodo che
-// faccia una select() su tutti i socket aperti
+	do {
 
-	while( Flags.IsSet( FTPF_CONNECTED ) && RecvCommand() ) {
+		App->IO->WaitEvents();
+
+	} while( Flags.IsSet( FTPF_CONNECTED ));
+
+	delete User;
+	delete Server;
+	delete UserData;
+	delete ServerData;
+
+	User       = NULL;
+	Server     = NULL;
+	UserData   = NULL;
+	ServerData = NULL;
+}
+//---------------------------------------------------------------------------
+void Client::DispatchCmd( void )
+{
+	if( RecvCommand() ) {
 
 		if( Command == "AUTH" ) {
 
@@ -226,16 +253,70 @@ void Client::Dispatch( void )
 		} else
 			User->Printf( "530 Please login.\r\n" );
 	}
+}
+//---------------------------------------------------------------------------
+void Client::SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data )
+{
+	switch( reason ) {
 
-	delete User;
-	delete Server;
+		case PROM_SOCK_READ:
+			if( sock == User )
+				DispatchCmd();
+//			else if( sock == Server )
+//				ForwardData();
+			break;
+
+
+		case PROM_SOCK_ACCEPT:
+			if( sock == UserData )
+				AcceptUserData((TcpSocket *)data );
+			else
+				AcceptServerData((TcpSocket *)data );
+			break;
+
+		case PROM_SOCK_TIMEOUT:
+		case PROM_SOCK_ERROR:
+//			HandleError( sock, data );
+			break;
+	}
+}
+//---------------------------------------------------------------------------
+void Client::AcceptUserData( TcpSocket *sock )
+{
 	delete UserData;
+
+	if( sock->IsValid() ) {
+
+		sock->UseDispatcher( App->IO );
+		sock->SetAsyncCallback( SocketCB, this );
+
+		App->IO->AddFD( sock, PROM_IOF_READ );
+
+		UserData = sock;
+
+	} else
+		UserData = NULL;
+}
+//---------------------------------------------------------------------------
+void Client::AcceptServerData( TcpSocket *sock )
+{
 	delete ServerData;
 
-	User       = NULL;
-	Server     = NULL;
-	UserData   = NULL;
-	ServerData = NULL;
+	if( sock->IsValid() ) {
+
+		sock->UseDispatcher( App->IO );
+		sock->SetAsyncCallback( SocketCB, this );
+
+		App->IO->AddFD( sock, PROM_IOF_READ );
+
+		ServerData = sock;
+
+	} else {
+
+		// XXX report error to user
+
+		ServerData = NULL;
+	}
 }
 //---------------------------------------------------------------------------
 void Client::ConnectToServer( void )
@@ -381,6 +462,9 @@ void Client::CmdProt( void )
 void Client::CmdPasv( void )
 {
 	UserData = new TcpSocket();
+
+	UserData->UseDispatcher( App->IO );
+	UserData->SetAsyncCallback( SocketCB, this );
 
 	if( UserData->IsValid() && UserData->MakeIPv4() &&
 		UserData->Bind() && UserData->Listen() ) {

@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.h
                              -------------------
-	revision             : $Id: socket.h,v 1.3 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: socket.h,v 1.4 2002-10-23 17:54:25 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -35,7 +35,8 @@ class IODispatcher;
 #define PROM_SOCKF_LISTEN			(1 << 0)
 #define PROM_SOCKF_CONNECTING		(1 << 1)
 #define PROM_SOCKF_SENDING			(1 << 2)
-#define PROM_SOCKF_NOTIFY_DISCONN	(1 << 3)
+#define PROM_SOCKF_RECVING			(1 << 3)
+#define PROM_SOCKF_NOTIFY_DISCONN	(1 << 4)
 
 class Socket : public Fd
 {
