@@ -1,7 +1,7 @@
 /***************************************************************************
                                    core.h
                              -------------------
-	revision             : $Id: core.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: core.h,v 1.3 2002-11-03 17:28:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -26,6 +26,7 @@ class CtrlIPC;
 class Loader;
 class DNSCache;
 class IODispatcher;
+class Acl;
 
 class Core
 {
@@ -35,6 +36,7 @@ public:
 	IODispatcher	*IO;
 	DNSCache		*DNS;
 	Loader			*Mods;
+	Acl				*ACL;
 
 					Core();
 					~Core();

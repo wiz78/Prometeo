@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-	revision             : $Id: core.cpp,v 1.4 2002-11-01 19:01:01 tellini Exp $
+    revision             : $Id: core.cpp,v 1.5 2002-11-03 17:28:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -25,6 +25,7 @@
 #include <fstream>
 
 #include "registry.h"
+#include "acl.h"
 #include "ctrlipc.h"
 #include "loader.h"
 #include "dnscache.h"
@@ -61,6 +62,7 @@ Core::Core()
 	IPC   = NULL;
 	Mods  = NULL;
 	DNS   = NULL;
+	ACL   = NULL;
 }
 //--------------------------------------------------------------------------
 Core::~Core()
@@ -69,6 +71,7 @@ Core::~Core()
 	delete IPC;
 	delete Mods;
 	delete DNS;
+	delete ACL;
 	delete Cfg;
 	delete Log;
 	delete IO;
@@ -82,6 +85,7 @@ void Core::Run( void )
 
 		Log->Log( LOG_INFO, PACKAGE" "VERSION" starting" );
 
+		ACL  = new Acl( Cfg, "root/ACL" );
 		IPC  = new CtrlIPC();
 		DNS  = new DNSCache( IO );
 		Mods = new Loader();

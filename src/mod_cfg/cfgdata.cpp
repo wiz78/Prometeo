@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.2 2002-10-22 14:31:22 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.3 2002-11-03 17:28:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,6 +26,7 @@
 #include "mystring.h"
 #include "stringlist.h"
 #include "registry.h"
+#include "acl.h"
 #include "loader.h"
 
 #include "cfgdata.h"
@@ -212,7 +213,7 @@ void CfgData::AddBodyData( int len )
 		*ptr-- = '\0';
 
 		if( *ptr == '\n' ) {
-				
+
 			*ptr-- = '\0';
 
 			if(( BodyLen > 1 ) && ( *ptr == '\r' ))
@@ -460,7 +461,12 @@ void CfgData::ParseAuth( char *str )
 //---------------------------------------------------------------------------
 bool CfgData::IsAuthorized( void )
 {
-	bool ret = true;
+	bool ret;
+
+	ret = App->ACL->UserPermission( Username.c_str(), "mod_cfg/access" ) &&
+		  App->ACL->AuthenticateUser( Username.c_str(), 
+									  Password.c_str(),
+									  Peer->GetPeerName() );
 
 	return( ret );
 }
