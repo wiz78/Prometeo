@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-    revision             : $Id: core.cpp,v 1.7 2003-02-16 20:31:15 tellini Exp $
+    revision             : $Id: core.cpp,v 1.8 2003-03-01 19:55:20 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -383,6 +383,9 @@ static void SigDie( int signum )
 
 		case SIGFPE:
 			throw "FPU exception";
+
+		default:
+			throw "unexpected signal to SigDie()!";
 	}
 }
 //--------------------------------------------------------------------------
