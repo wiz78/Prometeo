@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.13 2003-03-01 19:45:45 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.14 2003-03-02 17:08:47 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -851,7 +851,7 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 {
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::StartTunneling( %08x )", data ));
 
-	if( data->ClientSock ) {
+	if( data->ClientSock && data->ServerSock ) {
 		int			i = 0;
 		const char	*ptr;
 
