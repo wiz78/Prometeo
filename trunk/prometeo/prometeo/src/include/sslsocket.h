@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.h
                              -------------------
-    revision             : $Id: sslsocket.h,v 1.1 2002-10-30 16:53:01 tellini Exp $
+    revision             : $Id: sslsocket.h,v 1.2 2002-10-31 19:04:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -16,6 +16,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+#if USE_SSL
 
 #ifndef PROM_SSLSOCKET_H
 #define PROM_SSLSOCKET_H
@@ -57,3 +59,5 @@ private:
 #define SSLF_DONT_CLOSE			(1 << 0)
 
 #endif
+
+#endif /* USE_SSL */

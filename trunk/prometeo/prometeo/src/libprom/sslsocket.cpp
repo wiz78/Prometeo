@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.cpp
                              -------------------
-    revision             : $Id: sslsocket.cpp,v 1.1 2002-10-30 16:53:01 tellini Exp $
+    revision             : $Id: sslsocket.cpp,v 1.2 2002-10-31 19:04:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -16,6 +16,17 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+#include "main.h"
+
+#if USE_SSL
+
+#if HAVE_ZLIB_H
+#define ZLIB 1
+#endif
+
+#include <openssl/err.h>
+#include <openssl/comp.h>
 
 #include "sslsocket.h"
 
@@ -47,8 +58,8 @@ SSLSocket::~SSLSocket()
 
 	free( SslCtx );
 
-//	ERR_free_strings();
-//	ERR_remove_state( 0 );
+	ERR_free_strings();
+	ERR_remove_state( 0 );
 
 	if( SSLFlags.IsSet( SSLF_DONT_CLOSE ))
 		FD = -1;
@@ -66,15 +77,15 @@ bool SSLSocket::SSLInitSession( SocketType type )
 
 	SSL_load_error_strings();
 	SSL_library_init();
-/*
-#if HAVE_ZLIB_H
+
+#if ZLIB
 	{
 		COMP_METHOD *cm = COMP_zlib();
 
 		if( cm && ( cm->type != NID_undef ))
         	SSL_COMP_add_compression_method( 0xe0, cm ); // Eric Young's ZLIB ID
 	}
-#endif*/ /* ZLIB */
+#endif
 
 	if( type == CLIENT )
 		SslCtx = InitClient();
@@ -160,3 +171,4 @@ int SSLSocket::Recv( void *buffer, int size, int flags, int timeout )
 	return( nread );
 }
 //---------------------------------------------------------------------------
+#endif /* USE_SSL */

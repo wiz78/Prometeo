@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.4 2002-10-30 16:53:01 tellini Exp $
+    revision             : $Id: client.cpp,v 1.5 2002-10-31 19:04:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -295,10 +295,12 @@ void Client::DispatchCmd( void )
 
 			if( Command == "FEAT" )
 				CmdFeat();
+#if USE_SSL
 			else if( Command == "PBSZ" )
 				CmdPbsz();
 			else if( Command == "PROT" )
 				CmdProt();
+#endif
 			else if( Command == "PASV" )
 				CmdPasv();
 			else if( Command == "EPSV" )
@@ -509,6 +511,7 @@ bool Client::ForwardCmd( void )
 //---------------------------------------------------------------------------
 void Client::CmdAuth( void )
 {
+#if USE_SSL
 	if(( Args == "TLS" ) || ( Args == "TLS-C" ) || ( Args == "SSL" )) {
 		SSLSocket	*ssl;
 
@@ -535,6 +538,7 @@ void Client::CmdAuth( void )
 		}
 
 	} else
+#endif
 		User->Printf( "504 AUTH %s is not supported.\r\n", Args.c_str() );
 }
 //---------------------------------------------------------------------------
@@ -551,11 +555,13 @@ void Client::CmdPass( void )
 void Client::CmdFeat( void )
 {
 	User->Printf( "211-Extensions supported\r\n"
+#if USE_SSL
 				  " AUTH TLS\r\n"
-				  " EPRT\r\n"
-				  " EPSV\r\n"
 				  " PBSZ\r\n"
 				  " PROT\r\n"
+#endif
+				  " EPRT\r\n"
+				  " EPSV\r\n"
 				  "211 END\r\n" );
 }
 //---------------------------------------------------------------------------

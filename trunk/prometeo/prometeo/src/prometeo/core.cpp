@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-	revision             : $Id: core.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: core.cpp,v 1.3 2002-10-31 19:04:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -29,6 +29,8 @@
 #include "loader.h"
 #include "dnscache.h"
 #include "iodispatcher.h"
+#include "tcpsocket.h"
+#include "sslsocket.h"
 
 #define PROM_PID_FILE	"/tmp/prometeo.pid"
 #define SPOOL_DIR		"/var/spool/prometeo"
@@ -45,6 +47,13 @@ static volatile int LastSig = -1;
 //--------------------------------------------------------------------------
 Core::Core()
 {
+	// bring in this two classes from libprom
+	// otherwise the modules won't find them
+	delete new TcpSocket( -1 );
+#if USE_SSL
+	delete new SSLSocket( -1 );
+#endif
+		
 	Cfg   = new Registry( this );
 	Log   = new Logger();
 	IO    = new IODispatcher();
