@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.6 2003-03-19 20:36:55 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.7 2004-09-12 11:31:54 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -284,10 +284,14 @@ bool Socket::AsyncRecv( void *data, int size, int flags, int timeout )
 
 		len = recv( FD, data, size, flags );
 
-		if( len >= 0 )
+		if( len >= 0 ) {
+
+			if( len == 0 )
+				ret = false;
+				
 			Callback( PROM_SOCK_READ, len );
 
-		else if(( errno != EWOULDBLOCK ) && ( errno != EINTR )) {
+		} else if(( errno != EWOULDBLOCK ) && ( errno != EINTR )) {
 
 			Callback( PROM_SOCK_ERROR, errno );
 
