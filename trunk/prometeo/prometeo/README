@@ -1,4 +1,4 @@
-$Id: README,v 1.6 2002-12-11 14:18:49 tellini Exp $
+$Id: README,v 1.7 2003-02-09 11:23:20 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -70,6 +70,10 @@ to check out are:
 
 After you've compiled and installed prometeo, rename prometeo.xml.sample
 to prometeo.xml (in <prefix>/etc) and invoke prometeo.
+
+Except on BSD systems, you should also copy the file pam/prometeo to your
+system's pam directory (on Mandrake it's /etc/pam.d) and edit it if you
+like.
 
 Now you can point your web browser to http://localhost:8081 to access 
 the configuration panel.
