@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.5 2002-10-31 19:04:14 tellini Exp $
+    revision             : $Id: client.cpp,v 1.6 2002-11-01 19:01:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -75,11 +75,20 @@ Client::Client() : Process()
 	Server     = NULL;
 	UserData   = NULL;
 	ServerData = NULL;
+#if USE_SSL
+	ClientCtx  = new SSLCtx( SSLCtx::CLIENT );
+	ServerCtx  = new SSLCtx( SSLCtx::SERVER );
+#endif
 }
 //---------------------------------------------------------------------------
 Client::~Client()
 {
 	Cleanup();
+
+#if USE_SSL
+	delete ClientCtx;
+	delete ServerCtx;
+#endif
 }
 //---------------------------------------------------------------------------
 void Client::OnFork( void )
@@ -426,18 +435,7 @@ bool Client::ServerLogin( const string& user )
 
 	if( RecvStatus() == 220 ) {
 
-		if( FTPFlags.IsSet( FTPF_TLS )) {
-			bool	ok = false;
-
-			Server->Printf( "AUTH TLS\r\n" );
-
-			if( RecvStatus() == 234 ) {
-			}
-
-			if( !ok )
-				User->Printf( "421 Cannot login.\r\n" );
-
-		} else {
+		if( AttemptTLSLogin() ) {
 
 			Server->Printf( "USER %s\r\n", user.c_str() );
 
@@ -462,6 +460,48 @@ bool Client::ServerLogin( const string& user )
 			ret = true;
 		}
 	}
+
+	return( ret );
+}
+//---------------------------------------------------------------------------
+bool Client::AttemptTLSLogin( void )
+{
+	bool	ret = true;
+
+#if USE_SSL
+	Server->Printf( "AUTH TLS\r\n" );
+
+	if( RecvStatus() == 234 ) {
+		SSLSocket *ssl = new SSLSocket( ClientCtx, Server );
+
+		if( ssl->SSLInitSession( SSLCtx::CLIENT )) {
+
+			// avoid closing the socket
+			Server->SetFD( -1 );
+
+			delete Server;
+
+			Server = (TcpSocket *)ssl;
+
+			Flags.Set( FTPF_TLS );
+
+		} else {
+
+			// grab return code from the server
+			RecvStatus();
+
+			ssl->SetFD( -1 );
+
+			delete ssl;
+
+			ret = false;
+		}
+	}
+
+	if( !ret )
+		User->Printf( "421 Cannot login.\r\n" );
+
+#endif /* USE_SSL */
 
 	return( ret );
 }
@@ -512,14 +552,15 @@ bool Client::ForwardCmd( void )
 void Client::CmdAuth( void )
 {
 #if USE_SSL
-	if(( Args == "TLS" ) || ( Args == "TLS-C" ) || ( Args == "SSL" )) {
+	if(( Args == "TLS" ) || ( Args == "TLS-C" ) || ( Args == "TLS-P" ) ||
+	   ( Args == "SSL" )) {
 		SSLSocket	*ssl;
 
 		User->Printf( "234 AUTH %s accepted.\r\n", Args.c_str() );
 
-		ssl = new SSLSocket( User );
+		ssl = new SSLSocket( ServerCtx, User );
 
-		if( ssl->SSLInitSession( SSLSocket::SERVER )) {
+		if( ssl->SSLInitSession( SSLCtx::SERVER )) {
 
 			// avoid closing the socket
 			User->SetFD( -1 );

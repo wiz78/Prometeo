@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-	revision             : $Id: core.cpp,v 1.3 2002-10-31 19:04:15 tellini Exp $
+	revision             : $Id: core.cpp,v 1.4 2002-11-01 19:01:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -47,13 +47,14 @@ static volatile int LastSig = -1;
 //--------------------------------------------------------------------------
 Core::Core()
 {
-	// bring in this two classes from libprom
+	// bring in these classes from libprom
 	// otherwise the modules won't find them
 	delete new TcpSocket( -1 );
 #if USE_SSL
-	delete new SSLSocket( -1 );
+	delete new SSLSocket( NULL, -1 );
+	delete new SSLCtx( SSLCtx::DUMMY );
 #endif
-		
+
 	Cfg   = new Registry( this );
 	Log   = new Logger();
 	IO    = new IODispatcher();

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.cpp
                              -------------------
-    revision             : $Id: sslsocket.cpp,v 1.2 2002-10-31 19:04:14 tellini Exp $
+    revision             : $Id: sslsocket.cpp,v 1.3 2002-11-01 19:01:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,31 +21,30 @@
 
 #if USE_SSL
 
-#if HAVE_ZLIB_H
-#define ZLIB 1
-#endif
-
-#include <openssl/err.h>
-#include <openssl/comp.h>
-
 #include "sslsocket.h"
 
 //---------------------------------------------------------------------------
-SSLSocket::SSLSocket() : TcpSocket()
+SSLSocket::SSLSocket( SSLCtx *ctx ) : TcpSocket()
 {
+	SslCtx = ctx;
+
 	Setup();
 }
 //---------------------------------------------------------------------------
-SSLSocket::SSLSocket( int fd, bool dontclose ) : TcpSocket( fd )
+SSLSocket::SSLSocket( SSLCtx *ctx, int fd, bool dontclose ) : TcpSocket( fd )
 {
+	SslCtx = ctx;
+
 	if( dontclose )
 		SSLFlags.Set( SSLF_DONT_CLOSE );
 
 	Setup();
 }
 //---------------------------------------------------------------------------
-SSLSocket::SSLSocket( TcpSocket *sock, bool dontclose ) : TcpSocket( sock->GetFD() )
+SSLSocket::SSLSocket( SSLCtx *ctx, TcpSocket *sock, bool dontclose ) : TcpSocket( sock->GetFD() )
 {
+	SslCtx = ctx;
+
 	if( dontclose )
 		SSLFlags.Set( SSLF_DONT_CLOSE );
 
@@ -56,55 +55,29 @@ SSLSocket::~SSLSocket()
 {
 	SSLEndSession();
 
-	free( SslCtx );
-
-	ERR_free_strings();
-	ERR_remove_state( 0 );
-
 	if( SSLFlags.IsSet( SSLF_DONT_CLOSE ))
 		FD = -1;
 }
 //---------------------------------------------------------------------------
 void SSLSocket::Setup( void )
 {
-	Ssl    = NULL;
-	SslCtx = NULL;
+	Ssl = NULL;
 }
 //---------------------------------------------------------------------------
-bool SSLSocket::SSLInitSession( SocketType type )
+bool SSLSocket::SSLInitSession( SSLCtx::SessionType type )
 {
 	bool	ok = false;
 
-	SSL_load_error_strings();
-	SSL_library_init();
+	if( SslCtx->IsValid() ) {
 
-#if ZLIB
-	{
-		COMP_METHOD *cm = COMP_zlib();
-
-		if( cm && ( cm->type != NID_undef ))
-        	SSL_COMP_add_compression_method( 0xe0, cm ); // Eric Young's ZLIB ID
-	}
-#endif
-
-	if( type == CLIENT )
-		SslCtx = InitClient();
-	else
-		SslCtx = InitServer();
-
-	if( SslCtx ) {
-
-		// TODO make paths/certs configurable
-		SSL_CTX_set_default_verify_paths( SslCtx );
-
-		Ssl = SSL_new( SslCtx );
+		Ssl = SSL_new( SslCtx->GetCtx() );
 
 		if( Ssl ) {
 			int res;
 
 			SSL_set_fd( Ssl, FD );
 
-			if( type == CLIENT )
+			if( type == SSLCtx::CLIENT )
 				res = SSL_connect( Ssl );
 			else
 				res = SSL_accept( Ssl );
@@ -123,38 +96,10 @@ void SSLSocket::SSLEndSession( void )
 		if( SSL_shutdown( Ssl ) == 0 )
 			SSL_shutdown( Ssl );
 
-		free( Ssl );
+		SSL_free( Ssl );
 
 		Ssl = NULL;
 	}
-}
-//---------------------------------------------------------------------------
-SSL_CTX *SSLSocket::InitClient( void )
-{
-	SSL_CTX	*ctx = SSL_CTX_new( SSLv23_client_method() );
-
-	if( ctx ) {
-
-		/* Set up session caching. */
-		SSL_CTX_set_session_cache_mode( ctx, SSL_SESS_CACHE_CLIENT );
-		SSL_CTX_set_session_id_context( ctx, (unsigned char *)"1", 1 );
-	}
-
-	return( ctx );
-}
-//---------------------------------------------------------------------------
-SSL_CTX *SSLSocket::InitServer( void )
-{
-	SSL_CTX	*ctx = SSL_CTX_new( SSLv23_server_method() );
-
-	if( ctx ) {
-
-		/* Set up session caching. */
-		SSL_CTX_set_session_cache_mode( ctx, SSL_SESS_CACHE_SERVER );
-		SSL_CTX_set_session_id_context( ctx, (unsigned char *)"1", 1 );
-	}
-
-	return( ctx );
 }
 //---------------------------------------------------------------------------
 bool SSLSocket::Send( const void *data, int size, int flags )
@@ -166,7 +111,26 @@ int SSLSocket::Recv( void *buffer, int size, int flags, int timeout )
 {
 	int nread;
 
-	nread = SSL_read( Ssl, buffer, size );
+	// first check whether we already have some data
+	if( TmpData.GetSize() > 0 ) {
+
+		nread = TmpData.GetSize();
+
+		if( size < nread )
+			nread = size;
+
+		memcpy( buffer, TmpData.GetData(), nread );
+
+		if( nread < TmpData.GetSize() )
+			TmpData.SetContent( TmpData.GetData() + nread, TmpData.GetSize() - nread );
+		else
+			TmpData.Clear();
+
+	} else
+		nread = SSL_read( Ssl, buffer, size );
+
+	if( flags & MSG_PEEK )
+		TmpData.SetContent((char *)buffer, nread );
 
 	return( nread );
 }

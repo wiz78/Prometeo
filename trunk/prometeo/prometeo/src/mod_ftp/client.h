@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.6 2002-10-30 16:53:02 tellini Exp $
+    revision             : $Id: client.h,v 1.7 2002-11-01 19:01:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,6 +26,7 @@ using namespace std;
 
 #include "process.h"
 #include "bitfield.h"
+#include "sslctx.h"
 
 class TcpSocket;
 
@@ -45,6 +46,10 @@ private:
 	TcpSocket			*Server;
 	TcpSocket			*UserData;
 	TcpSocket			*ServerData;
+#if USE_SSL
+	SSLCtx				*ClientCtx;
+	SSLCtx				*ServerCtx;
+#endif
 	string				Command;
 	string				Args;
 	string				LastReply;
@@ -74,8 +79,10 @@ private:
 	virtual void		Dispatch( void );
 
 	void				DispatchCmd( void );
+
 	void				ConnectToServer( void );
 	bool				ServerLogin( const string& user );
+	bool				AttemptTLSLogin( void );
 
 	void				AcceptUserData( TcpSocket *sock );
 	void				AcceptServerData( TcpSocket *sock );
