@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.h
                              -------------------
-    revision             : $Id: cfgdata.h,v 1.4 2002-11-14 18:14:00 tellini Exp $
+    revision             : $Id: cfgdata.h,v 1.5 2002-11-20 22:53:43 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -28,6 +28,7 @@
 #include "api.h"
 #include "linkedlist.h"
 #include "buffer.h"
+#include "option.h"
 
 class CfgEditor;
 class TcpSocket;
@@ -44,7 +45,7 @@ public:
 	string			DecodeArg( const char *arg );
 
 	void			UpdateKey( const string& key, const string& node,
-							   const string type, const string val );
+							   Option::OptionType type, const string val );
 
 private:
 	CfgEditor		*Editor;
@@ -89,8 +90,6 @@ private:
 	bool			IsAuthorized( void );
 
 	void			SendFile( string name );
-
-	string			UrlDecode( const string val );
 
 	void			UpdateSettings( PageMaker& pg );
 	void			UpdateMods( PageMaker& pg );

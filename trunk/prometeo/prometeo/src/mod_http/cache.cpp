@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.6 2002-11-07 14:49:40 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.7 2002-11-20 22:53:43 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -127,9 +127,7 @@ bool Cache::Prune( void )
 {
 	bool	deleted = false;
 
-	DBG( App->Log->Log( LOG_INFO, "mod_http: cache size = %lld, MaxSize = %lld", Store.GetSize(), MaxSize ));
-
-//	Store.RecalcSize(); // fixes an unknown bug - XXX
+//	DBG( App->Log->Log( LOG_INFO, "mod_http: cache size = %lld, MaxSize = %lld", Store.GetSize(), MaxSize ));
 	
 	if( Store.GetSize() > MaxSize ) {
 		CacheObj	*obj = (CacheObj *)Objects.GetHead();
@@ -161,7 +159,7 @@ bool Cache::Prune( void )
 		unsigned long long	size = 0;
 		CacheObj			*obj = (CacheObj *)Objects.GetHead();
 					
-		App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() returns %d - size = %lld", deleted, Store.GetSize() );
+//		App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() returns %d - size = %lld", deleted, Store.GetSize() );
 		
 		while( Objects.IsNode( obj )) {
 

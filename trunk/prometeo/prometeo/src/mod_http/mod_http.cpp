@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.7 2002-11-18 17:46:42 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.8 2002-11-20 22:53:43 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -120,6 +120,39 @@ static const char *GetManifest( const char *key, const char *name )
 				"				<Label>Port</Label>"
 				"				<Descr>The port to redirected to.</Descr>"
 				"				<Key name=\"port\"/>"
+				"			</Option>"
+				"		</Fields>"
+				"	</Option>"
+
+				"	<Option type=\"list\" name=\"filters\">"
+				"		<Label>Filters</Label>"
+				"		<Descr>URL filtering table.</Descr>"
+				"		<Key name=\"" + basekey + "Filters\"/>"
+				"		<ListKey name=\"label\">"
+				"			<Label>Label</Label>"
+				"			<Descr>A label to identify the filter.</Descr>"
+				"		</ListKey>"
+				"		<Fields>"
+				"			<Option type=\"text\" name=\"url\" default=\"\" show=\"no\">"
+				"				<Label>URLs</Label>"
+				"				<Descr>A list of URL's which this filter should be applied to. You can use regular expressions; don't forget to start them with \"http://\", if needed.</Descr>"
+				"				<Key name=\"url\"/>"
+				"			</Option>"
+				"			<Option type=\"select\" name=\"action\" default=\"noaction\" show=\"yes\">"
+				"				<Items>"
+				"					<Item value=\"noaction\">no action</Item>"
+				"					<Item value=\"nocache\">don't cache</Item>"
+				"					<Item value=\"forbid\">forbid</Item>"
+				"					<Item value=\"redirect\">redirect</Item>"
+				"				</Items>"
+				"				<Label>Action</Label>"
+				"				<Descr>What to do when the filter is matched.</Descr>"
+				"				<Key name=\"action\"/>"
+				"			</Option>"
+				"			<Option type=\"string\" name=\"redirect\" default=\"\" show=\"no\">"
+				"				<Label>Redirect to</Label>"
+				"				<Descr>The URL to redirect to. It's ignored if action is not \"redirect\".</Descr>"
+				"				<Key name=\"redirect\"/>"
 				"			</Option>"
 				"		</Fields>"
 				"	</Option>"

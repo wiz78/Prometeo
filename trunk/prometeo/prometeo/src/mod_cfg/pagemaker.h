@@ -1,7 +1,7 @@
 /***************************************************************************
                                  pagemaker.h
                              -------------------
-    revision             : $Id: pagemaker.h,v 1.6 2002-11-15 20:22:25 tellini Exp $
+    revision             : $Id: pagemaker.h,v 1.7 2002-11-20 22:53:43 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -24,22 +24,13 @@
 #include <sablot.h>
 #include <sdom.h>
 
-#include "cfgdata.h"
-#include "stringlist.h"
+#include "list.h"
 
-class ListData
-{
-public:
-	string			Page;
-	string			List;
-	string			Path;
-	string			Descr;
-	string			BaseKey;
-	string			KeyName;
-	string			KeyLabel;
-	string			KeyDescr;
-	StringList		Fields;
-};
+#include "cfgdata.h"
+#include "misc.h"
+
+class Option;
+class ListOption;
 
 class PageMaker
 {
@@ -51,7 +42,8 @@ public:
 
 	void			BuildPage( const string& page, string& result );
 
-	StringList&		GetOptions( const string& page );
+	bool			ReadOptions( const string& page );
+	Option			*GetOption( int i );
 
 private:
 	CfgData			*Cfg;
@@ -59,27 +51,20 @@ private:
 	SablotSituation	Situation;
 	SDOM_Document	DocDOM;
 	string			Doc;
-	StringList		Options;
+	List			Options;
 
 	void			LoadFile( const char *str );
 
 	bool			ParseDoc( void );
 
-	string			ValueOf( const string query, SDOM_Node context );
-	void			GetOptionList( const string query, StringList& list );
+	string			ValueOf( const string query, SDOM_Node context ) { return( ::ValueOf( query, context, Situation )); }
+	void			ClearOptions( void );
 
-	void			AddPageHeader( const string page, string& result );
+	void			AddPageHeader( string page, string& result );
 	void			AddPageFooter( string& result, bool closeform = true );
 
 	void			BeginOptionsTable( const string caption, string& result );
 	void			EndOptionsTable( string& result );
-
-	void			AddOption( const string& page, const char *opt, string& result );
-	void			AddTextOption( const StringList& args, string& result, bool edit );
-	void			AddTextAreaOption( const StringList& args, string& result );
-	void			AddIntegerOption( const StringList& args, string& result );
-	void			AddBoolOption( const StringList& args, string& result );
-	void			AddListOption( const StringList& args, string& result, const string& page );
 
 	void			BuildModsPage( string& result );
 	void			BuildApplyPage( string& result );
@@ -88,13 +73,9 @@ private:
 	void			BuildListEditPage( string& result );
 	void			BuildListItemPage( string& result );
 
-	void			GetListData( ListData& data );
-	int				AddListHeaders( const ListData& data, string& result );
-	void			AddListRow( const char *item, const ListData& data, string& result );
-	void			SaveListItem( const ListData& data );
+	ListOption		*GetListData( void );
+	void			SaveListItem( ListOption *opt );
 	void			DeleteListItem( string& result );
-
-	string			UrlEncode( const string& str );
 };
 
 // options
