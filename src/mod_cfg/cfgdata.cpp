@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.7 2002-11-15 16:26:45 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.8 2002-11-20 22:53:43 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,7 +20,6 @@
 #include "main.h"
 
 #include <fstream>
-#include <stdio.h>
 
 #include "tcpsocket.h"
 #include "stringlist.h"
@@ -31,6 +30,7 @@
 #include "cfgdata.h"
 #include "base64.h"
 #include "pagemaker.h"
+#include "misc.h"
 
 #define TIMEOUT_REQUEST				15
 #define TIMEOUT_BODY				45
@@ -328,7 +328,7 @@ void CfgData::ParseRequest( void )
 			CheckPage( pg );
 			ProcessRequest( pg );
 
-			pg.BuildPage( RequestedPage, body );
+			pg.BuildPage( UrlDecode( RequestedPage ), body );
 
 			len = body.length();
 
@@ -590,83 +590,18 @@ string CfgData::DecodeArg( const char *arg )
 	return( val );
 }
 //---------------------------------------------------------------------------
-string CfgData::UrlDecode( const string val )
-{
-	const char	*src;
-	char		*dst, *tmp;
-	string		ret;
-
-	tmp = new char[ val.length() + 1 ];
-	src = val.c_str();
-	dst = tmp;
-
-	while( *src ) {
-		char ch = *src++;
-
-		switch( ch ) {
-
-			case '+':
-				*dst++ = ' ';
-				break;
-
-			case '%': // %xx - hex value to decode
-				char v1, v2;
-
-				if(( v1 = *src ) && ( v2 = *++src )) {
-					static const char 	hex[] = "0123456789abcdef";
-					const char			*ptr;
-
-					if( ptr = strchr( hex, tolower( v1 ))) {
-
-						v1 = ptr - hex;
-
-						if( ptr = strchr( hex, tolower( v2 ))) {
-
-							v2 = ptr - hex;
-
-							*dst++ = ( v1 << 4 ) | v2;
-						}
-					}
-
-					src++;
-				}
-				break;
-
-			default:
-				*dst++ = ch;
-				break;
-		}
-	}
-
-	*dst = '\0';
-
-	ret = tmp;
-
-	delete[] tmp;
-
-	return( ret );
-}
-//---------------------------------------------------------------------------
 void CfgData::UpdateSettings( PageMaker& pg )
 {
 	if( RequestedPage == "mods" )
 		UpdateMods( pg );
-	else {
-		string		page = RequestedPage;
+	else if( pg.ReadOptions( RequestedPage )) {
+		int i = 0;
 
-		if( page.substr( 0, 4 ) == "mod/" )
-			page.erase( 0, 4 );
-
-		StringList&	options = pg.GetOptions( page );
-
-		for( int i = 0; i < options.Count(); i++ ) {
-			StringList			list;
+		while( Option *opt = pg.GetOption( i++ )) {
 			string				str;
 			string::size_type	pos;
 
-			list.Explode( options[ i ], "|" );
-
-			str = list[ OP_KEY ];
+			str = opt->GetKey();
 			pos = str.rfind( "/" );
 
 			if( pos != string::npos ) {
@@ -674,30 +609,35 @@ void CfgData::UpdateSettings( PageMaker& pg )
 
 				key  = str.substr( 0, pos );
 				node = str.substr( pos + 1 );
-				val  = DecodeArg( list[ OP_NAME ] );
+				val  = DecodeArg( opt->GetName().c_str() );
 
-				UpdateKey( key, node, list[ OP_TYPE ], val );
+				UpdateKey( key, node, opt->GetType(), val );
 			}
 		}
 	}
 }
 //---------------------------------------------------------------------------
 void CfgData::UpdateKey( const string& key, const string& node,
-						 const string type, const string val )
+						 Option::OptionType type, const string val )
 {
 	if( App->Cfg->OpenKey( key.c_str(), true )) {
 
-		if( type == "string" )
-			App->Cfg->SetString( node.c_str(), val.c_str() );
+		switch( type ) {
 
-		else if( type == "text" )
-			App->Cfg->SetString( node.c_str(), val.c_str() );
+			case Option::T_STRING:
+			case Option::T_TEXT:
+			case Option::T_SELECT:
+				App->Cfg->SetString( node.c_str(), val.c_str() );
+				break;
 
-		else if( type == "integer" )
-			App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
+			case Option::T_INTEGER:
+				App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
+				break;
 
-		else if( type == "bool" )
-			App->Cfg->SetInteger( node.c_str(), val == "on" );
+			case Option::T_BOOL:
+				App->Cfg->SetInteger( node.c_str(), val == "on" );
+				break;
+		}
 
 		App->Cfg->CloseKey();
 	}
