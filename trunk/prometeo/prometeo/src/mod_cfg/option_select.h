@@ -1,7 +1,7 @@
 /***************************************************************************
                                option_select.h
                              -------------------
-    revision             : $Id: option_select.h,v 1.1 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: option_select.h,v 1.2 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -37,6 +37,8 @@ public:
 
 	virtual void	Render( string& result );
 	virtual void	ReadParams( SablotSituation sit, SDOM_Node ctx );
+
+	string			GetValueLabel( string value );
 
 private:
 	SelectItem		*Items;

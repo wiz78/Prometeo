@@ -1,7 +1,7 @@
 /***************************************************************************
                                 option_list.h
                              -------------------
-    revision             : $Id: option_list.h,v 1.1 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: option_list.h,v 1.2 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -36,13 +36,19 @@ public:
 	string&			GetKeyName( void )    { return( KeyName ); }
 	string&			GetKeyLabel( void )   { return( KeyLabel ); }
 	string&			GetKeyDescr( void )   { return( KeyDescr ); }
+	string&			GetPathName( void )   { return( PathName.empty() ? Name : PathName ); }
 
 	Option			*GetField( int i );
+
+	void			SetParentName( string str ) { PathName = str + "/" + Name; }
+
+	ListOption		*FindList( string name );
 
 private:
 	string			KeyName;
 	string			KeyLabel;
 	string			KeyDescr;
+	string			PathName;
 	List			Fields;
 
 	int				AddListHeaders( string& result );

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.8 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.9 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,6 +23,7 @@
 
 #include "mod_http.h"
 #include "cache.h"
+#include "filter.h"
 
 #undef DBG
 #define DBG(x)
@@ -146,7 +147,7 @@ static const char *GetManifest( const char *key, const char *name )
 				"					<Item value=\"redirect\">redirect</Item>"
 				"				</Items>"
 				"				<Label>Action</Label>"
-				"				<Descr>What to do when the filter is matched.</Descr>"
+				"				<Descr>What to do when the filter is triggered.</Descr>"
 				"				<Key name=\"action\"/>"
 				"			</Option>"
 				"			<Option type=\"string\" name=\"redirect\" default=\"\" show=\"no\">"
@@ -208,6 +209,7 @@ HTTPProxy::HTTPProxy( const char *key )
 	ListeningSocket = NULL;
 	MaxObjectSize   = 600 * 1024;
 	HostMap         = new HostMapper( Key + "/HostMap" );
+	Filters         = new FilterMgr( Key + "/Filters" );
 
 	time( &LastPruneTime );
 
@@ -245,6 +247,7 @@ void HTTPProxy::ReloadCfg( void )
 	Setup();
 	CacheMgr.SetMaxSize( maxcache );
 	HostMap->ReloadCfg();
+	Filters->Load();
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::Setup( void )
@@ -510,7 +513,7 @@ void HTTPProxy::SocketClosed( HTTPData *data, Socket *sock )
 				else
 					SendError( data, HTTP_BAD_GATEWAY, "The server closed the connection unexpectedly." );
 				break;
-				
+
 			default:
 				data->ServerState = S_CLOSING;
 
@@ -529,6 +532,9 @@ void HTTPProxy::SocketClosed( HTTPData *data, Socket *sock )
 //---------------------------------------------------------------------------
 void HTTPProxy::HandleRequest( HTTPData *data )
 {
+	Filter *filter = Filters->Match( data->Client.GetURL().Encode() );
+	bool	ok = true;
+
 	if( Flags.IsSet( MODF_LOG_REQUESTS ))
 		App->Log->Log( LOG_INFO, "mod_http: %s \"%s %s %s\"",
 					   data->ClientSock->GetPeerName(),
@@ -536,23 +542,38 @@ void HTTPProxy::HandleRequest( HTTPData *data )
 					   data->Client.GetURL().Encode(),
 					   data->Client.GetProtocol() );
 
-	switch( data->Client.GetMethod() ) {
+	if( filter )
+		switch( filter->GetAction() ) {
 
-		case HTTP::M_PUT:
-		case HTTP::M_POST:
-			ConnectToServer( data );
-			break;
+			case Filter::F_REDIRECT:
+				data->Client.GetURL().Decode( filter->GetTarget().c_str() );
+				break;
 
-		case HTTP::M_GET:
-		case HTTP::M_HEAD:
-			Handle_GET_HEAD( data );
-			break;
+			case Filter::F_FORBID:
+				SendError( data, HTTP_FORBIDDEN,
+						   "Sorry, you're not authorized to see this page." );
+				ok = false;
+				break;
+		}
 
-		default:
-			SendError( data, HTTP_NOT_IMPLEMENTED,
-					   "Your browser used a method I don't understand." );
-			break;
-	}
+	if( ok )
+		switch( data->Client.GetMethod() ) {
+
+			case HTTP::M_PUT:
+			case HTTP::M_POST:
+				ConnectToServer( data );
+				break;
+
+			case HTTP::M_GET:
+			case HTTP::M_HEAD:
+				Handle_GET_HEAD( data );
+				break;
+
+			default:
+				SendError( data, HTTP_NOT_IMPLEMENTED,
+						"Your browser used a method I don't understand." );
+				break;
+		}
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::SendError( HTTPData *data, int code, const char *text )
@@ -579,7 +600,7 @@ void HTTPProxy::SendError( HTTPData *data, int code, const char *text )
 void HTTPProxy::ResetConnection( HTTPData *data )
 {
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::ResetConnection( %08x )", data ));
-	
+
 	if( !ResetServerConnection( data )) {
 
 		if( data->ClientSock && ( data->State != S_CLOSING ) && data->Client.KeepAlive() ) {
@@ -944,7 +965,8 @@ void HTTPProxy::SendRequest( const char *method, HTTPData *data )
 		    !strncmp( str, "accept-charset:", 15 ) ||
 		    !strncmp( str, "accept-language:", 16 ) ||
 		    !strncmp( str, "cookie:", 7 ) ||
-		    !strncmp( str, "user-agent:", 11 ))
+		    !strncmp( str, "user-agent:", 11 ) ||
+			!strncmp( str, "host", 4 ))
 			headers.Add( "%s", ptr );
 
 		if( !strncmp( str, "range:", 6 )) {
@@ -1137,7 +1159,7 @@ void HTTPProxy::SendFromCache( HTTPData *data )
 {
 	if( !ResetServerConnection( data )) {
 		StoreObj *obj =  data->Cached->GetStoreObj();
-			
+
 		if( obj ) {
 			StringList	headers;
 			bool		done;
@@ -1210,7 +1232,7 @@ void HTTPProxy::HandleBody( HTTPData *data, int len )
 		else {
 
 			data->ServerState = S_CLOSING;
-				
+
 			SendError( data, HTTP_BAD_GATEWAY, "Received corrupt data from the origin server." );
 		}
 	}
@@ -1299,8 +1321,15 @@ bool HTTPProxy::IsCacheable( HTTPData *data )
 {
 	bool	ret;
 
-	ret = data->Server.IsCacheable() && 
+	ret = data->Server.IsCacheable() &&
 		 ( data->Server.GetSize() <= MaxObjectSize );
+
+	if( ret ) {
+		Filter *filter = Filters->Match( data->Client.GetURL().Encode() );
+
+		if( filter && ( filter->GetAction() == Filter::F_DONT_CACHE ))
+			ret = false;
+	}
 
 	return( ret );
 }

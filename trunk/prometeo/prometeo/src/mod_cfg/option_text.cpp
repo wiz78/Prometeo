@@ -1,7 +1,7 @@
 /***************************************************************************
                                option_text.cpp
                              -------------------
-    revision             : $Id: option_text.cpp,v 1.1 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: option_text.cpp,v 1.2 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -51,16 +51,6 @@ void TextOption::Render( string& result )
 		value.erase( pos, 1 );
 
 		pos = value.find( ">", pos );
-	}
-
-	pos = value.find( "\n" );
-
-	while( pos != string::npos ) {
-
-		value.insert( pos + 1, "<br>" );
-		value.erase( pos, 1 );
-
-		pos = value.find( "\n", pos );
 	}
 
 	result += "<tr>"

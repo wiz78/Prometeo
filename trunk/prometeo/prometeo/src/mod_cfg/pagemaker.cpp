@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.7 2002-11-20 22:53:43 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.8 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -567,10 +567,15 @@ ListOption *PageMaker::GetListData( void )
 	ReadOptions( page );
 
 	for( int i = 0; !ret && ( i < Options.Count() ); i++ ) {
-		Option *opt = GetOption( i );
+		ListOption *opt = (ListOption *)GetOption( i );
 
-		if( list == opt->GetName() )
-			ret = (ListOption *)opt;
+		if( opt->GetType() == Option::T_LIST ) {
+		
+			if( list == opt->GetPathName() )
+				ret = opt;
+			else
+				ret = opt->FindList( list );
+		}
 	}
 
 	return( ret );
@@ -593,7 +598,7 @@ void PageMaker::BuildListItemPage( string& result )
 		BeginOptionsTable( opt->GetDescr(), result );
 
 		result +=	"<input type=\"hidden\" name=\"page\" value=\"" + opt->GetPage() + "\">"
-					"<input type=\"hidden\" name=\"list\" value=\"" + opt->GetName() + "\">"
+					"<input type=\"hidden\" name=\"list\" value=\"" + opt->GetPathName() + "\">"
 					"<input type=\"hidden\" name=\"save\" value=\"1\">";
 
 		item = Cfg->DecodeArg( opt->GetKeyName().c_str() );
@@ -621,7 +626,7 @@ void PageMaker::BuildListItemPage( string& result )
 					"</form>"
 					"<form action=\"/listedit\" method=\"GET\">"
 					"  <input type=\"hidden\" name=\"page\" value=\"" + opt->GetPage() + "\">"
-					"  <input type=\"hidden\" name=\"list\" value=\"" + opt->GetName() + "\">"
+					"  <input type=\"hidden\" name=\"list\" value=\"" + opt->GetPathName() + "\">"
 					"  <input type=\"submit\" value=\"Back to the list page\">"
 					"</form>";
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.2 2002-11-18 17:46:46 tellini Exp $
+	revision             : $Id: mod_http.h,v 1.3 2002-11-21 18:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,7 @@ using namespace std;
 #include "url.h"
 #include "cache.h"
 #include "hostmapper.h"
+#include "filtermgr.h"
 
 class HTTPData;
 class CacheObj;
@@ -70,6 +71,7 @@ private:
 	time_t			LastIndexTime;
 	unsigned int	MaxObjectSize;
 	HostMapper		*HostMap;
+	FilterMgr		*Filters;
 
 	void			Setup( void );
 
@@ -104,7 +106,7 @@ private:
 	void			ForwardResponse( HTTPData *data );
 	void			DownloadAndCache( HTTPData *data );
 	void			SendFromCache( HTTPData *data );
-	
+
 	bool			IsCacheable( HTTPData *data );
 
 	enum {
