@@ -1,4 +1,4 @@
-$Id: README,v 1.3 2002-12-06 17:06:47 tellini Exp $
+$Id: README,v 1.4 2002-12-08 16:54:09 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -58,7 +58,15 @@ Installation
 ----------------------------------------------------------------------------
 
 It follows the standard GNU guidelines, so read the INSTALL file for the
-generic install instructions.
+generic install instructions. Some configure options which you may want
+to check out are:
+
+ --enable-ipv6    to enable IPv6 support, if available (on Linux: make
+                  sure to have the IPv6 module compiled in the kernel, or
+				  insmod it)
+
+ --with-openssl   to activate the SSL/TLS support for all the modules 
+                  which need it
 
 After you've compiled and installed prometeo, rename prometeo.xml.sample
 to prometeo.xml (in <prefix>/etc) and invoke prometeo.
