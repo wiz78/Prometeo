@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.1 2003-05-24 12:28:53 tellini Exp $
+    revision             : $Id: client.h,v 1.2 2003-07-20 12:05:20 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -79,12 +79,13 @@ private:
 	bool				CreateTmpDir( string& dir );
 };
 
-#define POPF_CONNECTED			(1 << 0)
-#define POPF_TRANSPARENT		(1 << 1)
+#define POPF_CONNECTED				(1 << 0)
+#define POPF_TRANSPARENT			(1 << 1)
+#define POPF_CONNECTED_TO_ORIGIN	(1 << 2)
 
-#define POPF_CFG_SPAMD			(1 << 31)
+#define POPF_CFG_SPAMD				(1 << 31)
 
-#define POPF_CFG_MASK			( POPF_CFG_SPAMD )
+#define POPF_CFG_MASK				( POPF_CFG_SPAMD )
 
 }; // namespace
 

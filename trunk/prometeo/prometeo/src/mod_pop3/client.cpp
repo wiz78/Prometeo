@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.3 2003-06-20 20:13:41 tellini Exp $
+    revision             : $Id: client.cpp,v 1.4 2003-07-20 12:05:20 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -308,7 +308,7 @@ bool Client::DoConnect( Prom_Addr *addr, int port )
 
 	if( Server->Connect( addr, port )) {
 				
-		CFlags.Set( POPF_CONNECTED );
+		CFlags.Set( POPF_CONNECTED | POPF_CONNECTED_TO_ORIGIN );
 		
 		Prom_set_ps_display( "connected" );
 
@@ -358,7 +358,7 @@ void Client::ForwardCmd( void )
 	if( !CFlags.IsSet( POPF_TRANSPARENT ) && ( Command == "USER" ))
 		ConnectToServer();
 	
-	else if( CFlags.IsSet( POPF_CONNECTED )) {
+	else if( CFlags.IsSet( POPF_CONNECTED_TO_ORIGIN )) {
 		bool multiline = false;
 		
 		Server->Printf( "%s", Command.c_str() );
@@ -509,7 +509,7 @@ void Client::HandleError( TcpSocket *sock, int err )
 	if( sock == Server )
 		User->Printf( "-ERR The server connection dropped.\r\n" );
 
-	CFlags.Clear( POPF_CONNECTED );
+	CFlags.Clear( POPF_CONNECTED | POPF_CONNECTED_TO_ORIGIN );
 }
 //---------------------------------------------------------------------------
 }; // namespace
