@@ -3,9 +3,9 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl                              configure.in
 dnl                          -------------------
-dnl copyright            : (C) 2002 by Simone Tellini
+dnl copyright            : (C) 2002-2003 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.13 2003-03-01 20:22:08 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.14 2003-04-11 12:25:15 tellini Exp $
 dnl
 
 dnl -----------------------------------
