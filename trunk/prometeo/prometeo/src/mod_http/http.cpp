@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.4 2002-11-15 18:42:19 tellini Exp $
+    revision             : $Id: http.cpp,v 1.5 2002-11-22 16:53:23 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -477,6 +477,33 @@ const char *HTTP::GetCodeMsg( int code ) const
 	return( "" );
 }
 //---------------------------------------------------------------------------
+void HTTP::Redirect( const char *url )
+{
+	StringList	headers;
+	char		buf[ 4096 ];
+	int			len;
+
+	snprintf( buf, sizeof( buf ),
+			  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
+			  "<HTML><HEAD>"
+			  "<TITLE>302 Found</TITLE>"
+			  "</HEAD><BODY>"
+			  "<H1>Found</H1>"
+			  "The resource you requested is now available <A HREF=\"%s\">here</A><P>"
+			  "<HR><ADDRESS>prometeo/mod_http/"MOD_VERSION" proxy</ADDRESS>"
+			  "</BODY></HTML>\n",
+			  url );
+
+	len = strlen( buf );
+
+	headers.Add( "Location: %s", url );
+	headers.Add( "Content-Length: %d", len );
+
+	SendHeader( HTTP_MOVED_TEMPORARILY, "text/html", !KeepAlive(), &headers );
+
+	Sock->AsyncSend( buf, len );
+}
+//---------------------------------------------------------------------------
 void HTTP::SendHeader( int code, const char *type, bool closecon, StringList *ExtraHeaders )
 {
 	NetDate	date;
@@ -498,10 +525,10 @@ void HTTP::SendHeader( int code, const char *type, bool closecon, StringList *Ex
 
 #if HAVE_ZLIB_H
 	if( GZipper )
-		Sock->AsyncPrintf( "Content-Encoding: %s\r\n", 
+		Sock->AsyncPrintf( "Content-Encoding: %s\r\n",
 						   Flags.IsSet( HTTPF_DEFLATE ) ? "deflate" : "gzip" );
 #endif
-	
+
 	Sock->AsyncSend( "\r\n", 2 );
 
 	Flags.Set( HTTPF_HEADER_SENT );

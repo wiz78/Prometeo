@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.9 2002-11-21 18:36:55 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.10 2002-11-22 16:53:24 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -532,9 +532,6 @@ void HTTPProxy::SocketClosed( HTTPData *data, Socket *sock )
 //---------------------------------------------------------------------------
 void HTTPProxy::HandleRequest( HTTPData *data )
 {
-	Filter *filter = Filters->Match( data->Client.GetURL().Encode() );
-	bool	ok = true;
-
 	if( Flags.IsSet( MODF_LOG_REQUESTS ))
 		App->Log->Log( LOG_INFO, "mod_http: %s \"%s %s %s\"",
 					   data->ClientSock->GetPeerName(),
@@ -542,21 +539,7 @@ void HTTPProxy::HandleRequest( HTTPData *data )
 					   data->Client.GetURL().Encode(),
 					   data->Client.GetProtocol() );
 
-	if( filter )
-		switch( filter->GetAction() ) {
-
-			case Filter::F_REDIRECT:
-				data->Client.GetURL().Decode( filter->GetTarget().c_str() );
-				break;
-
-			case Filter::F_FORBID:
-				SendError( data, HTTP_FORBIDDEN,
-						   "Sorry, you're not authorized to see this page." );
-				ok = false;
-				break;
-		}
-
-	if( ok )
+	if( !FilterRequest( data ))
 		switch( data->Client.GetMethod() ) {
 
 			case HTTP::M_PUT:
@@ -574,6 +557,31 @@ void HTTPProxy::HandleRequest( HTTPData *data )
 						"Your browser used a method I don't understand." );
 				break;
 		}
+}
+//---------------------------------------------------------------------------
+bool HTTPProxy::FilterRequest( HTTPData *data )
+{
+	Filter *filter = Filters->Match( data->Client.GetURL().Encode() );
+	bool	ret = false;;
+
+	if( filter )
+		switch( filter->GetAction() ) {
+
+			case Filter::F_REDIRECT:
+				data->Client.Redirect( filter->GetTarget().c_str() );
+				ResetConnection( data );
+
+				ret = true;
+				break;
+
+			case Filter::F_FORBID:
+				SendError( data, HTTP_FORBIDDEN,
+						   "Sorry, you're not authorized to see this page." );
+				ret = true;
+				break;
+		}
+
+	return( ret );
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::SendError( HTTPData *data, int code, const char *text )
@@ -684,7 +692,7 @@ void HTTPProxy::Written( HTTPData *data, int len, Socket *sock )
 bool HTTPProxy::CloseServerSocket( HTTPData *data )
 {
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::CloseServerSocket( %08x )", data ));
-		
+
 	data->ServerState = S_CLOSING;
 		
 	if( data->ServerSock ) {
@@ -965,8 +973,7 @@ void HTTPProxy::SendRequest( const char *method, HTTPData *data )
 		    !strncmp( str, "accept-charset:", 15 ) ||
 		    !strncmp( str, "accept-language:", 16 ) ||
 		    !strncmp( str, "cookie:", 7 ) ||
-		    !strncmp( str, "user-agent:", 11 ) ||
-			!strncmp( str, "host", 4 ))
+		    !strncmp( str, "user-agent:", 11 ))
 			headers.Add( "%s", ptr );
 
 		if( !strncmp( str, "range:", 6 )) {

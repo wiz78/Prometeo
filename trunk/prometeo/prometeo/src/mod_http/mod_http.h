@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.3 2002-11-21 18:36:55 tellini Exp $
+	revision             : $Id: mod_http.h,v 1.4 2002-11-22 16:53:24 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -94,6 +94,7 @@ private:
 	void			ConnectToServer( HTTPData *data );
 	void			StartTunneling( HTTPData *data );
 
+	bool			FilterRequest( HTTPData *data );
 	void			HandleRequest( HTTPData *data );
 	void			HandleResponse( HTTPData *data );
 	void			Handle_GET_HEAD( HTTPData *data );
