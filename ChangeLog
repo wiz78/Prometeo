@@ -1,0 +1,21 @@
+2003-02-14 16:50  tellini
+
+	* mod_http/gzipcodec.cpp: Removed zutil.h
+
+2003-02-13 12:11  tellini
+
+	* mod_http/: http.cpp, mod_http.cpp: Fixed crash when compiled
+	without zlib and compression was enabled
+
+2003-02-11 20:04  tellini
+
+	* prometeo/core.cpp: Added SIGBUS handling
+
+2003-02-07 15:10  tellini
+
+	* include/fd.h, include/file.h, include/process.h,
+	include/regkey.h, include/regnode.h, include/regstring.h,
+	include/socket.h, include/sslsocket.h, include/unixsocket.h,
+	mod_ftp/client.h, mod_ssl/client.h: Added virtual keyword to some
+	destructors which may need it
+
