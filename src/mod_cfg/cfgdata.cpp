@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.1.1.1 2002-10-10 09:59:25 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.2 2002-10-22 14:31:22 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -645,7 +645,7 @@ void CfgData::UpdateSettings( PageMaker& pg )
 						App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
 
 					else if( !strcmp( list[ OP_TYPE ], "bool" ))
-						App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
+						App->Cfg->SetInteger( node.c_str(), val == "on" );
 
 					App->Cfg->CloseKey();
 				}

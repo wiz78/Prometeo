@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.h
                              -------------------
-    revision             : $Id: cache.h,v 1.1.1.1 2002-10-10 09:59:32 tellini Exp $
+    revision             : $Id: cache.h,v 1.2 2002-10-22 14:31:27 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -37,7 +37,7 @@ public:
 	CacheObj			*Find( const char *id );
 
 	void				Delete( const char *id );
-	void				Delete( CacheObj *obj ) { Delete( obj->GetID() ); }
+	void				Delete( CacheObj *obj );
 
 	bool				Prune( void );
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 storeobj.cpp
                              -------------------
-    revision             : $Id: storeobj.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+    revision             : $Id: storeobj.cpp,v 1.2 2002-10-22 14:31:28 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -182,10 +182,10 @@ bool StoreObj::Release( void )
 {
 	bool del;
 
-	if( RefCount )
+	if( RefCount > 0 )
 		--RefCount;
 
-	del = RefCount == 0;
+	del = RefCount <= 0;
 
 	if( del )
 		Store->Close( this );

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 cacheobj.cpp
                              -------------------
-    revision             : $Id: cacheobj.cpp,v 1.1.1.1 2002-10-10 09:59:32 tellini Exp $
+    revision             : $Id: cacheobj.cpp,v 1.2 2002-10-22 14:31:27 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -100,7 +100,7 @@ bool CacheObj::IsFresh( void )
 
 		dt.Set();
 
-		if( dt > Expires )
+		if( dt >= Expires )
 			fresh = false;
 
 	} else if( GetAge() > ( 3600 * 12 ))
@@ -157,10 +157,10 @@ bool CacheObj::Release( void )
 {
 	bool ret;
 	
-	if( RefCount )
+	if( RefCount > 0 )
 		RefCount--;
 
-	ret = RefCount == 0;
+	ret = RefCount <= 0;
 
 	if( ret ) {
 			
