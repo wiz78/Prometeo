@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.5 2002-11-22 16:53:23 tellini Exp $
+    revision             : $Id: http.cpp,v 1.6 2002-12-02 16:22:47 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -226,7 +226,7 @@ void HTTP::ParseHeader( char *str )
 
 	for( char *ptr = str; *ptr; ptr++ ) {
 
-		if( *ptr == ':' ) {
+		if( !needargs && ( *ptr == ':' )) {
 
 			*ptr = '\0';
 
