@@ -1,11 +1,11 @@
 /***************************************************************************
                                 procpool.cpp
                              -------------------
-    revision             : $Id: procpool.cpp,v 1.4 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: procpool.cpp,v 1.1 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-    description          : handles the pool of processes which serve the ftp
+    description          : handles the pool of processes which serve the
                            clients
  ***************************************************************************/
 
@@ -25,7 +25,7 @@
 #include "client.h"
 
 //---------------------------------------------------------------------------
-ProcPool::ProcPool( string key, IODispatcher *io ) : ProcessGroup( 20, io )
+SSLProcPool::SSLProcPool( string key, IODispatcher *io ) : ProcessGroup( 20, io )
 {
 	Key               = key;
 	MinChildren       = 0;
@@ -37,7 +37,7 @@ ProcPool::ProcPool( string key, IODispatcher *io ) : ProcessGroup( 20, io )
 	Setup();
 }
 //---------------------------------------------------------------------------
-void ProcPool::Setup( void )
+void SSLProcPool::Setup( void )
 {
 	if( App->Cfg->OpenKey( Key.c_str(), false )) {
 
@@ -51,23 +51,23 @@ void ProcPool::Setup( void )
 	if( MinChildren > Children.Count() ) {
 
 		while( MinChildren > Children.Count() ) {
-			Client	*proc = new Client( Key );
+			SSLClient	*proc = new SSLClient( Key );
 
-			if( proc->Spawn( "FTP proxy" ))
+			if( proc->Spawn( "SSL tunnel" ))
 				AddChild( proc );
 			else {
-				App->Log->Log( LOG_ERR, "mod_ftp: couldn't spawn a new process" );
+				App->Log->Log( LOG_ERR, "mod_ssl: couldn't spawn a new process" );
 				delete proc;
 			}
 		}
 	}
 }
 //---------------------------------------------------------------------------
-void ProcPool::OnFork( void )
+void SSLProcPool::OnFork( void )
 {
 	// free some resources when someone else forks
 	for( int i = 0; i < Children.Count(); i++ ) {
-		Client	*proc = (Client *)Children[ i ];
+		SSLClient	*proc = (SSLClient *)Children[ i ];
 
 		proc->OnFork();
 
@@ -77,15 +77,15 @@ void ProcPool::OnFork( void )
 	Children.Clear();
 }
 //---------------------------------------------------------------------------
-void ProcPool::ServeClient( TcpSocket *sock )
+void SSLProcPool::ServeClient( TcpSocket *sock )
 {
-	Client	*proc = (Client *)FindIdleProcess();
-	bool		forked = false;
+	SSLClient	*proc = (SSLClient *)FindIdleProcess();
+	bool	forked = false;
 
 	if( !proc && ( Children.Count() < MaxChildren )) {
 
-		proc   = new Client( Key );
-		forked = proc->Spawn( "FTP proxy" );
+		proc   = new SSLClient( Key );
+		forked = proc->Spawn( "SSL tunnel" );
 
 		if( forked )
 			AddChild( proc );
@@ -97,18 +97,16 @@ void ProcPool::ServeClient( TcpSocket *sock )
 
 	if( proc )
 		proc->Serve( sock, forked );
-	else {
-		sock->Printf( "421 Too many clients.\r\n" );
+	else
 		delete sock;
-	}
 }
 //---------------------------------------------------------------------------
-bool ProcPool::AreIdle( void )
+bool SSLProcPool::AreIdle( void )
 {
 	bool	idle = true;
 
 	for( int i = 0; idle && ( i < Children.Count() ); i++ ) {
-		Client	*proc = (Client *)Children[ i ];
+		SSLClient	*proc = (SSLClient *)Children[ i ];
 
 		if( proc->IsBusy() )
 			idle = false;

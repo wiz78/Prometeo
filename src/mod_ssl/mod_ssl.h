@@ -1,11 +1,11 @@
 /***************************************************************************
-                                 mod_ftp.h
+                                 mod_ssl.h
                              -------------------
-	revision             : $Id: mod_ftp.h,v 1.2 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: mod_ssl.h,v 1.1 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : FTP proxy with TSL support
+    description          : simple TCP tunnel with SSL transport
  ***************************************************************************/
 
 /***************************************************************************
@@ -17,8 +17,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef MOD_FTP_H
-#define MOD_FTP_H
+#ifndef MOD_SSL_H
+#define MOD_SSL_H
 
 #include <string>
 
@@ -29,10 +29,10 @@ using namespace std;
 
 class TcpSocket;
 
-class FTPProxy
+class SSLProxy
 {
 public:
-					FTPProxy( const char *key );
+					SSLProxy( const char *key );
 
 	bool			Cleanup( void );
 	void			ReloadCfg( void );
@@ -46,7 +46,7 @@ private:
 	string			Key;
 	short			Port;
 	TcpSocket		*ListeningSocket;
-	ProcPool		Children;
+	SSLProcPool		Children;
 
 	void			Setup( void );
 };

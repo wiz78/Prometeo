@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.h
                              -------------------
-    revision             : $Id: sslsocket.h,v 1.3 2002-11-01 19:01:00 tellini Exp $
+    revision             : $Id: sslsocket.h,v 1.4 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -39,6 +39,8 @@ public:
 
 	bool			SSLInitSession( SSLCtx::SessionType type );
 	void			SSLEndSession( void );
+
+	const char		*SSLGetErrorStr( void );
 
 	X509			*SSLGetPeerCert( void ) { return( SSL_get_peer_certificate( Ssl )); }
 	STACK_OF(X509)	*SSLGetPeerCertChain( void ) { return( SSL_get_peer_cert_chain( Ssl )); }

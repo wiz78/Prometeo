@@ -1,7 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.1 2002-10-10 09:59:08 tellini Exp $
+# $Id: Makefile.am,v 1.2 2002-11-09 18:25:12 tellini Exp $
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS				= libprom prometeo include prometeoctl mod_tunnel mod_http \
-			 		  mod_cfg mod_ftp .
+SUBDIRS				= libprom prometeo include prometeoctl \
+					  mod_tunnel mod_http mod_cfg mod_ftp mod_ssl \
+					  .
 

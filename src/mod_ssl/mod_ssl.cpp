@@ -1,11 +1,11 @@
 /***************************************************************************
-                                 mod_ftp.cpp
+                                 mod_ssl.cpp
                              -------------------
-    revision             : $Id: mod_ftp.cpp,v 1.3 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: mod_ssl.cpp,v 1.1 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-    description          : FTP proxy with TLS support
+    description          : simple TCP tunnel with SSL transport
  ***************************************************************************/
 
 /***************************************************************************
@@ -21,7 +21,7 @@
 #include "registry.h"
 #include "tcpsocket.h"
 
-#include "mod_ftp.h"
+#include "mod_ssl.h"
 #include "client.h"
 
 static const char *GetManifest( const char *key, const char *name );
@@ -36,7 +36,7 @@ static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userd
 PROM_MODULE =
 {
 	1,						// API version supported by this module
-	"mod_ftp",
+	"mod_ssl",
 	PROM_MT_CUSTOM,
 
 	GetManifest,
@@ -57,10 +57,22 @@ static const char *GetManifest( const char *key, const char *name )
 	Manifest =	"<Page name=\"" + mod + "\">"
 				"	<Label>" + mod + " options</Label>"
 
-				"	<Option type=\"integer\" name=\"port\" default=\"8021\">"
-				"		<Label>Port</Label>"
+				"	<Option type=\"integer\" name=\"srcport\" default=\"8639\">"
+				"		<Label>Local port</Label>"
 				"		<Descr>The port to listen on.</Descr>"
-				"		<Key name=\"" + basekey + "port\"/>"
+				"		<Key name=\"" + basekey + "srcport\"/>"
+				"	</Option>"
+
+				"	<Option type=\"string\" name=\"dsthost\" default=\"\">"
+				"		<Label>Target host</Label>"
+				"		<Descr>The host to connect to.</Descr>"
+				"		<Key name=\"" + basekey + "dsthost\"/>"
+				"	</Option>"
+
+				"	<Option type=\"integer\" name=\"dstport\" default=\"80\">"
+				"		<Label>Target port</Label>"
+				"		<Descr>The port to connect to.</Descr>"
+				"		<Key name=\"" + basekey + "dstport\"/>"
 				"	</Option>"
 
 				"	<Option type=\"integer\" name=\"minchildren\" default=\"0\">"
@@ -80,26 +92,6 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Descr>The lifetime of idle children, in seconds.</Descr>"
 				"		<Key name=\"" + basekey + "childrenttl\"/>"
 				"	</Option>"
-				
-				"	<Option type=\"bool\" name=\"trytls\" default=\"1\">"
-				"		<Label>Try TLS/SSL auth</Label>"
-				"		<Descr>If set, mod_ftp will try to setup a TLS connection to remote sites.</Descr>"
-				"		<Key name=\"" + basekey + "trytls\"/>"
-				"	</Option>"
-				
-				"	<Option type=\"bool\" name=\"requiretls\" default=\"0\">"
-				"		<Label>Require TLS/SSL</Label>"
-				"		<Descr>If set (and if the above switch is set too), you won't be able to connect"
-				" to servers which don't support the TLS/SSL authorization method.</Descr>"
-				"		<Key name=\"" + basekey + "requiretls\"/>"
-				"	</Option>"
-				
-				"	<Option type=\"bool\" name=\"datatls\" default=\"0\">"
-				"		<Label>Secure data channel</Label>"
-				"		<Descr>If TLS is in use and this is set, the data channel will be secured. Otherwise"
-				" only the control channel will use TLS.</Descr>"
-				"		<Key name=\"" + basekey + "datatls\"/>"
-				"	</Option>"
 
 				"</Page>";
 
@@ -108,7 +100,7 @@ static const char *GetManifest( const char *key, const char *name )
 //---------------------------------------------------------------------------
 static HANDLE SetupModule( const char *key )
 {
-	return( new FTPProxy( key ));
+	return( new SSLProxy( key ));
 }
 //---------------------------------------------------------------------------
 static BOOL CleanupModule( HANDLE mod )
@@ -116,7 +108,7 @@ static BOOL CleanupModule( HANDLE mod )
 	BOOL ret = TRUE;
 
 	if( mod ) {
-		FTPProxy *cfg = (FTPProxy *)mod;
+		SSLProxy *cfg = (SSLProxy *)mod;
 
 		ret = cfg->Cleanup();
 
@@ -130,35 +122,35 @@ static BOOL CleanupModule( HANDLE mod )
 static void CfgChanged( HANDLE mod )
 {
 	if( mod )
-		((FTPProxy *)mod )->ReloadCfg();
+		((SSLProxy *)mod )->ReloadCfg();
 }
 //---------------------------------------------------------------------------
 static void OnFork( HANDLE mod )
 {
 	if( mod )
-		((FTPProxy *)mod )->OnFork();
+		((SSLProxy *)mod )->OnFork();
 }
 //---------------------------------------------------------------------------
 static void OnTimer( HANDLE mod, time_t now )
 {
 	if( mod )
-		((FTPProxy *)mod )->OnTimer( now );
+		((SSLProxy *)mod )->OnTimer( now );
 }
 //---------------------------------------------------------------------------
-FTPProxy::FTPProxy( const char *key ) : Children( key, App->IO )
+SSLProxy::SSLProxy( const char *key ) : Children( key, App->IO )
 {
 	Key             = key;
-	Port            = 8021;
+	Port            = 8639;
 	ListeningSocket = NULL;
 
 	ReloadCfg();
 }
 //---------------------------------------------------------------------------
-void FTPProxy::ReloadCfg( void )
+void SSLProxy::ReloadCfg( void )
 {
 	if( App->Cfg->OpenKey( Key.c_str(), false )) {
 
-		Port = App->Cfg->GetInteger( "port", Port );
+		Port = App->Cfg->GetInteger( "srcport", Port );
 
 		App->Cfg->CloseKey();
 	}
@@ -168,7 +160,7 @@ void FTPProxy::ReloadCfg( void )
 	Children.ReloadCfg();
 }
 //---------------------------------------------------------------------------
-void FTPProxy::Setup( void )
+void SSLProxy::Setup( void )
 {
 	if( !ListeningSocket || ( ListeningSocket->GetLocalPort() != Port )) {
 
@@ -183,17 +175,17 @@ void FTPProxy::Setup( void )
 
 			if( !ListeningSocket->Listen())
 				App->Log->Log( LOG_ERR,
-							   "mod_ftp: cannot listen on port %d - %s",
+							   "mod_ssl: cannot listen on port %d - %s",
 							   Port, strerror( errno ));
 
 		} else
 			App->Log->Log( LOG_ERR,
-						   "mod_ftp: cannot bind on port %d - %s",
+						   "mod_ssl: cannot bind on port %d - %s",
 						   Port, strerror( errno ));
 	}
 }
 //---------------------------------------------------------------------------
-bool FTPProxy::Cleanup( void )
+bool SSLProxy::Cleanup( void )
 {
 	delete ListeningSocket;
 
@@ -206,10 +198,10 @@ bool FTPProxy::Cleanup( void )
 static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userdata )
 {
 	if( reason == PROM_SOCK_ACCEPT )
-		((FTPProxy *)userdata )->Accept((TcpSocket *)data );
+		((SSLProxy *)userdata )->Accept((TcpSocket *)data );
 }
 //---------------------------------------------------------------------------
-void FTPProxy::Accept( TcpSocket *sock )
+void SSLProxy::Accept( TcpSocket *sock )
 {
 	if( sock->IsValid() )
 		Children.ServeClient( sock );
@@ -217,12 +209,12 @@ void FTPProxy::Accept( TcpSocket *sock )
 	delete sock;
 }
 //---------------------------------------------------------------------------
-void FTPProxy::OnTimer( time_t now )
+void SSLProxy::OnTimer( time_t now )
 {
 	Children.Flush( now );
 }
 //---------------------------------------------------------------------------
-void FTPProxy::OnFork( void )
+void SSLProxy::OnFork( void )
 {
 	Children.OnFork();
 	Cleanup();

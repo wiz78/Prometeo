@@ -1,11 +1,11 @@
 /***************************************************************************
-                                 mod_ftp.h
+                                  client.h
                              -------------------
-	revision             : $Id: mod_ftp.h,v 1.2 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: client.h,v 1.1 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : FTP proxy with TSL support
+    description          : this class handles an SSL tunnel
  ***************************************************************************/
 
 /***************************************************************************
@@ -17,38 +17,49 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef MOD_FTP_H
-#define MOD_FTP_H
-
-#include <string>
+#ifndef CLIENT_H
+#define CLIENT_H
 
 using namespace std;
 
-#include "main.h"
-#include "procpool.h"
+#include <string>
+
+#include "process.h"
+#include "bitfield.h"
+#include "sslctx.h"
 
 class TcpSocket;
+class SSLSocket;
 
-class FTPProxy
+class SSLClient : public Process
 {
 public:
-					FTPProxy( const char *key );
+						SSLClient( const string& key );
+						~SSLClient();
 
-	bool			Cleanup( void );
-	void			ReloadCfg( void );
+	virtual void		OnFork( void );
+	virtual void		ReloadCfg( void );
 
-	void			Accept( TcpSocket *sock );
-
-	void			OnFork( void );
-	void			OnTimer( time_t now );
+	void				Serve( TcpSocket *sock, bool forked );
+	void				SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data );
 
 private:
-	string			Key;
-	short			Port;
-	TcpSocket		*ListeningSocket;
-	ProcPool		Children;
+	string				CfgKey;
+	TcpSocket			*User;
+	SSLSocket			*Server;
+	SSLCtx				*ClientCtx;
+	string				TargetHost;
+	int					TargetPort;
 
-	void			Setup( void );
+	void				Setup();
+	void				Cleanup();
+
+	virtual void		WaitRequest( void );
+
+	void				ForwardData( TcpSocket *sock, int len );
+	void				HandleError( TcpSocket *sock, int err );
+
+	virtual void		Dispatch( void );
 };
 
 #endif
