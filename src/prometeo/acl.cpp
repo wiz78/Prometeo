@@ -1,7 +1,7 @@
 /***************************************************************************
                                    acl.cpp
                              -------------------
-    revision             : $Id: acl.cpp,v 1.3 2002-11-08 14:32:31 tellini Exp $
+    revision             : $Id: acl.cpp,v 1.4 2002-12-10 15:28:41 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -19,21 +19,29 @@
 
 #include "main.h"
 
+#if HAVE_BSD_AUTH_H
+#include <login_cap.h>
+#include <bsd_auth.h>
+#endif
+
 #include "registry.h"
 #include "acl.h"
 
 //---------------------------------------------------------------------------
+#if HAVE_SECURITY_PAM_APPL_H
 static int pam_conv( int num_msg, const struct pam_message **msg,
 					 struct pam_response **resp, void *appdata );
-
+#endif
 //---------------------------------------------------------------------------
 Acl::Acl( Registry *reg, const char *basekey )
 {
 	Reg     = reg;
 	BaseKey = basekey;
 
+#if HAVE_SECURITY_PAM_APPL_H
 	PAM_Conv.conv        = pam_conv;
 	PAM_Conv.appdata_ptr = this;
+#endif
 }
 //---------------------------------------------------------------------------
 bool Acl::UserPermission( const char *user, const char *perm )
@@ -77,6 +85,7 @@ bool Acl::AuthenticateUser( const char *user, const char *pwd, const char *host 
 	bool	ret = false;
 
 	if( user && user[0] ) {
+#if HAVE_SECURITY_PAM_APPL_H
 		int				pam_error;
 		pam_handle_t	*pamh = NULL;
 
@@ -98,6 +107,10 @@ bool Acl::AuthenticateUser( const char *user, const char *pwd, const char *host 
 
 		Pwd.erase();
 
+#elif HAVE_BSD_AUTH_H
+		ret = auth_userokay( user, NULL, NULL, pwd );
+#endif
+
 		if( !ret )
 			App->Log->Log( LOG_ERR, "ACL: authentication failed for user %s", user );
 	}
@@ -105,6 +118,7 @@ bool Acl::AuthenticateUser( const char *user, const char *pwd, const char *host 
 	return( ret );
 }
 //---------------------------------------------------------------------------
+#if HAVE_SECURITY_PAM_APPL_H
 static int pam_conv( int num_msg, const struct pam_message **msg,
 					 struct pam_response **resp, void *appdata )
 {
@@ -144,4 +158,5 @@ static int pam_conv( int num_msg, const struct pam_message **msg,
 
 	return( PAM_SUCCESS );
 }
+#endif
 //---------------------------------------------------------------------------
