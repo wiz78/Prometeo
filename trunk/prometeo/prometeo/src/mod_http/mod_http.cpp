@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-	revision             : $Id: mod_http.cpp,v 1.1.1.1 2002-10-10 09:59:49 tellini Exp $
+	revision             : $Id: mod_http.cpp,v 1.2 2002-10-15 14:53:08 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -843,8 +843,8 @@ void HTTPProxy::SendRequest( const char *method, HTTPData *data )
 
 	headers.Add( "Connection: Keep-Alive" );
 
-	if( ptr = data->Client.GetAuthorization() )
-		headers.Add( "Authorization: %s", ptr );
+	if( data->Client.IsAuthValid() )
+		headers.Add( "Authorization: %s", data->Client.GetAuthorization() );
 
 	while( ptr = data->Client.GetHeader( i++ )) {
 		char		str[ 1024 ], *to = str;
