@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.2 2002-11-13 15:42:12 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.3 2003-05-23 18:10:27 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,19 +21,19 @@
 
 #include <string.h>
 #include <arpa/inet.h>
-#if defined(HAVE_NETINET_IP_COMPAT_H)
+#if HAVE_NETINET_IP_COMPAT_H
 #include <netinet/ip_compat.h>
 #endif
-#if defined(HAVE_NETINET_IP_FIL_COMPAT_H)
+#if HAVE_NETINET_IP_FIL_COMPAT_H
 #include <netinet/ip_fil_compat.h>
 #endif
-#if defined(HAVE_NETINET_IP_FIL_H)
+#if HAVE_NETINET_IP_FIL_H
 #include <netinet/ip_fil.h>
 #endif
-#if defined(HAVE_NETINET_IP_NAT_H)
+#if HAVE_NETINET_IP_NAT_H
 #include <netinet/ip_nat.h>
 #endif
-#if defined(HAVE_LINUX_NETFILTER_IPV4_H)
+#if HAVE_LINUX_NETFILTER_IPV4_H
 #include <linux/netfilter_ipv4.h>
 #endif
 
@@ -378,11 +378,11 @@ bool TcpSocket::GetOriginalDest( Prom_Addr *addr, short *port )
 
 		// loop?
 		if(( name.sin_port == dest.sin_port ) &&
-		( name.sin_addr.s_addr == dest.sin_addr.s_addr ))
+		   ( name.sin_addr.s_addr == dest.sin_addr.s_addr ))
 			ret = false;
 
 		*((struct in_addr *)addr) = dest.sin_addr;
-		*port 					  = dest.sin_port;
+		*port 					  = ntohs( dest.sin_port );
 
 #elif defined(HAVE_NETINET_IP_NAT_H) && defined(SIOCGNATL)
 		int 		natfd;
@@ -423,13 +423,13 @@ bool TcpSocket::GetOriginalDest( Prom_Addr *addr, short *port )
 
 				// loop?
 				if(( name.sin_port == natlook.nl_realport ) &&
-				( name.sin_addr.s_addr == natlook.nl_realip.s_addr ))
+				   ( name.sin_addr.s_addr == natlook.nl_realip.s_addr ))
 					ret = false;
 
 				if( ret ) {
 
 					*((struct in_addr *)addr) = natlook.nl_realip;
-					*port                     = natlook.nl_realport;
+					*port                     = ntohs( natlook.nl_realport );
 				}
 			}
 		}
