@@ -1,8 +1,8 @@
 /***************************************************************************
                                  registry.h
                              -------------------
-	revision             : $Id: registry.h,v 1.3 2003-01-06 12:30:26 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+	revision             : $Id: registry.h,v 1.4 2003-12-29 22:25:39 tellini Exp $
+    copyright            : (C) 2002-2004 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
 
@@ -25,6 +25,7 @@ using namespace std;
 #include "regkey.h"
 #include "regstring.h"
 #include "reginteger.h"
+#include "list.h"
 
 class Core;
 
@@ -70,6 +71,7 @@ private:
 	string			Buffer;
 	void			*Parser;
 	bool			Parsing;
+	List			OpenKeysStack;
 
 	void			SetupParser( void );
 	void			Clear( void );
