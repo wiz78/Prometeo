@@ -1,7 +1,7 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.2 2002-10-15 14:53:08 tellini Exp $
+    revision             : $Id: http.h,v 1.3 2002-11-14 18:14:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -87,7 +87,7 @@ public:
 	const char			*GetAuthorization( void ) const { return( Authorization.c_str() ); }
 	const char			*GetMIMEType( void ) const      { return( MIMEType.c_str() ); }
 	const char			*GetETag( void ) const          { return( ETag.c_str() ); }
-	const char			*GetEntityID( void ) const      { return( EntityID.c_str() ); }
+	const char			*GetEntityID( void );
 	NetDate&			GetLastModified( void )         { return( LastModified ); }
 	NetDate&			GetModifiedSince( void )        { return( IfModifiedSince ); }
 	NetDate&			GetUnmodifiedSince( void )      { return( IfUnmodifiedSince ); }

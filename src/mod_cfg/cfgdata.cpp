@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.5 2002-11-08 14:32:31 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.6 2002-11-14 18:14:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -322,27 +322,11 @@ void CfgData::ParseRequest( void )
 			SendFile( RequestedPage.substr( 5 ));
 
 		else {
-			PageMaker			pg( this );
-			string				body;
-			string::size_type	pos;
-			int					len;
+			PageMaker	pg( this );
+			int			len;
+			string		body;
 
-			// if we're asked for a module configuration page, we need
-			// to load the right manifest
-			if( RequestedPage.substr( 0, 4 ) == "mod/" ) {
-				string				mod;
-				string::size_type	pos;
-
-				RequestedPage = UrlDecode( RequestedPage );
-				mod           = RequestedPage.substr( 4 );
-				pos           = mod.find( "/" );
-
-				if( pos != string::npos )
-					mod.erase( pos );
-
-				pg.SetModuleManifest( App->Mods->GetManifest( mod.c_str() ));
-			}
-
+			CheckPage( pg );
 			ProcessRequest( pg );
 
 			pg.BuildPage( RequestedPage, body );
@@ -371,6 +355,32 @@ void CfgData::ParseRequest( void )
 
 	} else
 		SendError( HTTP_UNAUTHORIZED, "You need to authenticate to pass this point." );
+}
+//---------------------------------------------------------------------------
+void CfgData::CheckPage( PageMaker& pg )
+{
+	string	page;
+
+	// if we're asked for a module configuration page, we need
+	// to load the right manifest
+	if( RequestedPage.substr( 0, 4 ) == "mod/" )
+		page = RequestedPage;
+	else
+		page = DecodeArg( "page" );
+
+	if( page.substr( 0, 4 ) == "mod/" ) {
+		string				mod;
+		string::size_type	pos;
+
+		page = UrlDecode( page );
+		mod  = page.substr( 4 );
+		pos  = mod.find( "/" );
+
+		if( pos != string::npos )
+			mod.erase( pos );
+
+		pg.SetModuleManifest( App->Mods->GetManifest( mod.c_str() ));
+	}
 }
 //---------------------------------------------------------------------------
 void CfgData::ProcessRequest( PageMaker& pg )
@@ -668,21 +678,30 @@ void CfgData::UpdateSettings( PageMaker& pg )
 				node = str.substr( pos + 1 );
 				val  = DecodeArg( list[ OP_NAME ] );
 
-				if( App->Cfg->OpenKey( key.c_str(), true )) {
-
-					if( !strcmp( list[ OP_TYPE ], "string" ))
-						App->Cfg->SetString( node.c_str(), val.c_str() );
-
-					else if( !strcmp( list[ OP_TYPE ], "integer" ))
-						App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
-
-					else if( !strcmp( list[ OP_TYPE ], "bool" ))
-						App->Cfg->SetInteger( node.c_str(), val == "on" );
-
-					App->Cfg->CloseKey();
-				}
+				UpdateKey( key, node, list[ OP_TYPE ], val );
 			}
 		}
+	}
+}
+//---------------------------------------------------------------------------
+void CfgData::UpdateKey( const string& key, const string& node,
+						 const string type, const string val )
+{
+	if( App->Cfg->OpenKey( key.c_str(), true )) {
+
+		if( type == "string" )
+			App->Cfg->SetString( node.c_str(), val.c_str() );
+
+		else if( type == "text" )
+			App->Cfg->SetString( node.c_str(), val.c_str() );
+
+		else if( type == "integer" )
+			App->Cfg->SetInteger( node.c_str(), atoi( val.c_str() ));
+
+		else if( type == "bool" )
+			App->Cfg->SetInteger( node.c_str(), val == "on" );
+
+		App->Cfg->CloseKey();
 	}
 }
 //---------------------------------------------------------------------------

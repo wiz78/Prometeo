@@ -1,11 +1,11 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-	revision             : $Id: mod_http.cpp,v 1.5 2002-11-12 13:17:26 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.6 2002-11-14 18:14:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : caching HTTP proxy
+    description          : caching HTTP proxy
  ***************************************************************************/
 
 /***************************************************************************
@@ -100,6 +100,28 @@ static const char *GetManifest( const char *key, const char *name )
 				"encodings will be served compressed pages. You can disable it if "
 				"you want to save some CPU power on the proxy machine.</Descr>"
 				"		<Key name=\"" + basekey + "gzipencoding\"/>"
+				"	</Option>"
+
+				"	<Option type=\"list\" name=\"hostmap\">"
+				"		<Label>Host map</Label>"
+				"		<Descr>Hosts mapping table.</Descr>"
+				"		<Key name=\"" + basekey + "HostMap\"/>"
+				"		<ListKey name=\"host\">"
+				"			<Label>Hostname</Label>"
+				"			<Descr>The hostname to map.</Descr>"
+				"		</ListKey>"
+				"		<Fields>"
+				"			<Option type=\"string\" name=\"target\" default=\"\" show=\"yes\">"
+				"				<Label>Target</Label>"
+				"				<Descr>The name of the host where requests for Host should be redirected to.</Descr>"
+				"				<Key name=\"target\"/>"
+				"			</Option>"
+				"			<Option type=\"integer\" name=\"port\" default=\"80\" show=\"yes\">"
+				"				<Label>Port</Label>"
+				"				<Descr>The port to redirected to.</Descr>"
+				"				<Key name=\"port\"/>"
+				"			</Option>"
+				"		</Fields>"
 				"	</Option>"
 
 				"</Page>";
@@ -632,7 +654,7 @@ bool HTTPProxy::FreeHTTPData( HTTPData *data )
 	// it can be still be used!
 	if( data && !data->ClientSock && !data->ServerSock ) {
 
-		DBG( App->Log->Log( LOG_ERR, "HTTPProxy::FreeHTTPData( %08x ) - data->Cached = %08x", 
+		DBG( App->Log->Log( LOG_ERR, "HTTPProxy::FreeHTTPData( %08x ) - data->Cached = %08x",
 							data, data->Cached ));
 
 		if( data->Cached ) {
@@ -656,8 +678,16 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 	URL&	url = data->Client.GetURL();
 
 	if( !url.GetHost()[0] ) {
-			
-		SendError( data, HTTP_FORBIDDEN, "This is just a proxy, you can't request local resources!" );
+		short	port;
+
+		if( data->ClientSock->GetOriginalDest( &data->Addr, &port )) {
+
+			url.SetPort( port );
+
+			Resolved( data, sizeof( data->Addr ));
+
+		} else
+			SendError( data, HTTP_FORBIDDEN, "This is just a proxy, you can't request local resources!" );
 
 	} else if( strcmp( url.GetScheme(), "http" )) {
 
@@ -667,7 +697,7 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 
 		if( data->ServerSock )
 			CloseServerSocket( data );
-			
+
 		data->ServerSock = Connections.FindConnection( url.GetHostPort() );
 
 		if( data->ServerSock )
@@ -710,9 +740,9 @@ void HTTPProxy::Resolved( HTTPData *data, int addrlen )
 			data->ServerSock->AsyncConnect( &data->Addr, data->Client.GetURL().GetPort(), TIMEOUT_CONNECT );
 
 		} else {
-			
+
 			data->ServerState = S_CLOSING;
-			
+
 			SendError( data, HTTP_INTERNAL_ERROR, "Cannot create a new socket." );
 		}
 
@@ -1191,7 +1221,7 @@ void HTTPProxy::CopyServerHeaders( HTTPData *data, StringList& headers )
 			headers.Add( "%s", hdr );
 
 		// enable gzip encoding if the object is text
-		if( Flags.IsSet( MODF_COMPRESS ) && !strcmp( str, "content-type" ) && 
+		if( Flags.IsSet( MODF_COMPRESS ) && !strcmp( str, "content-type" ) &&
 			strstr( hdr, "text/" ))
 			data->Client.CompressBody();
 	}

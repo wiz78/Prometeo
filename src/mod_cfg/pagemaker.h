@@ -1,7 +1,7 @@
 /***************************************************************************
                                  pagemaker.h
                              -------------------
-    revision             : $Id: pagemaker.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
+    revision             : $Id: pagemaker.h,v 1.4 2002-11-14 18:14:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -30,8 +30,13 @@
 class ListData
 {
 public:
-	string			KeyType;
+	string			Page;
+	string			List;
+	string			Path;
+	string			Descr;
+	string			BaseKey;
 	string			KeyName;
+	string			KeyLabel;
 	string			KeyDescr;
 	StringList		Fields;
 };
@@ -70,7 +75,7 @@ private:
 	void			EndOptionsTable( string& result );
 
 	void			AddOption( const string& page, const char *opt, string& result );
-	void			AddTextOption( const StringList& args, string& result );
+	void			AddTextOption( const StringList& args, string& result, bool edit );
 	void			AddTextAreaOption( const StringList& args, string& result );
 	void			AddIntegerOption( const StringList& args, string& result );
 	void			AddBoolOption( const StringList& args, string& result );
@@ -81,11 +86,12 @@ private:
 	void			BuildAclPage( string& result );
 	void			BuildAclUserPage( string& result );
 	void			BuildListEditPage( string& result );
+	void			BuildListItemPage( string& result );
 
-	int				AddListHeaders( const string path, const ListData& data, string& result );
-	void			AddListRow( const string page, const string list,
-								const char *item, const string path,
-								const ListData& data, string& result );
+	void			GetListData( ListData& data );
+	int				AddListHeaders( const ListData& data, string& result );
+	void			AddListRow( const char *item, const ListData& data, string& result );
+	void			SaveListItem( const string& item, const ListData& data );
 
 	string			UrlEncode( const string& str );
 };

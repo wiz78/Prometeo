@@ -1,7 +1,7 @@
 /***************************************************************************
                                    url.cpp
                              -------------------
-    revision             : $Id: url.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
+    revision             : $Id: url.cpp,v 1.3 2002-11-14 18:14:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -50,7 +50,6 @@ void URL::Clear( void )
 void URL::Decode( const char *string )
 {
 	char 	*temp;
-	char	buf[ 8 ];
 
 	Clear();
 
@@ -106,26 +105,22 @@ void URL::Decode( const char *string )
 
 		free( temp );
 	}
-
-	sprintf( buf, ":%d", Port );
-
-	HostPort = Host + buf;
 }
 //---------------------------------------------------------------------------
 const char *URL::Encode( void )
 {
 	EncodedURL = "";
 
-	if( Host.c_str()[0] ) {
+	if( !Host.empty() ) {
 
-		if( Scheme.c_str()[0] )
+		if( !Scheme.empty() )
 			EncodedURL += Scheme + "://";
 
-		if( User.c_str()[0] ) {
+		if( !User.empty() ) {
 
 			EncodedURL += User;
 
-			if( Password.c_str()[0] )
+			if( !Password.empty() )
 				EncodedURL += ":" + Password;
 
 			EncodedURL += "@";
@@ -147,4 +142,14 @@ const char *URL::Encode( void )
 	return( EncodedURL.c_str() );
 }
 //---------------------------------------------------------------------------
+const char *URL::GetHostPort( void )
+{
+	char	buf[ 8 ];
 
+	sprintf( buf, ":%d", Port );
+
+	HostPort = Host + buf;
+
+	return( HostPort.c_str() );
+}
+//---------------------------------------------------------------------------
