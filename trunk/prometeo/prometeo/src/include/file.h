@@ -1,7 +1,7 @@
 /***************************************************************************
                                    file.h
                              -------------------
-	revision             : $Id: file.h,v 1.2 2003-02-07 14:10:58 tellini Exp $
+	revision             : $Id: file.h,v 1.3 2003-02-16 20:31:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -31,6 +31,7 @@ class File : public Fd
 public:
 						File();
 						File( const char *name, int flags );
+						File( int fd );
 	virtual				~File();
 
 	bool				Open( const char *name, int flags );
@@ -83,6 +84,7 @@ private:
 // private flags
 #define PROM_FILEF_WRITING		(1 << 4)
 #define PROM_FILEF_FLUSH		(1 << 5)
+#define PROM_FILEF_READING		(1 << 6)
 
 // Seek whence
 #define PROM_FILE_SEEK_BEG		0

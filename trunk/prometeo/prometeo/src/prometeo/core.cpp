@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-    revision             : $Id: core.cpp,v 1.6 2003-02-11 19:04:09 tellini Exp $
+    revision             : $Id: core.cpp,v 1.7 2003-02-16 20:31:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -30,6 +30,7 @@
 #include "loader.h"
 #include "dnscache.h"
 #include "iodispatcher.h"
+#include "file.h"
 #include "tcpsocket.h"
 #include "sslsocket.h"
 
@@ -37,6 +38,7 @@
 #define SPOOL_DIR		"/var/spool/prometeo"
 
 //--------------------------------------------------------------------------
+static void StdErrCB( File *file, Prom_FC_Reason reason, int data, void *userdata );
 static void SigChildExit( int signum );
 static void SigReloadCfg( int signum );
 static void SigQuit( int signum );
@@ -56,13 +58,14 @@ Core::Core()
 	delete new SSLCtx( SSLCtx::DUMMY );
 #endif
 
-	Cfg   = new Registry( this );
-	Log   = new Logger();
-	IO    = new IODispatcher();
-	IPC   = NULL;
-	Mods  = NULL;
-	DNS   = NULL;
-	ACL   = NULL;
+	Cfg     = new Registry( this );
+	Log     = new Logger();
+	IO      = new IODispatcher();
+	IPC     = NULL;
+	Mods    = NULL;
+	DNS     = NULL;
+	ACL     = NULL;
+	ErrFile = NULL;
 }
 //--------------------------------------------------------------------------
 Core::~Core()
@@ -74,6 +77,7 @@ Core::~Core()
 	delete ACL;
 	delete Cfg;
 	delete Log;
+	delete ErrFile;
 	delete IO;
 }
 //--------------------------------------------------------------------------
@@ -141,16 +145,34 @@ bool Core::Daemonize( void )
 	else if( pid == 0 ) { // child
 
 		if( CheckPid() ) {
+			int	fds[2];
 #endif
 			child = true;
 
 			Prom_init_ps_display( "master" );
 
 #ifndef DEBUG
-			// we don't need these
-			close( STDIN_FILENO );
-			close( STDOUT_FILENO );
-			close( STDERR_FILENO );
+			// we don't need the standard file descriptors, but
+			// closing them is a *bad* idea: some libraries
+			// we use may think it could be nice to use them,
+			// causing havoc
+			if( !freopen( "/dev/null", "r", stdin  ))
+				Log->Log( LOG_ERR, "core: couldn't replace stdin" );
+			
+			if( !freopen( "/dev/null", "w", stdout ))
+				Log->Log( LOG_ERR, "core: couldn't replace stdout" );
+			
+			// create a pipe to catch errors
+			if( !pipe( fds )) {
+
+				ErrFile = new File( fds[0] );
+
+				ErrFile->SetAsyncCallback( StdErrCB, this );
+
+				IO->AddFD( ErrFile, PROM_IOF_READ );
+			
+				dup2( fds[1], STDERR_FILENO );
+			}
 
 			setsid();
 #endif
@@ -206,11 +228,13 @@ pid_t Core::Fork( char *ident )
 			DNS->OnFork();
 
 		delete IPC;
+		delete ErrFile;
 
 		// at this point, we can unblock the parent
 		WakeUpParent();
 
-		IPC = NULL;
+		IPC     = NULL;
+		ErrFile = NULL;
 
 		Prom_init_ps_display( ident );
 
@@ -292,6 +316,33 @@ void Core::CfgReload( void )
 		Mods->CfgChanged();
 
 	Log->Log( LOG_INFO, "configuration loaded" );
+}
+//--------------------------------------------------------------------------
+static void StdErrCB( File *file, Prom_FC_Reason reason, int data, void *userdata )
+{
+	if(( reason == PROM_FILE_READ ) && ( data == -1 )) {
+		char	buf[ 1024 ];
+		int		len;
+	
+		if(( len = file->Read( buf, sizeof( buf ) - 1 )) > 0 ) {
+			char	*ptr = buf, *start = buf, *end;
+			
+			end  = &buf[ len ];
+			*end = '\0';
+			
+			while(( ptr < end ) && ( ptr = strchr( ptr, '\n' ))) {
+
+				*ptr++ = '\0';
+
+				App->Log->Log( LOG_ERR, "stderr: %s", start );
+
+				start = ptr;
+			}
+		
+			if( start < end )
+				App->Log->Log( LOG_ERR, "stderr: %s", start );
+		}
+	}
 }
 //--------------------------------------------------------------------------
 static void SigChildExit( int signum )
