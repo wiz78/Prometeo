@@ -1,11 +1,11 @@
 /***************************************************************************
                                unixsocket.cpp
                              -------------------
-	revision             : $Id: unixsocket.cpp,v 1.1.1.1 2002-10-10 09:59:22 tellini Exp $
+	revision             : $Id: unixsocket.cpp,v 1.2 2002-10-13 23:22:08 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : socket interface wrapper
+	description          : unix socket interface wrapper
  ***************************************************************************/
 
 /***************************************************************************
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include "unixsocket.h"
 
@@ -153,5 +154,118 @@ uid_t UnixSocket::GetPeerUID( void )
 	DoStat();
 
 	return( PeerUID );
+}
+//---------------------------------------------------------------------------
+// the following functions are derived from OpenSSH - monitor_fdpass.c
+/*
+ * Copyright 2001 Niels Provos <provos@citi.umich.edu>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+bool UnixSocket::SendFD( int fd )
+{
+	bool			ret = false;
+#if defined(HAVE_SENDMSG) && (defined(HAVE_ACCRIGHTS_IN_MSGHDR) || defined(HAVE_CONTROL_IN_MSGHDR))
+	struct msghdr	msg;
+	struct iovec	vec;
+	char			ch = '\0';
+	int				n;
+#ifndef HAVE_ACCRIGHTS_IN_MSGHDR
+	char			tmp[ CMSG_SPACE( sizeof( int )) ];
+	struct cmsghdr *cmsg;
+#endif
+
+	memset( &msg, 0, sizeof( msg ));
+#ifdef HAVE_ACCRIGHTS_IN_MSGHDR
+	msg.msg_accrights    = (caddr_t)&fd;
+	msg.msg_accrightslen = sizeof( fd );
+#else
+	msg.msg_control           = (caddr_t)tmp;
+	msg.msg_controllen        = CMSG_LEN( sizeof( int ));
+	cmsg                      = CMSG_FIRSTHDR( &msg );
+	cmsg->cmsg_len            = CMSG_LEN( sizeof( int ));
+	cmsg->cmsg_level          = SOL_SOCKET;
+	cmsg->cmsg_type           = SCM_RIGHTS;
+	*(int *)CMSG_DATA( cmsg ) = fd;
+#endif
+
+	vec.iov_base   = &ch;
+	vec.iov_len    = 1;
+	msg.msg_iov    = &vec;
+	msg.msg_iovlen = 1;
+
+	n = sendmsg( FD, &msg, 0 );
+
+	ret = n == 1;
+#endif
+
+	return( ret );
+}
+//---------------------------------------------------------------------------
+int UnixSocket::RecvFD( void )
+{
+	int				fd = -1;
+#if defined(HAVE_RECVMSG) && (defined(HAVE_ACCRIGHTS_IN_MSGHDR) || defined(HAVE_CONTROL_IN_MSGHDR))
+	struct msghdr	msg;
+	struct iovec	vec;
+	char			ch;
+	int				n;
+#ifndef HAVE_ACCRIGHTS_IN_MSGHDR
+	char			tmp[ CMSG_SPACE( sizeof( int ))];
+	struct cmsghdr *cmsg;
+#endif
+
+	memset( &msg, 0, sizeof( msg ));
+	
+	vec.iov_base   = &ch;
+	vec.iov_len    = 1;
+	msg.msg_iov    = &vec;
+	msg.msg_iovlen = 1;
+#ifdef HAVE_ACCRIGHTS_IN_MSGHDR
+	msg.msg_accrights    = (caddr_t)&fd;
+	msg.msg_accrightslen = sizeof( fd );
+#else
+	msg.msg_control    = tmp;
+	msg.msg_controllen = sizeof( tmp );
+#endif
+
+	if ((n = recvmsg( FD, &msg, 0 )) == -1)
+		fatal("%s: recvmsg: %s", __func__, strerror(errno));
+
+	if( n == 1 ) {
+
+#ifdef HAVE_ACCRIGHTS_IN_MSGHDR
+		if( msg.msg_accrightslen != sizeof( fd ))
+			fd = -1;
+#else
+		cmsg = CMSG_FIRSTHDR( &msg );
+		
+		if( cmsg->cmsg_type == SCM_RIGHTS )
+			fd = (*(int *)CMSG_DATA( cmsg ));
+#endif
+	}
+	
+#endif
+
+	return( fd );
 }
 //---------------------------------------------------------------------------

@@ -30,6 +30,10 @@ MAINTAINERCLEANFILES 	= Makefile.in aclocal.m4 configure src/include/config-h.in
 
 ACLOCAL			= aclocal -I $(auxdir)
 
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+libtool: $(LIBTOOL_DEPS)
+	        $(SHELL) ./config.status --recheck
+
 dist-hook:
 	(cd $(distdir) && mkdir $(auxdir))
 	for file in $(AUX_DIST) $(AUX_DIST_EXTRA); do \

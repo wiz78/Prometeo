@@ -6,7 +6,7 @@ INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 CPPFLAGS = @CPPFLAGS@
 CXXFLAGS = @CXXFLAGS@
 
-libexec_LTLIBRARIES = mod_tunnel.la
+pkglib_LTLIBRARIES = mod_tunnel.la
 
 mod_tunnel_la_SOURCES = mod_tunnel.cpp
 mod_tunnel_la_LDFLAGS = -no-undefined -module -avoid-version

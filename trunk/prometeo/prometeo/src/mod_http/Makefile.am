@@ -6,7 +6,7 @@ INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 CPPFLAGS = @CPPFLAGS@
 CXXFLAGS = @CXXFLAGS@
 
-libexec_LTLIBRARIES = mod_http.la
+pkglib_LTLIBRARIES = mod_http.la
 
 mod_http_la_SOURCES = mod_http.cpp url.cpp connectionmgr.cpp netdate.cpp \
 					  http.cpp md5.c cache.cpp cacheobj.cpp \
