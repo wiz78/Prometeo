@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.4 2002-10-23 17:54:25 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.5 2002-11-12 13:10:29 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -484,7 +484,8 @@ void Socket::HandleTimeout( void )
 
 	Data.Clear();
 
-	Flags.Clear( PROM_SOCKF_SENDING | PROM_SOCKF_CONNECTING | PROM_SOCKF_NOTIFY_DISCONN );
+	Flags.Clear( PROM_SOCKF_SENDING | PROM_SOCKF_RECVING | 
+				 PROM_SOCKF_CONNECTING | PROM_SOCKF_NOTIFY_DISCONN );
 
 	if( Dispatcher )
 		Dispatcher->RemFD( this, PROM_IOF_READ | PROM_IOF_WRITE | PROM_IOF_EXCEPT );
@@ -496,7 +497,10 @@ void Socket::Callback( Prom_SC_Reason reason, int data )
 {
 	if( reason != PROM_SOCK_WRITTEN )
 		SetTimeout( 0 );
-		
+
+	if( reason == PROM_SOCK_ERROR )
+		Flags.Clear( PROM_SOCKF_SENDING | PROM_SOCKF_CONNECTING | PROM_SOCKF_RECVING );
+	
 	if( AsyncCallback )
 		( *AsyncCallback )( this, reason, data, AsyncUserData );
 }

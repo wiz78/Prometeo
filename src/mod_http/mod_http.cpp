@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-	revision             : $Id: mod_http.cpp,v 1.3 2002-11-07 14:49:40 tellini Exp $
+	revision             : $Id: mod_http.cpp,v 1.4 2002-11-12 13:10:29 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -309,6 +309,8 @@ void HTTPProxy::Accept( TcpSocket *sock )
 
 		Sockets.AddTail( data );
 
+		DBG( App->Log->Log( LOG_ERR, "HTTPProxy::Accept( %d ) - data = %08x", sock->GetFD(), data ));
+
 		data->Proxy      = this;
 		data->ClientSock = sock;
 		data->ServerSock = NULL;
@@ -504,6 +506,9 @@ void HTTPProxy::SendError( HTTPData *data, int code, const char *text )
 
 	if( data->ClientSock ) {
 
+		if( data->ServerState == S_CLOSING )
+			CloseServerSocket( data );
+			
 		if( !data->Client.HeaderSent() )
 			data->Client.ErrorMsg( code, text );
 		else
@@ -659,6 +664,9 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 
 	} else {
 
+		if( data->ServerSock )
+			CloseServerSocket( data );
+			
 		data->ServerSock = Connections.FindConnection( url.GetHostPort() );
 
 		if( data->ServerSock )
@@ -683,6 +691,9 @@ static void DNSCallback( int addrlen, void *userdata )
 void HTTPProxy::Resolved( HTTPData *data, int addrlen )
 {
 	if( data->ClientSock && addrlen ) {
+
+		if( data->ServerSock )
+			CloseServerSocket( data );
 
 		data->ServerSock = new TcpSocket();
 
