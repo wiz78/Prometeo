@@ -1,7 +1,7 @@
 /***************************************************************************
                                    main.cpp
                              -------------------
-	revision             : $Id: main.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: main.cpp,v 1.2 2003-04-11 12:23:10 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -35,6 +35,10 @@ int main( int argc, char *argv[] )
 	catch( const char *p ) {
 
 		App->Log->Log( LOG_CRIT, "Raised exception: %s", p );
+	}
+	catch(...) {
+
+		App->Log->Log( LOG_CRIT, "Unhandled exception!" );
 	}
 
 	delete App;
