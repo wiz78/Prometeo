@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.h
                              -------------------
-	revision             : $Id: tcpsocket.h,v 1.1.1.1 2002-10-10 09:59:19 tellini Exp $
+	revision             : $Id: tcpsocket.h,v 1.2 2002-10-17 18:03:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -33,7 +33,13 @@ public:
 						TcpSocket();
 						TcpSocket( int fd );
 
-	bool				Bind( unsigned short port );
+#if HAVE_IPV6
+	bool				MakeIPv4( void );
+#else
+	bool				MakeIPv4( void ) { return( true ); }
+#endif
+
+	bool				Bind( unsigned short port = 0 );
 	virtual Socket		*Accept( void );
 
 	bool				Connect( Prom_Addr *addr, short port );
@@ -43,15 +49,18 @@ public:
 	virtual char		*GetLocalName( void );
 	int					GetPeerPort( void );
 	int					GetLocalPort( void );
-	
+
 	static char			*AddrToName( Prom_Addr *addr );
 
 protected:
 #if HAVE_IPV6
-	struct sockaddr_in6	AddrBuf;
+	int					Family;
+	struct sockaddr_in6	AddrBuf6;
+#endif
+	struct sockaddr_in	AddrBuf;
+#ifdef HAVE_IPV6
 	char				NameBuf[ INET6_ADDRSTRLEN ];
 #else
-	struct sockaddr_in	AddrBuf;
 	char				NameBuf[ 16 ];
 #endif
 

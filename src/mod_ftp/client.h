@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
+    revision             : $Id: client.h,v 1.3 2002-10-17 18:03:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -25,6 +25,7 @@ using namespace std;
 #include <string>
 
 #include "process.h"
+#include "bitfield.h"
 
 class TcpSocket;
 
@@ -41,15 +42,35 @@ public:
 private:
 	TcpSocket			*User;
 	TcpSocket			*Server;
+	TcpSocket			*UserData;
+	TcpSocket			*ServerData;
 	string				Command;
 	string				Args;
+	BitField			Flags;
 
 	virtual void		WaitRequest( void );
 
 	bool				RecvCommand( void );
+	int					RecvStatus( void );
+
+	void				ForwardReply( void );
+	bool				ForwardCmd( void );
 
 	virtual void		Dispatch( void );
 	void				ConnectToServer( void );
+	bool				ServerLogin( const string& user );
+
+	void				CmdFeat( void );
+	void				CmdPbsz( void );
+	void				CmdProt( void );
+	void				CmdPasv( void );
 };
+
+#define FTPF_CONNECTED		(1 << 0)
+#define FTPF_LOGGED_IN		(1 << 1)
+#define FTPF_DATA_TLS		(1 << 2)	// TLS required for data channel
+#define FTPF_PBSZ			(1 << 3)
+#define FTPF_TLS			(1 << 4)
+#define FTPF_CLIENT_PASV	(1 << 5)
 
 #endif
