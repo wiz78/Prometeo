@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.21 2003-06-01 10:37:05 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.22 2003-06-02 17:20:02 tellini Exp $
     copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -978,6 +978,8 @@ void HTTPProxy::StartTunneling( HTTPData *data )
 				strcmp( buffer, "keep-alive" ))
 				data->ServerSock->AsyncPrintf( "%s\r\n", hdr );
 		}
+		
+		data->ServerSock->AsyncPrintf( "\r\n" );
 
 		InitTunnel( data );
 
