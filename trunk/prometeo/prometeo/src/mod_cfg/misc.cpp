@@ -1,7 +1,7 @@
 /***************************************************************************
                                   misc.cpp
                              -------------------
-    revision             : $Id: misc.cpp,v 1.1 2002-11-21 12:43:26 tellini Exp $
+    revision             : $Id: misc.cpp,v 1.2 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include <cctype>
+#include <stdio.h>
 
 #include "misc.h"
 

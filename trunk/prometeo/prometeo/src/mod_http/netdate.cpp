@@ -1,7 +1,7 @@
 /***************************************************************************
                                  netdate.cpp
                              -------------------
-    revision             : $Id: netdate.cpp,v 1.2 2002-12-02 16:22:50 tellini Exp $
+    revision             : $Id: netdate.cpp,v 1.3 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -62,10 +62,12 @@ NetDate& NetDate::operator =( const char *str )
 			ok = ParseLame( buffer, &dt );
 
 		if( ok ) {
-
-			tzset();
-
-			dt.tm_sec -= timezone; // convert to local time
+			time_t	now;
+			
+			time( &now );
+			
+			// convert to local time
+			dt.tm_sec += mktime( localtime( &now )) - mktime( gmtime( &now ));
 			Date       = mktime( &dt );
 		}
 	}

@@ -1,7 +1,7 @@
 /***************************************************************************
                                     api.h
                              -------------------
-    revision             : $Id: api.h,v 1.3 2002-11-13 16:45:58 tellini Exp $
+    revision             : $Id: api.h,v 1.4 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
 
 #ifdef __cplusplus
 #define CDECL "C"

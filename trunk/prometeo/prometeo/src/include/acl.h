@@ -1,7 +1,7 @@
 /***************************************************************************
                                     acl.h
                              -------------------
-    revision             : $Id: acl.h,v 1.2 2002-12-10 15:28:41 tellini Exp $
+    revision             : $Id: acl.h,v 1.3 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,7 +43,9 @@ public:
 
 	bool		AuthenticateUser( const char *user, const char *pwd, const char *host = NULL );
 
+#if HAVE_SECURITY_PAM_APPL_H
 	const char	*GetPwd( void ) const { return( Pwd.c_str() ); }
+#endif
 
 private:
 	Registry	*Reg;

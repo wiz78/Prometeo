@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.9 2002-12-10 15:28:40 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.10 2002-12-10 23:11:29 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -85,7 +85,8 @@ AC_TYPE_SIZE_T
 
 AC_CACHE_CHECK([for socklen_t], [promac_cv_var_socklen_t],
 [AC_TRY_COMPILE(
-	[#include <sys/socket.h>],
+	[#include <sys/types.h>
+	 #include <sys/socket.h>],
 	[socklen_t len; len = 1;],
 	[promac_cv_var_socklen_t=yes],
 	[promac_cv_var_socklen_t=no])
@@ -94,9 +95,22 @@ if test "$promac_cv_var_socklen_t" = no ; then
 	AC_DEFINE( socklen_t, int, [Define to 'int' if <sys/socket.h> doesn't provide it.] )
 fi
 
+AC_CACHE_CHECK([for MSG_NOSIGNAL], [promac_cv_var_msg_no_signal],
+[AC_TRY_COMPILE(
+    [#include <sys/types.h>
+	 #include <sys/socket.h>],
+	[int foo = MSG_NOSIGNAL;],
+	[promac_cv_var_msg_no_signal=yes],
+	[promac_cv_var_msg_no_signal=no])
+])
+if test "$promac_cv_var_msg_no_signal" = no ; then
+	AC_DEFINE( MSG_NOSIGNAL, 0, [Define to 0 if <sys/socket.h> doesn't define MSG_NOSIGNAL.])
+fi
+
 AC_CACHE_CHECK([whether sockaddr_un has sun_len], [promac_cv_var_SOCKADDR_UN_LEN],
 [AC_TRY_COMPILE(
-	[#include <sys/socket.h>
+	[#include <sys/types.h>
+	 #include <sys/socket.h>
 	 #include <sys/un.h>],
 	[struct sockaddr_un addr; addr.sun_len = 1;],
 	[promac_cv_var_SOCKADDR_UN_LEN=yes],
@@ -241,7 +255,8 @@ if test "$use_ipv6" = "yes" ; then
 
 	AC_CACHE_CHECK([for IPv6 support], [promac_cv_var_IPV6],
 	[AC_TRY_COMPILE(
-		[#include <sys/socket.h>],
+		[#include <sys/types.h>
+		 #include <sys/socket.h>],
 		[int foo = AF_INET6;],
 		[promac_cv_var_IPV6=yes],
 		[promac_cv_var_IPV6=no])
@@ -252,8 +267,9 @@ if test "$use_ipv6" = "yes" ; then
 
 	AC_CACHE_CHECK([for getipnodebyname], [promac_cv_var_GETIPNODEBYNAME],
 	[AC_TRY_LINK(
-		[#include <sys/socket.h>
-		#include <netdb.h>
+		[#include <sys/types.h>
+		 #include <sys/socket.h>
+		 #include <netdb.h>
 		],
 		[getipnodebyname( "foo", AF_INET6, 0, NULL );],
 		[promac_cv_var_GETIPNODEBYNAME=yes],
@@ -263,6 +279,12 @@ if test "$use_ipv6" = "yes" ; then
 		AC_DEFINE( HAVE_GETIPNODEBYNAME, 1, [Define if you have the getipnodebyname function.] )
 	fi
 fi
+
+AC_ARG_ENABLE(ipv6,
+ [  --enable-debug         enable debug logging]
+ [AC_DEFINE( DEBUG, 1, [Define to 1 to enable debug logging.])],
+ []
+)
 
 dnl -----------------------------------
 dnl Substitute symbols

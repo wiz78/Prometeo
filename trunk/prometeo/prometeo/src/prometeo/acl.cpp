@@ -1,7 +1,7 @@
 /***************************************************************************
                                    acl.cpp
                              -------------------
-    revision             : $Id: acl.cpp,v 1.4 2002-12-10 15:28:41 tellini Exp $
+    revision             : $Id: acl.cpp,v 1.5 2002-12-10 23:11:30 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -108,7 +108,7 @@ bool Acl::AuthenticateUser( const char *user, const char *pwd, const char *host 
 		Pwd.erase();
 
 #elif HAVE_BSD_AUTH_H
-		ret = auth_userokay( user, NULL, NULL, pwd );
+		ret = auth_userokay((char *)user, NULL, NULL, (char *)pwd );
 #endif
 
 		if( !ret )
