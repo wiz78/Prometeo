@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.1 2002-10-14 19:36:17 tellini Exp $
+    revision             : $Id: client.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -32,8 +32,11 @@ class Client : public Process
 {
 public:
 						Client();
+						~Client();
 
-	void				Serve( TcpSocket *sock );
+	virtual void		OnFork( void );
+
+	void				Serve( TcpSocket *sock, bool forked );
 
 private:
 	TcpSocket			*User;

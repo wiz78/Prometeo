@@ -1,7 +1,7 @@
 /***************************************************************************
                               processgroup.cpp
                              -------------------
-	revision             : $Id: processgroup.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: processgroup.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -59,8 +59,8 @@ void ProcessGroup::AddChild( Process *proc )
 void ProcessGroup::Flush( time_t now )
 {
 	bool	go = true;
-		
-	while(( MinChildren > Children.Count() ) && go ) {
+
+	while(( Children.Count() > MinChildren ) && go ) {
 		Process *proc = FindIdleProcess();
 
 		if( proc && ( now - proc->GetLastReqTime() > ChildrenDecayTime )) {

@@ -1,7 +1,7 @@
 /***************************************************************************
                                    core.h
                              -------------------
-	revision             : $Id: core.h,v 1.1.1.1 2002-10-10 09:59:09 tellini Exp $
+	revision             : $Id: core.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -60,6 +60,7 @@ public:
 
 	bool			InitWait( void );
 	void			Wait( void );
+	void			WakeUpParent( void );
 
 private:
 	CtrlIPC			*IPC;

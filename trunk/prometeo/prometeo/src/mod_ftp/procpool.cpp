@@ -1,7 +1,7 @@
 /***************************************************************************
                                 procpool.cpp
                              -------------------
-    revision             : $Id: procpool.cpp,v 1.1 2002-10-14 19:36:17 tellini Exp $
+    revision             : $Id: procpool.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -25,7 +25,7 @@
 #include "client.h"
 
 //---------------------------------------------------------------------------
-ProcPool::ProcPool( string key ) : ProcessGroup( 20, NULL )
+ProcPool::ProcPool( string key, IODispatcher *io ) : ProcessGroup( 20, io )
 {
 	Key               = key;
 	MinChildren       = 0;
@@ -80,12 +80,14 @@ void ProcPool::OnFork( void )
 void ProcPool::ServeClient( TcpSocket *sock )
 {
 	Client	*proc = (Client *)FindIdleProcess();
+	bool	forked = false;
 
 	if( !proc && ( Children.Count() < MaxChildren )) {
 
-		proc = new Client();
+		proc   = new Client();
+		forked = proc->Spawn( "FTP proxy" );
 
-		if( proc->Spawn( "FTP proxy" ))
+		if( forked )
 			AddChild( proc );
 		else {
 			delete proc;
@@ -94,13 +96,9 @@ void ProcPool::ServeClient( TcpSocket *sock )
 	}
 
 	if( proc )
-		proc->Serve( sock );
-	else {
-
+		proc->Serve( sock, forked );
+	else
 		sock->Printf( "421 Too many clients.\r\n" );
-
-		delete sock;
-	}
 }
 //---------------------------------------------------------------------------
 bool ProcPool::AreIdle( void )

@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.2 2002-10-14 19:36:16 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.3 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -53,16 +53,19 @@ Socket::Socket( int fd )
 //---------------------------------------------------------------------------
 Socket::~Socket()
 {
-	if( IsValid() ) {
-		shutdown( FD, 2 );
+	if( IsValid() )
 		close( FD );
-	}
 }
 //---------------------------------------------------------------------------
 void Socket::Init( void )
 {
 	AsyncCallback	= NULL;
 	AsyncReadBuffer = NULL;
+}
+//---------------------------------------------------------------------------
+bool Socket::Shutdown( int how )
+{
+	return( shutdown( FD, how ));
 }
 //---------------------------------------------------------------------------
 bool Socket::Connect( const char *host )
@@ -185,7 +188,7 @@ void Socket::SetAsyncCallback( Prom_SockCallback callback, void *userdata )
 	AsyncUserData = userdata;
 }
 //---------------------------------------------------------------------------
-bool Socket::AsyncConnect( char *host, int timeout )
+bool Socket::AsyncConnect( const char *host, int timeout )
 {
 	bool			ret = false;
 	struct sockaddr	*addr;

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 dnscache.cpp
                              -------------------
-	revision             : $Id: dnscache.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: dnscache.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -100,8 +100,13 @@ void DNSCache::Clear( void )
 
 	Items = NULL;
 
-	for( unsigned int i = 0; i < Pending.Count(); i++ )
-		delete (PendingReq *)Pending.GetData( i );
+	while( Pending.Count() > 0 ) {
+		PendingReq *req = (PendingReq *)Pending.GetData( 0 );
+
+		Pending.Remove( req->Hostname );
+		
+		delete req;
+	}
 }
 //---------------------------------------------------------------------------
 void DNSCache::OnFork( void )
