@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.3 2002-10-30 14:48:50 tellini Exp $
+# $Id: Makefile.am,v 1.4 2002-11-03 17:28:46 tellini Exp $
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -14,7 +14,7 @@ prometeo_SOURCES	= main.cpp api.cpp core.cpp registry.cpp logger.cpp \
 					  list.cpp stringlist.cpp mystring.cpp \
 					  loader.cpp module.cpp ctrlipc.cpp \
 					  resolver.cpp dnscache.cpp setproctitle.cpp \
-					  process.cpp processgroup.cpp \
+					  acl.cpp process.cpp processgroup.cpp \
 					  strhash.cpp linkedlist.cpp file.cpp \
 					  storage.cpp storeobj.cpp
 

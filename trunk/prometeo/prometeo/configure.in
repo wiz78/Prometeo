@@ -2,10 +2,10 @@ dnl Process this file with autoconf to produce a configure script.
 
 dnl
 dnl                              configure.in
-dnl							 -------------------
-dnl	copyright            : (C) 2002 by Simone Tellini
+dnl                          -------------------
+dnl copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.5 2002-11-01 19:01:00 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.6 2002-11-03 17:28:45 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -62,6 +62,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 AC_CHECK_HEADERS(string.h strings.h unistd.h syslog.h sys/syslog.h sys/pstat.h libutil.h zlib.h)
+AC_CHECK_HEADER(security/pam_appl.h, [], [required PAM header missing])
 
 dnl -----------------------------------
 dnl Checks for typedefs, structures and
@@ -172,6 +173,7 @@ AM_WITH_EXPAT
 AC_CHECK_LIB(util, setproctitle, [AC_DEFINE(HAVE_SETPROCTITLE, 1, [Define if you have setproctitle()])])
 AC_CHECK_LIB(socket, main)
 AC_CHECK_LIB(z, deflate)
+AC_CHECK_LIB(pam, pam_start, [], [library 'pam' is required])
 
 if test "x$openssl_prefix" != "x" ; then
   dnl Order matters!

@@ -1,13 +1,13 @@
 /***************************************************************************
                                    ctrlipc.cpp
                              -------------------
-	revision             : $Id: ctrlipc.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+    revision             : $Id: ctrlipc.cpp,v 1.2 2002-11-03 17:28:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : this class handles the administration interface
-	                       of the server. Basicly, it parses and dispacthes
-						   commands received by prometeoctl
+    description          : this class handles the administration interface
+                           of the server. Basicly, it parses and dispacthes
+                           commands received by prometeoctl
  ***************************************************************************/
 
 /***************************************************************************
@@ -27,6 +27,7 @@
 #include "ctrlipc.h"
 #include "loader.h"
 #include "registry.h"
+#include "acl.h"
 
 static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userdata );
 
@@ -130,15 +131,15 @@ void CtrlIPC::NewConnection( UnixSocket *sock )
 bool CtrlIPC::CheckAuth( int uid, char *auth )
 {
 	bool	ok = ( uid == 0 ) ||		// root is always ok
-				 ( uid == getuid() );
+				 ( uid == getuid() );	// as is the user which ran us
 
 	if( !ok ) {
 		struct passwd	*pw;
 
 		pw = getpwuid( uid );
 
-//		if( pw )
-//			ok = App->ACL->HasPermission( pw->pw_name, auth );
+		if( pw )
+			ok = App->ACL->UserPermission( pw->pw_name, auth );
 	}
 
 	return( ok );
