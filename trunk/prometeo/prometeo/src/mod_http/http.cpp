@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
+    revision             : $Id: http.cpp,v 1.3 2002-11-14 18:14:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -101,12 +101,13 @@ void HTTP::Reset( void )
 	Range        = "";
 	Location     = "";
 	ETag         = "";
-	EntityID     = "";
 	Size         = 0;
 	Offset       = 0;
 	LastModified = (time_t)0;
 	MaxAge       = 0;
 	GZipper      = NULL;
+
+	EntityID.erase();
 
 	MethodURL.Clear();
 	Data.Clear();
@@ -194,7 +195,6 @@ void HTTP::ParseMethod( char *str )
 			}
 
 			MethodURL.Decode( ptr );
-			EntityID = MethodURL.Encode();
 		}
 
 		MethodStr = str;
@@ -219,7 +219,7 @@ void HTTP::ParseHeader( char *str )
 	int		needargs = 0;
 
 	DBG( App->Log->Log( LOG_ERR, "HTTP::ParseHeader( %s )", str ));
-	
+
 	Headers.Add( "%s", str );
 
 	orig = str;
@@ -229,7 +229,7 @@ void HTTP::ParseHeader( char *str )
 		if( *ptr == ':' ) {
 
 			*ptr = '\0';
-			
+
 			needargs++;
 
 		} else {
@@ -243,7 +243,19 @@ void HTTP::ParseHeader( char *str )
 		}
 	}
 
-	if( !strcmp( str, "content-type" )) {
+	if( !strcmp( str, "host" )) {
+
+		if( ptr = strchr( args, ':' )) {
+			*ptr++ = '\0';
+			MethodURL.SetPort( atoi( args ));
+		}
+
+		MethodURL.SetHost( args );
+
+		if( !MethodURL.GetScheme()[0] )
+			MethodURL.SetScheme( "http://" );
+
+	} else if( !strcmp( str, "content-type" )) {
 
 		if( ptr = strchr( orig.c_str(), ' ' ))
 			MIMEType = ptr + 1;
@@ -388,7 +400,6 @@ void HTTP::ParseHeader( char *str )
 
 	} else if( !strcmp( str, "accept-encoding" )) {
 
-//		XXX FIXME deflate is currently disabled as it doesn't work (no clue why)
 		if( strstr( args, "deflate" ))
 			Flags.Set( HTTPF_DEFLATE );
 
@@ -396,6 +407,35 @@ void HTTP::ParseHeader( char *str )
 			Flags.Set( HTTPF_GZIP );
 	}
 #endif
+}
+//---------------------------------------------------------------------------
+const char *HTTP::GetEntityID( void )
+{
+	if( EntityID.empty() ) {
+
+		EntityID = MethodURL.Encode();
+
+		for( int i = 0; i < Headers.Count(); i++ ) {
+			char        str[ 1024 ], *to = str;
+			const char  *from = Headers[ i ];
+			int         n = 0;
+
+			while(( n < sizeof( str ) - 1 ) && *from && ( *from != ':' )) {
+				*to++ = tolower( *from++ );
+				n++;
+			}
+
+			*to = '\0';
+
+			if( from[0] && from[1] )
+				from += 2;
+
+			if( !strcmp( str, "cookie" ))
+				EntityID += " Cookie: " + string( from );
+		}
+	}
+
+	return( EntityID.c_str() );
 }
 //---------------------------------------------------------------------------
 void HTTP::ErrorMsg( int code, const char *text )

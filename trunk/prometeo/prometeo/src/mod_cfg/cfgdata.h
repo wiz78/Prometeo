@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.h
                              -------------------
-    revision             : $Id: cfgdata.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
+    revision             : $Id: cfgdata.h,v 1.4 2002-11-14 18:14:00 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,6 +43,9 @@ public:
 
 	string			DecodeArg( const char *arg );
 
+	void			UpdateKey( const string& key, const string& node,
+							   const string type, const string val );
+
 private:
 	CfgEditor		*Editor;
 	TcpSocket		*Peer;
@@ -77,6 +80,7 @@ private:
 	void			ParseRequest( void );
 	void			ParseAuth( char *str );
 
+	void			CheckPage( PageMaker& pg );
 	void			ProcessRequest( PageMaker& pg );
 
 	const char		*GetCodeMsg( int code ) const;

@@ -1,7 +1,7 @@
 /***************************************************************************
                                    url.h
                              -------------------
-    revision             : $Id: url.h,v 1.1.1.1 2002-10-10 09:59:54 tellini Exp $
+    revision             : $Id: url.h,v 1.2 2002-11-14 18:14:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -31,13 +31,14 @@ public:
 	const char	*GetScheme( void )   { return( Scheme.c_str() ); }
 	const char	*GetHost( void )     { return( Host.c_str() ); }
 	int			GetPort( void )      { return( Port ); }
-	const char	*GetHostPort( void ) { return( HostPort.c_str() ); }
+	const char	*GetHostPort( void );
 	const char	*GetRest( void )     { return( Rest.c_str() ); }
 	const char	*GetUser( void )     { return( User.c_str() ); }
 	const char	*GetPassword( void ) { return( Password.c_str() ); }
 
-	void		SetHost( const char *host ) { Host = host; }
-	void		SetPort( int port ) { Port = port; }
+	void		SetHost( const char *host )     { Host = host; }
+	void		SetPort( int port )             { Port = port; }
+	void		SetScheme( const char *scheme ) { Scheme = scheme; }
 
 	void		Decode( const char *string );
 	const char	*Encode( void );
