@@ -1,7 +1,7 @@
 /***************************************************************************
                                    http.h
                              -------------------
-    revision             : $Id: http.h,v 1.5 2003-03-25 13:27:11 tellini Exp $
+    revision             : $Id: http.h,v 1.6 2003-04-06 10:57:37 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -29,6 +29,7 @@
 #include "url.h"
 #include "netdate.h"
 #include "stringlist.h"
+#include "list.h"
 
 // Flags - internal use only
 #define HTTPF_DONT_CACHE			(1 << 0)
@@ -56,6 +57,7 @@
 #define HTTPF_NO_CACHE				(1 << 22)
 
 class GZipCodec;
+class StreamFilter;
 
 class HTTP
 {
@@ -83,6 +85,8 @@ public:
 	void				SendHeader( int code, const char *type, bool closecon, StringList *ExtraHeaders );
 	void				SendMethod( const char *method, const char *uri, StringList *headers );
 
+	void				AddFilter( StreamFilter *fil );
+	
 	HTTPMethod			GetMethod( void ) const         { return( Method ); }
 	const char			*GetMethodStr( void ) const     { return( MethodStr.c_str() ); }
 	URL&				GetURL( void )                  { return( MethodURL ); }
@@ -145,6 +149,7 @@ private:
 	NetDate				Expires;
 	StringList			Headers;
 	GZipCodec			*GZipper;
+	List				Filters;
 
 	void				ParseMethod( char *str );
 	void				ParseHeader( char *str );

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.16 2003-03-25 13:27:11 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.17 2003-04-06 10:57:37 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -24,6 +24,8 @@
 #include "mod_http.h"
 #include "cache.h"
 #include "filter.h"
+#include "popupblocker.h"
+#include "resizeblocker.h"
 
 #undef DBG
 #define DBG(x)
@@ -104,6 +106,17 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Key name=\"" + basekey + "gzipencoding\"/>"
 				"	</Option>"
 #endif
+				"	<Option type=\"bool\" name=\"blockpopups\" default=\"0\">"
+				"		<Label>Block popups</Label>"
+				"		<Descr>Set this if you want mod_http to try and block the annoying popup windows.</Descr>"
+				"		<Key name=\"" + basekey + "blockpopups\"/>"
+				"	</Option>"
+
+				"	<Option type=\"bool\" name=\"blockresize\" default=\"0\">"
+				"		<Label>Block resizeTo()</Label>"
+				"		<Descr>Set this if you want mod_http to prevent Javascript code to resize your browser window.</Descr>"
+				"		<Key name=\"" + basekey + "blockresize\"/>"
+				"	</Option>"
 
 				"	<Option type=\"list\" name=\"hostmap\">"
 				"		<Label>Host map</Label>"
@@ -242,6 +255,8 @@ void HTTPProxy::ReloadCfg( void )
 
 		Flags.Set( MODF_COMPRESS,     App->Cfg->GetInteger( "gzipencoding", Flags.IsSet( MODF_COMPRESS     )));
 		Flags.Set( MODF_LOG_REQUESTS, App->Cfg->GetInteger( "logrequests",  Flags.IsSet( MODF_LOG_REQUESTS )));
+		Flags.Set( MODF_BLOCK_POPUPS, App->Cfg->GetInteger( "blockpopups",  Flags.IsSet( MODF_BLOCK_POPUPS )));
+		Flags.Set( MODF_BLOCK_RESIZE, App->Cfg->GetInteger( "blockresize",  Flags.IsSet( MODF_BLOCK_RESIZE )));
 
 		App->Cfg->CloseKey();
 	}
@@ -1303,12 +1318,24 @@ void HTTPProxy::CopyServerHeaders( HTTPData *data, StringList& headers )
 			strcmp( str, "connection" ))
 			headers.Add( "%s", hdr );
 
+		if( !strcmp( str, "content-type" )) {
+
+			if( Flags.IsSet( MODF_BLOCK_POPUPS | MODF_BLOCK_RESIZE ) &&
+				( strstr( hdr, "text/html" ) || strstr( hdr, "text/javascript" ))) {
+
+				if( Flags.IsSet( MODF_BLOCK_POPUPS ))
+					data->Client.AddFilter( new PopupBlocker() );
+
+				if( Flags.IsSet( MODF_BLOCK_RESIZE ))
+					data->Client.AddFilter( new ResizeBlocker() );
+			}
+		
 #if HAVE_ZLIB_H
-		// enable gzip encoding if the object is text
-		if( Flags.IsSet( MODF_COMPRESS ) && !strcmp( str, "content-type" ) &&
-			strstr( hdr, "text/" ))
-			data->Client.CompressBody();
+			// enable gzip encoding if the object is text
+			if( Flags.IsSet( MODF_COMPRESS ) && strstr( hdr, "text/" ))
+				data->Client.CompressBody();
 #endif
+		}
 	}
 
 	if( data->Server.HasEntityBody() && data->Client.Is11() )
@@ -1333,6 +1360,16 @@ void HTTPProxy::PrepareHeaders( HTTPData *data, StringList& headers )
 	if( data->Cached->GetAge() > ( 24 * 3600 ))
 		headers.Add( "Warning: 113 prometeo-mod_http \"Heuristic expiration\"" );
 
+	if( !strncmp( data->Cached->GetMIMEType(), "text/html", 9 ) ||
+		!strncmp( data->Cached->GetMIMEType(), "text/javasript", 14 )) {
+
+		if( Flags.IsSet( MODF_BLOCK_POPUPS ))
+			data->Client.AddFilter( new PopupBlocker() );
+
+		if( Flags.IsSet( MODF_BLOCK_RESIZE ))
+			data->Client.AddFilter( new ResizeBlocker() );
+	}
+	
 #if HAVE_ZLIB_H
 	// enable gzip encoding if the object is text
 	if( Flags.IsSet( MODF_COMPRESS ) &&
@@ -1345,7 +1382,8 @@ bool HTTPProxy::IsCacheable( HTTPData *data )
 {
 	bool	ret;
 
-	ret = data->Server.IsCacheable() &&
+	ret = data->Client.IsCacheable() &&
+		  data->Server.IsCacheable() &&
 		 ( data->Server.GetSize() <= MaxObjectSize );
 
 	if( ret ) {
