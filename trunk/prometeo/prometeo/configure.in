@@ -3,9 +3,9 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl                              configure.in
 dnl                          -------------------
-dnl copyright            : (C) 2002-2003 by Simone Tellini
+dnl copyright            : (C) 2002-2004 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.19 2003-10-23 17:28:32 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.20 2004-09-12 11:52:52 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -17,7 +17,7 @@ AC_INIT(src/Makefile.am)
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(src/include/config.h:src/include/config-h.in)
 
-AM_INIT_AUTOMAKE(prometeo, 1.5)
+AM_INIT_AUTOMAKE(prometeo, 1.6)
 
 AC_LANG([C++])
 
