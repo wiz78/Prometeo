@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.5 2003-03-25 13:27:11 tellini Exp $
+	revision             : $Id: mod_http.h,v 1.6 2003-04-06 10:57:37 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -125,6 +125,8 @@ private:
 // Flags
 #define MODF_COMPRESS			(1 << 0)	// enable compression
 #define MODF_LOG_REQUESTS		(1 << 1)
+#define MODF_BLOCK_POPUPS		(1 << 2)
+#define MODF_BLOCK_RESIZE		(1 << 3)
 
 class HTTPData : public LinkedListNode
 {

@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.8 2003-03-25 13:27:11 tellini Exp $
+    revision             : $Id: http.cpp,v 1.9 2003-04-06 10:57:37 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -32,6 +32,7 @@
 #if HAVE_ZLIB_H
 #include "gzipcodec.h"
 #endif
+#include "streamfilter.h"
 
 static const struct
 {
@@ -89,9 +90,7 @@ HTTP::HTTP()
 //---------------------------------------------------------------------------
 HTTP::~HTTP()
 {
-#if HAVE_ZLIB_H
-	delete GZipper;
-#endif
+	Reset();
 }
 //---------------------------------------------------------------------------
 void HTTP::Reset( void )
@@ -101,6 +100,9 @@ void HTTP::Reset( void )
 
 	GZipper = NULL;
 #endif
+
+	for( int i = 0; i < Filters.Count(); i++ )
+		delete (StreamFilter *)Filters[ i ];
 
 	Method       = M_NONE;
 	MethodStr    = "";
@@ -121,6 +123,7 @@ void HTTP::Reset( void )
 	Flags.Clear();
 	Headers.Clear();
 	TmpBuf.Clear();
+	Filters.Clear();
 }
 //---------------------------------------------------------------------------
 bool HTTP::AddHeaderData( const char *data, int len )
@@ -642,10 +645,26 @@ char *HTTP::GetDecodedData( int *len )
 //---------------------------------------------------------------------------
 void HTTP::SendBodyData( const char *data, int len )
 {
-#if HAVE_ZLIB_H
-	bool	eof = len == 0;
+	bool	reallysend = true, eof_after_filter, eof = len == 0;
 		
-	if( GZipper ) {
+	// process the filters
+	for( int i = 0; reallysend && ( i < Filters.Count() ); i++ ) {
+		StreamFilter *fil = (StreamFilter *)Filters[ i ];
+
+		fil->Filter( data, len );
+		
+		len  = fil->GetSize( eof );
+		data = fil->GetData();
+
+		// no data available at this time, try again later
+		if( !len && !eof )
+			reallysend = false;
+	}
+
+	eof_after_filter = eof && len;
+		
+#if HAVE_ZLIB_H
+	if( reallysend && GZipper ) {
 		int		origlen = len;
 		bool	ok;
 
@@ -664,28 +683,37 @@ void HTTP::SendBodyData( const char *data, int len )
 
 		// avoid considering an EOF when the compressor
 		// doesn't produce any data in the current round
-		if( origlen && !len )
-			return;
+		reallysend = !origlen || len;
 	}
 #endif
 
-	if( Flags.IsSet( HTTPF_1_1 )) {
+	if( reallysend ) {
+	
+		if( Flags.IsSet( HTTPF_1_1 )) {
 
-		// chunked encoding
-		Sock->AsyncPrintf( "%x\r\n", len );
+			// chunked encoding
+			Sock->AsyncPrintf( "%x\r\n", len );
 
-		if( len )
-			Sock->AsyncSend( data, len );
+			if( len )
+				Sock->AsyncSend( data, len );
 
-		Sock->AsyncSend( "\r\n", 2 );
+			Sock->AsyncSend( "\r\n", 2 );
 
 #if HAVE_ZLIB_H
-		if( GZipper && eof )
-			Sock->AsyncSend( "0\r\n\r\n", 5 );
+			if( GZipper && eof )
+				Sock->AsyncSend( "0\r\n\r\n", 5 );
 #endif
 
-	} else if( len )
-		Sock->AsyncSend( data, len );
+		} else if( len )
+			Sock->AsyncSend( data, len );
+	}
+
+	// clean up the already processed data
+	for( int i = 0; i < Filters.Count(); i++ )
+		((StreamFilter *)Filters[ i ])->Clean();
+
+	if( eof_after_filter )
+		SendBodyData( NULL, 0 );
 }
 //---------------------------------------------------------------------------
 void HTTP::CompressBody( void )
@@ -884,5 +912,10 @@ bool HTTP::GetRange( int rangeidx, int size, int *start, int *stop ) const
 	}
 
 	return( ret );
+}
+//---------------------------------------------------------------------------
+void HTTP::AddFilter( StreamFilter *fil )
+{
+	Filters.Add( fil );
 }
 //---------------------------------------------------------------------------
