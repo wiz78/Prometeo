@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.1.1.1 2002-10-10 09:59:31 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.2 2002-10-12 14:33:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -133,7 +133,7 @@ bool Cache::Prune( void )
 			// even if MaxSize is exceeded
 			loop = false;
 
-			while( Objects.IsNode( obj ) && obj->IsInUse() && obj->IsDeleted() )
+			while( Objects.IsNode( obj ) && ( obj->IsInUse() || obj->IsDeleted() ))
 				obj = (CacheObj *)obj->GetSucc();
 
 			if( Objects.IsNode( obj )) {
