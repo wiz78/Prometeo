@@ -1,7 +1,7 @@
 /***************************************************************************
                                   storage.h
                              -------------------
-    revision             : $Id: storage.h,v 1.1.1.1 2002-10-10 09:59:17 tellini Exp $
+    revision             : $Id: storage.h,v 1.2 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -42,7 +42,8 @@ public:
 
 	void					Flush( void );
 
-	void					UpdateSize( long len ) { Size += len; }
+	void					UpdateSize( unsigned int len )   { Size += len; }
+	void					DecreaseSize( unsigned int len ) { Size -= len; }
 	unsigned long long		GetSize( void ) const { return( Size ); }
 
 private:

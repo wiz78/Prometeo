@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.5 2002-10-30 14:48:50 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.6 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -110,11 +110,11 @@ void Cache::Delete( const char *id )
 //---------------------------------------------------------------------------
 void Cache::Delete( CacheObj *obj )
 {
-	if( !obj->IsDeleted() ) {
+	if( obj && !obj->IsDeleted() ) {
 
 		Store.Delete( obj->GetFileName() );
-		Store.UpdateSize( -obj->GetSize() );
-
+		Store.DecreaseSize( obj->GetSize() );
+		
 		Hash.Remove( obj->GetID() );
 
 		obj->Delete();
@@ -129,6 +129,8 @@ bool Cache::Prune( void )
 
 	DBG( App->Log->Log( LOG_INFO, "mod_http: cache size = %lld, MaxSize = %lld", Store.GetSize(), MaxSize ));
 
+//	Store.RecalcSize(); // fixes an unknown bug - XXX
+	
 	if( Store.GetSize() > MaxSize ) {
 		CacheObj	*obj = (CacheObj *)Objects.GetHead();
 		bool		loop;
@@ -144,7 +146,7 @@ bool Cache::Prune( void )
 
 			if( Objects.IsNode( obj )) {
 				CacheObj	*next = (CacheObj *)obj->GetSucc();
-
+				
 				Delete( obj );
 
 				deleted = true;
@@ -155,7 +157,24 @@ bool Cache::Prune( void )
 		} while( loop && ( Store.GetSize() > MaxSize ));
 	}
 	
-	DBG( App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() returns %d", deleted ));
+	DBG(
+		unsigned long long	size = 0;
+		CacheObj			*obj = (CacheObj *)Objects.GetHead();
+					
+		App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() returns %d - size = %lld", deleted, Store.GetSize() );
+		
+		while( Objects.IsNode( obj )) {
+
+			if( !obj->IsDeleted() )
+				size += obj->GetSize();
+		
+			obj = (CacheObj *)obj->GetSucc();
+
+		}
+
+		if( size != Store.GetSize() )
+			App->Log->Log( LOG_INFO, "mod_http: Cache::Prune() - size mismatch: %lld != %lld", Store.GetSize(), size );
+	);
 	
 	return( deleted );
 }
@@ -230,6 +249,7 @@ void Cache::WriteIndex( void )
 
 			sto->FlushWriteBuffers();
 
+			Store.DecreaseSize( sto->GetSize() ); // don't count the index size!
 			Store.Close( sto );
 
 			if( allsaved )

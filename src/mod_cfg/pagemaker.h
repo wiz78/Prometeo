@@ -1,7 +1,7 @@
 /***************************************************************************
                                  pagemaker.h
                              -------------------
-    revision             : $Id: pagemaker.h,v 1.1.1.1 2002-10-10 09:59:30 tellini Exp $
+    revision             : $Id: pagemaker.h,v 1.2 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -24,12 +24,13 @@
 #include <sablot.h>
 #include <sdom.h>
 
+#include "cfgdata.h"
 #include "stringlist.h"
 
 class PageMaker
 {
 public:
-					PageMaker();
+					PageMaker( CfgData *cfg );
 					~PageMaker();
 
 	void			SetModuleManifest( const char *manifest );
@@ -39,6 +40,7 @@ public:
 	StringList&		GetOptions( const string& page );
 
 private:
+	CfgData			*Cfg;
 	SablotHandle	Processor;
 	SablotSituation	Situation;
 	SDOM_Document	DocDOM;
@@ -60,9 +62,11 @@ private:
 	void			AddTextOption( const StringList& args, string& result );
 	void			AddIntegerOption( const StringList& args, string& result );
 	void			AddBoolOption( const StringList& args, string& result );
+	void			AddListOption( const StringList& args, string& result, const string& page );
 
 	void			BuildModsPage( string& result );
 	void			BuildApplyPage( string& result );
+	void			BuildListEditPage( string& result );
 
 	string			UrlEncode( const string& str );
 };

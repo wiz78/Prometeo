@@ -1,7 +1,7 @@
 /***************************************************************************
                                 dnscache.cpp
                              -------------------
-	revision             : $Id: dnscache.cpp,v 1.3 2002-10-29 18:01:15 tellini Exp $
+	revision             : $Id: dnscache.cpp,v 1.4 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,6 +21,7 @@
 
 #include <signal.h>
 #include <sys/socket.h>
+#include <string>
 
 #include "dnscache.h"
 #include "registry.h"
@@ -36,7 +37,7 @@ public:
 						PendingReq( const char *host, Prom_Addr *addr,
 									Prom_DNS_Callback cb, void *data )
 						{
-							Hostname = strdup( host );
+							Hostname = host ? host : "";
 							Callback = cb;
 							Userdata = data;
 							Addr     = addr;
@@ -45,12 +46,11 @@ public:
 
 						~PendingReq()
 						{
-							free( Hostname );
 							delete Next;
 						}
 
 	PendingReq			*Next;
-	char 				*Hostname;
+	string 				Hostname;
 	Prom_Addr			*Addr;
 	Prom_DNS_Callback 	Callback;
 	void 				*Userdata;
@@ -102,8 +102,8 @@ void DNSCache::Clear( void )
 	while( Pending.Count() > 0 ) {
 		PendingReq *req = (PendingReq *)Pending.GetData( 0 );
 
-		Pending.Remove( req->Hostname );
-		
+		Pending.Remove( req->Hostname.c_str() );
+
 		delete req;
 	}
 }
@@ -161,25 +161,34 @@ void DNSCache::Remove( DNSItem *item )
 void DNSCache::AsyncResolve( const char *hostname, Prom_Addr *addr,
 							 Prom_DNS_Callback callback, void *userdata )
 {
-	if( FindCached( hostname, addr ))
-		( *callback )( sizeof( *addr  ), userdata );
+	if( hostname && hostname[0] ) {
 
-	else if( AddPendingRequest( hostname, addr, callback, userdata )) {
-		Buffer					*req = new Buffer();
-		struct ResolverRequest	*resreq;
+		if( FindCached( hostname, addr ))
+			( *callback )( sizeof( *addr  ), userdata );
 
-		req->Resize( sizeof( struct ResolverRequest ) + strlen( hostname ) + 1 );
+		else if( AddPendingRequest( hostname, addr, callback, userdata )) {
+			Buffer					*req = new Buffer();
+			struct ResolverRequest	*resreq;
 
-		resreq = (struct ResolverRequest *)req->GetData();
+			req->Resize( sizeof( struct ResolverRequest ) + strlen( hostname ) + 1 );
+
+			resreq = (struct ResolverRequest *)req->GetData();
 
 #if HAVE_IPV6
-		resreq->Family = AF_INET6;
+			resreq->Family = AF_INET6;
 #else
-		resreq->Family = AF_INET;
+			resreq->Family = AF_INET;
 #endif
-		strcpy( resreq->HostName, hostname );
+			strcpy( resreq->HostName, hostname );
 
-		SendRequest( req, IPCCallback, this );
+			SendRequest( req, IPCCallback, this );
+		}
+
+	} else {
+
+		memset( addr, 0, sizeof( *addr ));
+
+		( *callback )( sizeof( *addr  ), userdata );
 	}
 }
 //---------------------------------------------------------------------------

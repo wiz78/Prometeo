@@ -1,7 +1,7 @@
 /***************************************************************************
                                    acl.cpp
                              -------------------
-    revision             : $Id: acl.cpp,v 1.1 2002-11-03 17:28:46 tellini Exp $
+    revision             : $Id: acl.cpp,v 1.2 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -56,7 +56,7 @@ void Acl::SetUserPermission( const char *user, const char *perm, bool granted )
 {
 	string	key = BaseKey + string( "/Users/" ) + string( user );
 
-	if( Reg->OpenKey( key.c_str(), false )) {
+	if( Reg->OpenKey( key.c_str(), true )) {
 		Reg->SetInteger( perm, granted );
 		Reg->CloseKey();
 	}

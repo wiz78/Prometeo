@@ -1,11 +1,11 @@
-# $Id: Makefile.am,v 1.4 2002-11-03 17:28:46 tellini Exp $
+# $Id: Makefile.am,v 1.5 2002-11-07 14:49:40 tellini Exp $
 
 MAINTAINERCLEANFILES = Makefile.in
 
 sbin_PROGRAMS		= prometeo
 
 CPPFLAGS 			= @CPPFLAGS@
-CXXFLAGS 			= @CXXFLAGS@ -pg
+CXXFLAGS 			= @CXXFLAGS@ #-pg
 
 INCLUDES			= -I$(top_srcdir) @INCLTDL@
 

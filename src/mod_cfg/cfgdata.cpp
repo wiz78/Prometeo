@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.3 2002-11-03 17:28:46 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.4 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -188,11 +188,14 @@ void CfgData::AddHeaderData( int len )
 		if( State == S_REQUEST_BODY ) {
 			int len = ReqLen - ( start - ReqBuf );
 
-			// copy the left-overs in the right buffer
-			memcpy( Body.GetData(), start, len );
+			if( len >= Body.GetSize() )
+				len = Body.GetSize() - 1;
+
+			if( len > 0 ) // copy the left-overs in the right buffer
+				memcpy( Body.GetData(), start, len );
 			
 			AddBodyData( len );
-			
+
 		} else if( State == S_REQUEST_HEADER )
 			Peer->AsyncRecv( ReqBuf, sizeof( ReqBuf ) - 1, 0, TIMEOUT_BODY );
 
@@ -209,7 +212,7 @@ void CfgData::AddBodyData( int len )
 
 	if( BodyLen >= Body.GetSize() - 1 ) {
 		char *ptr = Body.GetData() + BodyLen;
-	
+
 		*ptr-- = '\0';
 
 		if( *ptr == '\n' ) {
@@ -319,9 +322,24 @@ void CfgData::ParseRequest( void )
 			SendFile( RequestedPage.substr( 5 ));
 
 		else {
-			PageMaker	pg;
-			string		body;
-			int			len;
+			PageMaker			pg( this );
+			string				body;
+			string::size_type	pos;
+			int					len;
+
+			// if there's a query string, move it to Body
+			pos = RequestedPage.find( "?" );
+
+			if( pos != string::npos ) {
+				string	query = RequestedPage.substr( pos );
+
+				if( Body.GetSize() > 0 )
+					Body.Append( "&", 1 );
+
+				Body.Append( query.c_str(), query.length() );
+
+				RequestedPage.erase( pos );
+			}
 
 			// if we're asked for a module configuration page, we need
 			// to load the right manifest
