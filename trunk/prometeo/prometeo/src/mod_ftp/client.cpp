@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.9 2002-12-06 20:13:05 tellini Exp $
+    revision             : $Id: client.cpp,v 1.10 2003-01-20 19:34:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -387,10 +387,13 @@ void Client::AcceptUserData( TcpSocket *sock )
 #if USE_SSL
 	if( sock->IsValid() && FTPFlags.IsSet( FTPF_CLI_DATA_TLS )) {
 		SSLSocket	*ssl = new SSLSocket( ServerCtx, sock );
+		bool		ok;
 
+		ok = ssl->SSLInitSession( SSLCtx::SERVER );
+		
 		sock->SetFD( -1 );
 
-		if( ssl->SSLInitSession( SSLCtx::SERVER )) {
+		if( ok ) {
 
 			delete sock;
 
@@ -427,10 +430,13 @@ void Client::AcceptServerData( TcpSocket *sock )
 #if USE_SSL
 	if( sock->IsValid() && FTPFlags.IsSet( FTPF_SRV_DATA_TLS )) {
 		SSLSocket	*ssl = new SSLSocket( ClientCtx, sock );
+		bool		ok;
+
+		ok = ssl->SSLInitSession( SSLCtx::CLIENT );
 
 		sock->SetFD( -1 );
 
-		if( ssl->SSLInitSession( SSLCtx::CLIENT )) {
+		if( ok ) {
 
 			delete sock;
 
@@ -1019,10 +1025,13 @@ bool Client::OpenClientDataConnection( void )
 #if USE_SSL
 	if( ok && FTPFlags.IsSet( FTPF_CLI_DATA_TLS )) {
 		SSLSocket	*ssl = new SSLSocket( ServerCtx, UserData );
+		bool		sessok;
+
+		sessok = ssl->SSLInitSession( SSLCtx::SERVER );
 
 		UserData->SetFD( -1 );
 
-		if( ssl->SSLInitSession( SSLCtx::SERVER )) {
+		if( sessok ) {
 
 			delete UserData;
 
