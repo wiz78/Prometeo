@@ -1,7 +1,7 @@
 /***************************************************************************
                                  strhash.cpp
                              -------------------
-	revision             : $Id: strhash.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: strhash.cpp,v 1.2 2002-11-18 17:46:47 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,11 +43,16 @@ StrHash::StrHash( unsigned int size )
 //---------------------------------------------------------------------------
 StrHash::~StrHash()
 {
+	Clear();
+
+	delete[] Items;
+}
+//---------------------------------------------------------------------------
+void StrHash::Clear( void )
+{
 	for( int i = 0; i < Size; i++ )
 		while( HashItem *item = (HashItem *)Items[ i ].RemTail() )
 			delete item;
-
-	delete[] Items;
 }
 //---------------------------------------------------------------------------
 unsigned int StrHash::ComputeHash( const char *str ) const

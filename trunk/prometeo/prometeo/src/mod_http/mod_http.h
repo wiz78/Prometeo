@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.h
                              -------------------
-	revision             : $Id: mod_http.h,v 1.1.1.1 2002-10-10 09:59:50 tellini Exp $
+	revision             : $Id: mod_http.h,v 1.2 2002-11-18 17:46:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,17 +23,21 @@
 #define MOD_VERSION	"1.0"
 
 #include <sys/types.h>
+#include <string>
+
+using namespace std;
 
 #include "api.h"
 #include "tcpsocket.h"
 #include "linkedlist.h"
 #include "bitfield.h"
+#include "stringlist.h"
 
 #include "http.h"
 #include "connectionmgr.h"
 #include "url.h"
 #include "cache.h"
-#include "stringlist.h"
+#include "hostmapper.h"
 
 class HTTPData;
 class CacheObj;
@@ -55,7 +59,7 @@ public:
 	void			CacheObjListener( HTTPData *data, char *buf, int len );
 
 private:
-	char			*Key;
+	string			Key;
 	short			Port;
 	BitField		Flags;
 	TcpSocket		*ListeningSocket;
@@ -65,6 +69,7 @@ private:
 	time_t			LastPruneTime;
 	time_t			LastIndexTime;
 	unsigned int	MaxObjectSize;
+	HostMapper		*HostMap;
 
 	void			Setup( void );
 

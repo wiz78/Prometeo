@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-    revision             : $Id: mod_http.cpp,v 1.6 2002-11-14 18:14:01 tellini Exp $
+    revision             : $Id: mod_http.cpp,v 1.7 2002-11-18 17:46:42 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -170,10 +170,11 @@ static void OnTimer( HANDLE mod, time_t now )
 //---------------------------------------------------------------------------
 HTTPProxy::HTTPProxy( const char *key )
 {
-	Key             = strdup( key );
+	Key             = key;
 	Port            = 8080;
 	ListeningSocket = NULL;
 	MaxObjectSize   = 600 * 1024;
+	HostMap         = new HostMapper( Key + "/HostMap" );
 
 	time( &LastPruneTime );
 
@@ -187,17 +188,16 @@ HTTPProxy::HTTPProxy( const char *key )
 HTTPProxy::~HTTPProxy()
 {
 	delete ListeningSocket;
+	delete HostMap;
 
 	CacheMgr.WriteIndex();
-
-	free( Key );
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::ReloadCfg( void )
 {
 	unsigned long maxcache = CacheMgr.GetMaxSize();
 
-	if( App->Cfg->OpenKey( Key, false )) {
+	if( App->Cfg->OpenKey( Key.c_str(), false )) {
 
 		Port          = App->Cfg->GetInteger( "port", Port );
 		maxcache      = App->Cfg->GetInteger( "maxcachesize", maxcache );
@@ -211,6 +211,7 @@ void HTTPProxy::ReloadCfg( void )
 
 	Setup();
 	CacheMgr.SetMaxSize( maxcache );
+	HostMap->ReloadCfg();
 }
 //---------------------------------------------------------------------------
 void HTTPProxy::Setup( void )
@@ -454,7 +455,7 @@ void HTTPProxy::GotData( HTTPData *data, int len, Socket *sock )
 void HTTPProxy::SocketClosed( HTTPData *data, Socket *sock )
 {
 	DBG( App->Log->Log( LOG_ERR, "HTTPProxy::SocketClosed( %08x ) - fd: %d", data, sock->GetFD() ));
-	
+
 	if( sock == data->ServerSock ) {
 
 		switch( data->ServerState ) {
@@ -694,6 +695,13 @@ void HTTPProxy::ConnectToServer( HTTPData *data )
 		SendError( data, HTTP_NOT_IMPLEMENTED, "Unsupported scheme." );
 
 	} else {
+		const char	*host;
+		short		port = url.GetPort();
+
+		host = HostMap->Map( url.GetHost(), &port );
+
+		url.SetHost( host );
+		url.SetPort( port );
 
 		if( data->ServerSock )
 			CloseServerSocket( data );
