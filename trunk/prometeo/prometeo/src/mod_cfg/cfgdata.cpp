@@ -1,7 +1,7 @@
 /***************************************************************************
                                  cfgdata.cpp
                              -------------------
-	revision             : $Id: cfgdata.cpp,v 1.6 2002-11-14 18:14:00 tellini Exp $
+	revision             : $Id: cfgdata.cpp,v 1.7 2002-11-15 16:26:45 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "tcpsocket.h"
-#include "mystring.h"
 #include "stringlist.h"
 #include "registry.h"
 #include "acl.h"
@@ -661,14 +660,13 @@ void CfgData::UpdateSettings( PageMaker& pg )
 		StringList&	options = pg.GetOptions( page );
 
 		for( int i = 0; i < options.Count(); i++ ) {
-			MyString			str = options[ i ];
 			StringList			list;
+			string				str;
 			string::size_type	pos;
 
-			str.Explode( "|", list );
+			list.Explode( options[ i ], "|" );
 
 			str = list[ OP_KEY ];
-
 			pos = str.rfind( "/" );
 
 			if( pos != string::npos ) {

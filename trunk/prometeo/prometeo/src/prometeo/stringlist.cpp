@@ -1,7 +1,7 @@
 /***************************************************************************
                                stringlist.cpp
                              -------------------
-    revision             : $Id: stringlist.cpp,v 1.3 2002-10-29 18:01:16 tellini Exp $
+    revision             : $Id: stringlist.cpp,v 1.4 2002-11-15 16:26:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -50,6 +50,21 @@ void StringList::Add( const char *fmt, ... )
 	List::Add( strdup( buf ));
 }
 //---------------------------------------------------------------------------
+void StringList::Set( int index, const char *str )
+{
+	if(( index < 0 ) || ( index > Count() ))
+		throw "StringList::Set() - index out of bounds!";
+
+	if( index == Count() )
+		Add( "%s", str );
+	else {
+
+		free( List::Get( index ));
+
+		List::Set( index, strdup( str ));
+	}
+}
+//---------------------------------------------------------------------------
 void StringList::Clear( void )
 {
 	for( int i = Count() - 1; i >= 0; i-- )
@@ -71,5 +86,20 @@ void StringList::Explode( const string& str, const char *separator )
 	}
 
 	Add( "%s", cur );
+}
+//---------------------------------------------------------------------------
+string StringList::Implode( const char *separator )
+{
+	string	ret;
+
+	for( int i = 0; i < Count(); i++ ) {
+
+		if( i )
+			ret += separator;
+
+		ret += Get( i );
+	}
+
+	return( ret );
 }
 //--------------------------------------------------------------------------

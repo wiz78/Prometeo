@@ -1,7 +1,7 @@
 /***************************************************************************
                                    ctrlipc.cpp
                              -------------------
-    revision             : $Id: ctrlipc.cpp,v 1.3 2002-11-13 16:45:58 tellini Exp $
+    revision             : $Id: ctrlipc.cpp,v 1.4 2002-11-15 16:26:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -89,22 +89,22 @@ void CtrlIPC::NewConnection( UnixSocket *sock )
 {
 	if( sock->IsValid() ) {
 		mode_t	mode = sock->GetPeerPerms();
+		uid_t	uid = sock->GetPeerUID();
 
-		App->Log->Log( LOG_INFO, "IPC: connection from %s, uid %d", sock->GetPeerName(), sock->GetPeerUID() );
-		
+		App->Log->Log( LOG_INFO, "IPC: connection from %s, uid %d", sock->GetPeerName(), uid );
+
 		if( mode ) {
 
 #ifdef S_ISSOCK
 			if( S_ISSOCK( mode )) {
 #endif
-			uid_t	uid = sock->GetPeerUID();
 
-			if( CheckAuth( uid, "admin/prometeoctl/connect" ))
+			if( CheckAuth( uid, "admin/prometeoctl" ))
 				HandleRequest( sock );
 			else {
 
 				sock->Printf( "Sorry, you don't have the required authorization.\n" );
-						
+
 				App->Log->Log( LOG_ALERT,
 							   "IPC: unauthorized connection attempted from uid %d",
 							   uid );
@@ -156,8 +156,9 @@ void CtrlIPC::HandleRequest( UnixSocket *sock )
 
 		args = strchr( req, ' ' );
 
-		while( isspace( *args ))
-			*args++ = '\0';
+		if( args )
+			while( isspace( *args ))
+				*args++ = '\0';
 
 		if( !strcmp( req, "stop" )) {
 
@@ -323,7 +324,14 @@ void CtrlIPC::CmdMod( UnixSocket *sock, char *req )
 //--------------------------------------------------------------------------
 void CtrlIPC::CmdHelp( UnixSocket *sock )
 {
-	sock->Printf( "Available commands:\n"
+	sock->Printf( PACKAGE" v"VERSION" - (c) by Simone Tellini <tellini@users.sourceforge.net>\n"
+				  "\n"
+				  "This program is free software; you can redistribute it and/or modify\n"
+				  "it under the terms of the GNU General Public License as published by\n"
+				  "the Free Software Foundation; either version 2 of the License, or\n"
+				  "(at your option) any later version.\n"
+				  "\n"
+				  "Available commands:\n"
 				  "\n"
 				  "  load <module>      - load the module with the specified name\n"
 				  "                       (it must have already been defined in\n"

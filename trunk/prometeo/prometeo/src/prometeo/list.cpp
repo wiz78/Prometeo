@@ -1,7 +1,7 @@
 /***************************************************************************
                                   list.cpp
                              -------------------
-	revision             : $Id: list.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: list.cpp,v 1.2 2002-11-15 16:26:46 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -51,9 +51,17 @@ void *List::operator[]( int index ) const
 void *List::Get( int index ) const
 {
 	if((unsigned int)index >= ItemsCount )
-		throw "List index out of bounds!";
+		throw "List::Get() - index out of bounds!";
 
 	return( Items[ index ] );
+}
+//--------------------------------------------------------------------------
+void List::Set( int index, void *item )
+{
+	if((unsigned int)index >= ItemsCount )
+		throw "List::Set() - index out of bounds!";
+
+	Items[ index ] = item;
 }
 //--------------------------------------------------------------------------
 void List::Add( void *item )

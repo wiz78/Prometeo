@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.4 2002-11-14 18:14:00 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.5 2002-11-15 16:26:45 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -252,7 +252,7 @@ void PageMaker::EndOptionsTable( string& result )
 //---------------------------------------------------------------------------
 void PageMaker::AddTextOption( const StringList& args, string& result, bool edit )
 {
-	string				value, key = args[ OP_KEY ];
+	string				value = args[ OP_DEFAULT ], key = args[ OP_KEY ];
 	string::size_type	pos;
 
 	pos = key.rfind( "/" );
@@ -261,7 +261,7 @@ void PageMaker::AddTextOption( const StringList& args, string& result, bool edit
 
 		if( App->Cfg->OpenKey( key.substr( 0, pos - 1 ).c_str(), false )) {
 
-			value = App->Cfg->GetString( key.substr( pos + 1 ).c_str(), args[ OP_DEFAULT ] );
+			value = App->Cfg->GetString( key.substr( pos + 1 ).c_str(), value.c_str() );
 
 			App->Cfg->CloseKey();
 		}
@@ -285,7 +285,7 @@ void PageMaker::AddTextOption( const StringList& args, string& result, bool edit
 //---------------------------------------------------------------------------
 void PageMaker::AddTextAreaOption( const StringList& args, string& result )
 {
-	string				value, key = args[ OP_KEY ];
+	string				value = args[ OP_DEFAULT ], key = args[ OP_KEY ];
 	string::size_type	pos;
 
 	pos = key.rfind( "/" );
@@ -294,7 +294,7 @@ void PageMaker::AddTextAreaOption( const StringList& args, string& result )
 
 		if( App->Cfg->OpenKey( key.substr( 0, pos - 1 ).c_str(), false )) {
 
-			value = App->Cfg->GetString( key.substr( pos + 1 ).c_str(), args[ OP_DEFAULT ] );
+			value = App->Cfg->GetString( key.substr( pos + 1 ).c_str(), value.c_str() );
 
 			App->Cfg->CloseKey();
 		}
@@ -343,7 +343,7 @@ void PageMaker::AddTextAreaOption( const StringList& args, string& result )
 //---------------------------------------------------------------------------
 void PageMaker::AddIntegerOption( const StringList& args, string& result )
 {
-	string				value, key = args[ OP_KEY ];
+	string				value = args[ OP_DEFAULT ], key = args[ OP_KEY ];
 	string::size_type	pos;
 
 	pos = key.rfind( "/" );
@@ -355,7 +355,7 @@ void PageMaker::AddIntegerOption( const StringList& args, string& result )
 
 			sprintf( buf, "%d",
 					 App->Cfg->GetInteger( key.substr( pos + 1 ).c_str(),
-					 					   atoi( args[ OP_DEFAULT ] )));
+					 					   atoi( value.c_str() )));
 
 			value = buf;
 
@@ -376,7 +376,7 @@ void PageMaker::AddIntegerOption( const StringList& args, string& result )
 //---------------------------------------------------------------------------
 void PageMaker::AddBoolOption( const StringList& args, string& result )
 {
-	bool				value = false;
+	bool				value = atoi( args[ OP_DEFAULT ] );
 	string				key = args[ OP_KEY ];
 	string::size_type	pos;
 
@@ -386,7 +386,7 @@ void PageMaker::AddBoolOption( const StringList& args, string& result )
 
 		if( App->Cfg->OpenKey( key.substr( 0, pos - 1 ).c_str(), false )) {
 
-			value = App->Cfg->GetInteger( key.substr( pos + 1 ).c_str(), atoi( args[ OP_DEFAULT ]) );
+			value = App->Cfg->GetInteger( key.substr( pos + 1 ).c_str(), value );
 
 			App->Cfg->CloseKey();
 		}
@@ -773,18 +773,6 @@ void PageMaker::BuildListEditPage( string& result )
 
 	sprintf( span, "%d", AddListHeaders( data, result ));
 
-	result +=	"<tr>"
-				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
-				"    </form>"
-				"    <form action=\"/listitem\" method=\"POST\">"
-				"      <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
-				"      <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
-				"      <input type=\"hidden\" name=\"item\" value=\"\">"
-				"      <input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\">"
-				"    </form>"
-				"  </td>"
-				"</tr>";
-
 	if( App->Cfg->OpenKey( data.BaseKey.c_str(), false )) {
 		int num = 0;
 
@@ -798,6 +786,26 @@ void PageMaker::BuildListEditPage( string& result )
 
 		App->Cfg->CloseKey();
 	}
+
+	result +=	"<tr>"
+				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
+				"    </form>"
+				"    <form action=\"/listitem\" method=\"POST\">"
+				"      <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
+				"      <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
+				"      <input type=\"hidden\" name=\"" + data.KeyName + "\" value=\"\">"
+				"      <input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\">"
+				"    </form>"
+				"  </td>"
+				"</tr>";
+
+	result +=	"<tr>"
+				"  <td align=\"center\" colspan=\"" + string( span ) + "\">"
+				"    <form action=\"/" + data.Page + "\" method=\"GET\">"
+				"      <input type=\"submit\" value=\"Back to the previous page\" class=\"maxwidth\">"
+				"    </form>"
+				"  </td>"
+				"</tr>";
 
 	result += "</table></td></tr>";
 
@@ -843,9 +851,10 @@ void PageMaker::GetListData( ListData& data )
 //---------------------------------------------------------------------------
 int PageMaker::AddListHeaders( const ListData& data, string& result )
 {
-	int columns = 2;
+	int columns = 3;
 
-	result += "<tr>";
+	result += 	"<tr>"
+				"  <th>" + data.KeyLabel + "</th>";
 
 	for( int i = 0; i < data.Fields.Count(); i++ ) {
 		StringList	tmp;
@@ -904,7 +913,7 @@ void PageMaker::AddListRow( const char *item, const ListData& data, string& resu
 
 	result +=	"  <td>"
 				"    <form action=\"listitem\" method=\"POST\">"
-				"      <input type=\"hidden\" name=\"item\" value=\"" + string( item ) + "\">"
+				"      <input type=\"hidden\" name=\"" + data.KeyName + "\" value=\"" + string( item ) + "\">"
 				"      <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
 				"      <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
 				"      <input type=\"submit\" value=\"Edit\" class=\"maxwidth\">"
@@ -924,60 +933,58 @@ void PageMaker::AddListRow( const char *item, const ListData& data, string& resu
 void PageMaker::BuildListItemPage( string& result )
 {
 	ListData	data;
-	char		span[ 32 ];
-	string		item, opt, keyval;
-
-	item = Cfg->DecodeArg( "item" );
+	string		item, opt;
 
 	GetListData( data );
 
 	if( Cfg->DecodeArg( "save" ) == "1" )
-		SaveListItem( item, data );
+		SaveListItem( data );
 
 	AddPageHeader( "listitem", result );
 	BeginOptionsTable( data.Descr, result );
 
-	result +=	"</form>";
+	result +=	"</form>"
 				"<form action=\"/listitem\" method=\"POST\">"
 				"  <input type=\"hidden\" name=\"page\" value=\"" + data.Page + "\">"
 				"  <input type=\"hidden\" name=\"list\" value=\"" + data.List + "\">"
-				"  <input type=\"hidden\" name=\"item\" value=\"" + item + "\">"
 				"  <input type=\"hidden\" name=\"save\" value=\"1\">";
 
-	if( !item.empty() && App->Cfg->OpenKey( "root", false )) {
-
-		App->Cfg->SetString( "tmp", item.c_str() );
-
-		App->Cfg->CloseKey();
-	}
-
-	opt = "string";
+	opt  = "string";
+	item = Cfg->DecodeArg( data.KeyName.c_str() );
 
 	if( !item.empty() )
 		opt += "_noedit";
 
-	opt += "|" + data.KeyName + "|root/tmp|" +
-		  data.KeyLabel + "|" + data.KeyDescr + "|";
+	// use a non-existant key, so it'll show the default (item)
+	opt += "|" + data.KeyName + "||" +
+		   data.KeyLabel + "|" + data.KeyDescr + "|" + item;
 
 	AddOption( data.Page, opt.c_str(), result );
 
-	if( App->Cfg->OpenKey( "root", false )) {
-		App->Cfg->DeleteValue( "tmp" );
-		App->Cfg->CloseKey();
+	for( int i = 0; i < data.Fields.Count(); i++ ) {
+		StringList	args;
+
+		args.Explode( data.Fields[ i ], "|" );
+		args.Set( OP_KEY, data.BaseKey + "/" + item + "/" + string( args[ OP_KEY ]) );
+
+		AddOption( data.Page, args.Implode( "|" ).c_str(), result );
 	}
 
-	for( int i = 0; i < data.Fields.Count(); i++ )
-		AddOption( data.Page, data.Fields[ i ], result );
-
 	EndOptionsTable( result );
-	AddPageFooter( result, true );
+
+	result += 	"      <div align=\"center\"><input type=\"submit\" value=\"Save\"></div>"
+				"    </form>"
+				"<form action=\"/listedit?page=" + UrlEncode( data.Page ) +
+				"&list=" + UrlEncode( data.List ) + "\" method=\"GET\">"
+				"  <input type=\"submit\" value=\"Back to the list page\">"
+				"</form>";
+
+	AddPageFooter( result, false );
 }
 //---------------------------------------------------------------------------
-void PageMaker::SaveListItem( const string& item, const ListData& data )
+void PageMaker::SaveListItem( const ListData& data )
 {
-	string key;
-
-	key = data.BaseKey + "/" + item;
+	string key = data.BaseKey + "/" + data.KeyName;
 
 	for( int i = 0; i < data.Fields.Count(); i++ ) {
 		StringList	args;
