@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.3 2002-11-14 18:14:00 tellini Exp $
+    revision             : $Id: http.cpp,v 1.4 2002-11-15 18:42:19 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -411,28 +411,25 @@ void HTTP::ParseHeader( char *str )
 //---------------------------------------------------------------------------
 const char *HTTP::GetEntityID( void )
 {
-	if( EntityID.empty() ) {
+	EntityID = MethodURL.Encode();
 
-		EntityID = MethodURL.Encode();
+	for( int i = 0; i < Headers.Count(); i++ ) {
+		char        str[ 1024 ], *to = str;
+		const char  *from = Headers[ i ];
+		int         n = 0;
 
-		for( int i = 0; i < Headers.Count(); i++ ) {
-			char        str[ 1024 ], *to = str;
-			const char  *from = Headers[ i ];
-			int         n = 0;
-
-			while(( n < sizeof( str ) - 1 ) && *from && ( *from != ':' )) {
-				*to++ = tolower( *from++ );
-				n++;
-			}
-
-			*to = '\0';
-
-			if( from[0] && from[1] )
-				from += 2;
-
-			if( !strcmp( str, "cookie" ))
-				EntityID += " Cookie: " + string( from );
+		while(( n < sizeof( str ) - 1 ) && *from && ( *from != ':' )) {
+			*to++ = tolower( *from++ );
+			n++;
 		}
+
+		*to = '\0';
+
+		if( from[0] && from[1] )
+			from += 2;
+
+		if( !strcmp( str, "cookie" ))
+			EntityID += " Cookie: " + string( from );
 	}
 
 	return( EntityID.c_str() );
