@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2002-10-10 09:59:19 tellini Exp $
+# $Id: Makefile.am,v 1.2 2002-10-30 14:48:50 tellini Exp $
 
 INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 				  -I$(top_builddir)/src -I$(top_srcdir)/src \
@@ -9,7 +9,8 @@ CXXFLAGS = @CXXFLAGS@
 
 noinst_LTLIBRARIES = libprom.la
 
-libprom_la_SOURCES = fd.cpp socket.cpp unixsocket.cpp iodispatcher.cpp buffer.cpp
+libprom_la_SOURCES = fd.cpp socket.cpp unixsocket.cpp tcpsocket.cpp \
+					 iodispatcher.cpp buffer.cpp
 libprom_la_LDFLAGS = -export-dynamic
 libprom_la_LIBADD  =
 

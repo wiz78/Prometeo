@@ -1,7 +1,7 @@
 /***************************************************************************
                                 cacheobj.cpp
                              -------------------
-    revision             : $Id: cacheobj.cpp,v 1.2 2002-10-22 14:31:27 tellini Exp $
+    revision             : $Id: cacheobj.cpp,v 1.3 2002-10-30 14:48:50 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -68,7 +68,11 @@ void CacheObj::Write( const char *data, int len )
 
 		ObjFile->Write( data, len );
 
-		Size += len;
+		// if the object is going to be deleted, the Write above
+		// won't actually write anything to disk, thus updating Size
+		// would be misleading
+		if( !Flags.IsSet( PROM_CACHEOBJF_DELETE ))
+			Size += len;
 	}
 }
 //---------------------------------------------------------------------------
