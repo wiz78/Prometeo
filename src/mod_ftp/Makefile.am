@@ -1,6 +1,6 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-# $Id: Makefile.am,v 1.1.1.1 2002-10-10 09:59:30 tellini Exp $
+# $Id: Makefile.am,v 1.2 2002-10-13 23:22:08 tellini Exp $
 
 INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 				  -I$(top_builddir)/src -I$(top_srcdir)/src \
@@ -9,7 +9,7 @@ INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 CPPFLAGS = @CPPFLAGS@
 CXXFLAGS = @CXXFLAGS@
 
-libexec_LTLIBRARIES = mod_ftp.la
+pkglib_LTLIBRARIES = mod_ftp.la
 
 mod_ftp_la_SOURCES = mod_ftp.cpp
 mod_ftp_la_LDFLAGS = -no-undefined -module -avoid-version

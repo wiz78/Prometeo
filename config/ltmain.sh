@@ -207,6 +207,17 @@ if test -n "$prevopt"; then
   exit 1
 fi
 
+# Mandrake: (gc) It's bad to link C++ code with GCC, so we need to use the compiler name if provided
+if test "$mode" = link && test -n "$archive_cmds" && test -x "/usr/bin/perl"; then
+    case $nonopt in
+    *cc | *++ | gcc* | *-gcc* | egcs*)
+	    archive_cmds=`echo $archive_cmds | perl -pe 's/^\S+\s+//'`
+	    archive_cmds="$nonopt $archive_cmds"
+	    archive_expsym_cmds=`echo $archive_expsym_cmds | perl -pe 's/^\S+\s+//'`
+	    archive_expsym_cmds="$nonopt $archive_expsym_cmds"
+    esac
+fi
+
 # If this variable is set in any of the actions, the command in it
 # will be execed at the end.  This prevents here-documents from being
 # left over by shells.
@@ -1316,11 +1327,11 @@ compiler."
       output_objdir="$output_objdir/$objdir"
     fi
     # Create the object directory.
-    if test ! -d $output_objdir; then
+    if test ! -d "$output_objdir"; then
       $show "$mkdir $output_objdir"
       $run $mkdir $output_objdir
       status=$?
-      if test $status -ne 0 && test ! -d $output_objdir; then
+      if test "$status" -ne 0 && test ! -d "$output_objdir"; then
 	exit $status
       fi
     fi
@@ -1535,7 +1546,7 @@ compiler."
 	  continue
 	  ;;
 	esac # case $deplib
-	if test $found = yes || test -f "$lib"; then :
+	if test "$found" = yes || test -f "$lib"; then :
 	else
 	  $echo "$modename: cannot find the library \`$lib'" 1>&2
 	  exit 1
@@ -1709,7 +1720,7 @@ compiler."
 	    -L*) newlib_search_path="$newlib_search_path "`$echo "X$deplib" | $Xsed -e 's/^-L//'`;; ### testsuite: skip nested quoting test
 	    esac
 	    # Need to link against all dependency_libs?
-	    if test $linkalldeplibs = yes; then
+	    if test "$linkalldeplibs" = yes; then
 	      deplibs="$deplib $deplibs"
 	    else
 	      # Need to hardcode shared library paths
@@ -1836,7 +1847,7 @@ compiler."
 	    # make sure the library variables are pointing to the new library
 	    dir=$output_objdir
 	    linklib=$newlib
-	  fi # test -n $old_archive_from_expsyms_cmds
+	  fi # test -n "$old_archive_from_expsyms_cmds"
 
 	  if test "$linkmode" = prog || test "$mode" != relink; then
 	    add_shlibpath=
@@ -2008,8 +2019,8 @@ compiler."
 
 	if test "$linkmode" = lib; then
 	  if test -n "$dependency_libs" &&
-	     { test "$hardcode_into_libs" != yes || test $build_old_libs = yes ||
-	       test $link_static = yes; }; then
+	     { test "$hardcode_into_libs" != yes || test "$build_old_libs" = yes ||
+	       test "$link_static" = yes; }; then
 	    # Extract -R from dependency_libs
 	    temp_deplibs=
 	    for libdir in $dependency_libs; do
@@ -2226,7 +2237,7 @@ compiler."
       fi
 
       set dummy $rpath
-      if test $# -gt 2; then
+      if test "$#" -gt 2; then
 	$echo "$modename: warning: ignoring multiple \`-rpath's for a libtool library" 1>&2
       fi
       install_libdir="$2"
@@ -2293,7 +2304,7 @@ compiler."
 	  ;;
 	esac
 
-	if test $age -gt $current; then
+	if test "$age" -gt "$current"; then
 	  $echo "$modename: AGE \`$age' is greater than the current interface number \`$current'" 1>&2
 	  $echo "$modename: \`$vinfo' is not valid version information" 1>&2
 	  exit 1
@@ -2332,7 +2343,7 @@ compiler."
 
 	  # Add in all the interfaces that we are compatible with.
 	  loop=$revision
-	  while test $loop != 0; do
+	  while test "$loop" -ne 0; do
 	    iface=`expr $revision - $loop`
 	    loop=`expr $loop - 1`
 	    verstring="sgi$major.$iface:$verstring"
@@ -2355,7 +2366,7 @@ compiler."
 
 	  # Add in all the interfaces that we are compatible with.
 	  loop=$age
-	  while test $loop != 0; do
+	  while test "$loop" -ne 0; do
 	    iface=`expr $current - $loop`
 	    loop=`expr $loop - 1`
 	    verstring="$verstring:${iface}.0"
@@ -2456,7 +2467,7 @@ compiler."
 	  *) finalize_rpath="$finalize_rpath $libdir" ;;
 	  esac
 	done
-	if test $hardcode_into_libs != yes || test $build_old_libs = yes; then
+	if test "$hardcode_into_libs" != yes || test "$build_old_libs" = yes; then
 	  dependency_libs="$temp_xrpath $dependency_libs"
 	fi
       fi
@@ -2540,7 +2551,7 @@ compiler."
 EOF
 	  $rm conftest
 	  $CC -o conftest conftest.c $deplibs
-	  if test $? -eq 0 ; then
+	  if test "$?" -eq 0 ; then
 	    ldd_output=`ldd conftest`
 	    for i in $deplibs; do
 	      name="`expr $i : '-l\(.*\)'`"
@@ -2574,7 +2585,7 @@ EOF
 		$rm conftest
 		$CC -o conftest conftest.c $i
 		# Did it work?
-		if test $? -eq 0 ; then
+		if test "$?" -eq 0 ; then
 		  ldd_output=`ldd conftest`
 		  libname=`eval \\$echo \"$libname_spec\"`
 		  deplib_matches=`eval \\$echo \"$library_names_spec\"`
@@ -2633,6 +2644,13 @@ EOF
 			*) potlib=`$echo "X$potlib" | $Xsed -e 's,[^/]*$,,'`"$potliblink";;
 			esac
 		      done
+		      # It is ok to link against an archive when
+		      # building a shared library.
+		      if $AR -t $potlib > /dev/null 2>&1; then
+		        newdeplibs="$newdeplibs $a_deplib"
+		        a_deplib=""
+		        break 2
+		      fi
 		      if eval $file_magic_cmd \"\$potlib\" 2>/dev/null \
 			 | sed 10q \
 			 | egrep "$file_magic_regex" > /dev/null; then
@@ -2745,7 +2763,7 @@ EOF
 	    echo "*** automatically added whenever a program is linked with this library"
 	    echo "*** or is declared to -dlopen it."
 
-	    if test $allow_undefined = no; then
+	    if test "$allow_undefined" = no; then
 	      echo
 	      echo "*** Since this library must not contain undefined symbols,"
 	      echo "*** because either the platform does not support them or"
@@ -2903,7 +2921,7 @@ EOF
 	    $show "mkdir $gentop"
 	    $run mkdir "$gentop"
 	    status=$?
-	    if test $status -ne 0 && test ! -d "$gentop"; then
+	    if test "$status" -ne 0 && test ! -d "$gentop"; then
 	      exit $status
 	    fi
 	    generated="$generated $gentop"
@@ -2922,7 +2940,7 @@ EOF
 	      $show "mkdir $xdir"
 	      $run mkdir "$xdir"
 	      status=$?
-	      if test $status -ne 0 && test ! -d "$xdir"; then
+	      if test "$status" -ne 0 && test ! -d "$xdir"; then
 		exit $status
 	      fi
 	      $show "(cd $xdir && $AR x $xabs)"
@@ -3042,7 +3060,7 @@ EOF
 	  $show "mkdir $gentop"
 	  $run mkdir "$gentop"
 	  status=$?
-	  if test $status -ne 0 && test ! -d "$gentop"; then
+	  if test "$status" -ne 0 && test ! -d "$gentop"; then
 	    exit $status
 	  fi
 	  generated="$generated $gentop"
@@ -3061,7 +3079,7 @@ EOF
 	    $show "mkdir $xdir"
 	    $run mkdir "$xdir"
 	    status=$?
-	    if test $status -ne 0 && test ! -d "$xdir"; then
+	    if test "$status" -ne 0 && test ! -d "$xdir"; then
 	      exit $status
 	    fi
 	    $show "(cd $xdir && $AR x $xabs)"
@@ -3456,7 +3474,7 @@ static const void *lt_preloaded_setup() {
 	finalize_command=`$echo "X$finalize_command" | $Xsed -e "s% @SYMFILE@%%"`
       fi
 
-      if test $need_relink = no || test "$build_libtool_libs" != yes; then
+      if test "$need_relink" = no || test "$build_libtool_libs" != yes; then
 	# Replace the output file specification.
 	compile_command=`$echo "X$compile_command" | $Xsed -e 's%@OUTPUT@%'"$output"'%g'`
 	link_command="$compile_command$compile_rpath"
@@ -3581,7 +3599,7 @@ static const void *lt_preloaded_setup() {
 	    relink_command="$var=\"$var_value\"; export $var; $relink_command"
 	  fi
 	done
-	relink_command="cd `pwd`; $relink_command"
+	relink_command="(cd `pwd`; $relink_command)"
 	relink_command=`$echo "X$relink_command" | $Xsed -e "$sed_quote_subst"`
       fi
 
@@ -3824,7 +3842,7 @@ fi\
 	$show "mkdir $gentop"
 	$run mkdir "$gentop"
 	status=$?
-	if test $status -ne 0 && test ! -d "$gentop"; then
+	if test "$status" -ne 0 && test ! -d "$gentop"; then
 	  exit $status
 	fi
 	generated="$generated $gentop"
@@ -3844,7 +3862,7 @@ fi\
 	  $show "mkdir $xdir"
 	  $run mkdir "$xdir"
 	  status=$?
-	  if test $status -ne 0 && test ! -d "$xdir"; then
+	  if test "$status" -ne 0 && test ! -d "$xdir"; then
 	    exit $status
 	  fi
 	  $show "(cd $xdir && $AR x $xabs)"
@@ -3911,7 +3929,7 @@ fi\
 	fi
       done
       # Quote the link command for shipping.
-      relink_command="cd `pwd`; $SHELL $0 --mode=relink $libtool_args @inst_prefix_dir@"
+      relink_command="(cd `pwd`; $SHELL $0 --mode=relink $libtool_args @inst_prefix_dir@)"
       relink_command=`$echo "X$relink_command" | $Xsed -e "$sed_quote_subst"`
 
       # Only create the output if not a dry run.
@@ -4001,7 +4019,7 @@ dlpreopen='$dlprefiles'
 
 # Directory that this library needs to be installed in:
 libdir='$install_libdir'"
-	  if test "$installed" = no && test $need_relink = yes; then
+	  if test "$installed" = no && test "$need_relink" = yes; then
 	    $echo >> $output "\
 relink_command=\"$relink_command\""
 	  fi
@@ -4137,7 +4155,7 @@ relink_command=\"$relink_command\""
 
       # Not a directory, so check to see that there is only one file specified.
       set dummy $files
-      if test $# -gt 2; then
+      if test "$#" -gt 2; then
 	$echo "$modename: \`$dest' is not a directory" 1>&2
 	$echo "$help" 1>&2
 	exit 1
@@ -4257,7 +4275,7 @@ relink_command=\"$relink_command\""
 	    $run eval "$striplib $destdir/$realname" || exit $?
 	  fi
 
-	  if test $# -gt 0; then
+	  if test "$#" -gt 0; then
 	    # Delete the old symlinks, and create new ones.
 	    for linkname
 	    do
@@ -4519,7 +4537,7 @@ relink_command=\"$relink_command\""
     fi
 
     # Exit here if they wanted silent mode.
-    test "$show" = ":" && exit 0
+    test "$show" = : && exit 0
 
     echo "----------------------------------------------------------------------"
     echo "Libraries have been installed in:"
@@ -4685,7 +4703,7 @@ relink_command=\"$relink_command\""
       fi
 
       # Now prepare to actually exec the command.
-      exec_cmd='"$cmd"$args'
+      exec_cmd="\$cmd$args"
     else
       # Display what would be done.
       if test -n "$shlibpath_var"; then
@@ -4735,10 +4753,10 @@ relink_command=\"$relink_command\""
 	objdir="$dir/$objdir"
       fi
       name=`$echo "X$file" | $Xsed -e 's%^.*/%%'`
-      test $mode = uninstall && objdir="$dir"
+      test "$mode" = uninstall && objdir="$dir"
 
       # Remember objdir for removal later, being careful to avoid duplicates
-      if test $mode = clean; then
+      if test "$mode" = clean; then
 	case " $rmdirs " in
 	  *" $objdir "*) ;;
 	  *) rmdirs="$rmdirs $objdir" ;;
@@ -4770,9 +4788,9 @@ relink_command=\"$relink_command\""
 	    rmfiles="$rmfiles $objdir/$n"
 	  done
 	  test -n "$old_library" && rmfiles="$rmfiles $objdir/$old_library"
-	  test $mode = clean && rmfiles="$rmfiles $objdir/$name $objdir/${name}i"
+	  test "$mode" = clean && rmfiles="$rmfiles $objdir/$name $objdir/${name}i"
 
-	  if test $mode = uninstall; then
+	  if test "$mode" = uninstall; then
 	    if test -n "$library_names"; then
 	      # Do each command in the postuninstall commands.
 	      eval cmds=\"$postuninstall_cmds\"
@@ -4781,7 +4799,7 @@ relink_command=\"$relink_command\""
 		IFS="$save_ifs"
 		$show "$cmd"
 		$run eval "$cmd"
-		if test $? != 0 && test "$rmforce" != yes; then
+		if test "$?" -ne 0 && test "$rmforce" != yes; then
 		  exit_status=1
 		fi
 	      done
@@ -4796,7 +4814,7 @@ relink_command=\"$relink_command\""
 		IFS="$save_ifs"
 		$show "$cmd"
 		$run eval "$cmd"
-		if test $? != 0 && test "$rmforce" != yes; then
+		if test "$?" -ne 0 && test "$rmforce" != yes; then
 		  exit_status=1
 		fi
 	      done
@@ -4816,7 +4834,7 @@ relink_command=\"$relink_command\""
 
       *)
 	# Do a test to see if this is a libtool program.
-	if test $mode = clean &&
+	if test "$mode" = clean &&
 	   (sed -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
 	  relink_command=
 	  . $dir/$file

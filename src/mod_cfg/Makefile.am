@@ -1,5 +1,5 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
-# $Id: Makefile.am,v 1.1.1.1 2002-10-10 09:59:22 tellini Exp $
+# $Id: Makefile.am,v 1.2 2002-10-13 23:22:08 tellini Exp $
 
 INCLUDES        = -I$(top_builddir) -I$(top_srcdir) \
 				  -I$(top_builddir)/src -I$(top_srcdir)/src \
@@ -10,7 +10,7 @@ CXXFLAGS = @CXXFLAGS@
 
 SUBDIRS = . data
 
-libexec_LTLIBRARIES = mod_cfg.la
+pkglib_LTLIBRARIES = mod_cfg.la
 
 mod_cfg_la_SOURCES = mod_cfg.cpp cfgdata.cpp base64.cpp pagemaker.cpp
 mod_cfg_la_LDFLAGS = -no-undefined -module -avoid-version

@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl							 -------------------
 dnl	copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.2 2002-10-10 10:39:46 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.3 2002-10-13 23:22:06 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -28,7 +28,7 @@ test "$exec_prefix" = NONE && exec_prefix=/usr/local/prometeo
 eval conftemp=${sysconfdir}
 AC_DEFINE_UNQUOTED( CFG_DIR, "$conftemp", [Config directory] )
 
-eval conftemp=${libexecdir}
+eval conftemp=${libdir}
 AC_DEFINE_UNQUOTED( MOD_DIR, "$conftemp/prometeo", [Modules directory] )
 
 eval conftemp=${datadir}
@@ -49,8 +49,10 @@ dnl Check for libltdl
 dnl -----------------------------------
 AC_LIBTOOL_DLOPEN
 AC_LIBLTDL_CONVENIENCE
+AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_CONFIG_SUBDIRS(libltdl)
+AC_SUBST(LIBTOOL_DEPS)
 
 dnl -----------------------------------
 dnl Check for headers
@@ -92,11 +94,52 @@ if test "$promac_cv_var_SOCKADDR_UN_LEN" = yes ; then
 	AC_DEFINE( HAVE_SOCKADDR_UN_LEN, 1, [Define if sockaddr_un has the sun_len field] )
 fi
 
+AC_CACHE_CHECK([for msg_accrights field in struct msghdr], promac_cv_have_accrights_in_msghdr, 
+[AC_TRY_RUN(
+	[#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #include <sys/uio.h>
+	 int main() {
+		#ifdef msg_accrights
+		exit(1);
+		#endif
+		struct msghdr m;
+		m.msg_accrights = 0;
+		exit(0);
+	}],
+	[ promac_cv_have_accrights_in_msghdr="yes"],
+	[ promac_cv_have_accrights_in_msghdr="no" ])
+])
+if test "x$promac_cv_have_accrights_in_msghdr" = "xyes" ; then
+	AC_DEFINE( HAVE_ACCRIGHTS_IN_MSGHDR, 1, [Define if msghdr has the msg_accrights field] )
+fi
+
+AC_CACHE_CHECK([for msg_control field in struct msghdr], promac_cv_have_control_in_msghdr,
+[AC_TRY_RUN(
+	[#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #include <sys/uio.h>
+	 int main() {
+		#ifdef msg_control
+		exit(1);
+		#endif
+		struct msghdr m;
+		m.msg_control = 0;
+		exit(0);
+	}],
+	[ promac_cv_have_control_in_msghdr="yes" ],
+	[ promac_cv_have_control_in_msghdr="no" ])
+])
+if test "x$promac_cv_have_control_in_msghdr" = "xyes" ; then
+	AC_DEFINE( HAVE_CONTROL_IN_MSGHDR, 1, [Define if msghdr has the msg_control field] )
+fi
+
 dnl -----------------------------------
 dnl Check for libraries functions
 dnl -----------------------------------
 AC_CHECK_FUNCS(memset memcpy strdup strncmp)
 AC_CHECK_FUNCS(setsid setproctitle)
+AC_CHECK_FUNCS(sendmsg recvmsg)
 
 AM_WITH_EXPAT
 

@@ -1,11 +1,11 @@
 /***************************************************************************
                                 unixsocket.h
                              -------------------
-	revision             : $Id: unixsocket.h,v 1.1.1.1 2002-10-10 09:59:19 tellini Exp $
+	revision             : $Id: unixsocket.h,v 1.2 2002-10-13 23:22:08 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : socket interface wrapper
+	description          : unix socket interface wrapper
  ***************************************************************************/
 
 /***************************************************************************
@@ -41,6 +41,10 @@ public:
 	mode_t				GetPeerPerms( void );
 	uid_t				GetPeerUID( void );
 
+	// FD-passing routines
+	bool				SendFD( int fd );
+	int					RecvFD( void );
+	
 protected:
 	struct sockaddr_un	AddrBuf;
 	mode_t				PeerMode;
