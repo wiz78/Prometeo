@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.12 2003-11-24 16:20:48 tellini Exp $
+    revision             : $Id: http.cpp,v 1.13 2005-03-06 17:30:10 tellini Exp $
     copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -166,6 +166,17 @@ bool HTTP::AddHeaderData( const char *data, int len )
 		}
 
 	} while( !complete && ( len > 0 ));
+
+#if HAVE_ZLIB_H
+	if( GZipper && ( MIMEType == "application/x-gzip" )) {
+		
+		delete GZipper;
+		
+		GZipper = NULL;
+
+		Flags.Clear( HTTPF_DEFLATE | HTTPF_GZIP );
+	}
+#endif
 
 	// if there's anything left, it's the entity body
 	if( len > 0 )
