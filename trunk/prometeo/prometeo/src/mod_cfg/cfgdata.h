@@ -1,11 +1,11 @@
 /***************************************************************************
                                  cfgdata.h
                              -------------------
-	revision             : $Id: cfgdata.h,v 1.1.1.1 2002-10-10 09:59:26 tellini Exp $
+    revision             : $Id: cfgdata.h,v 1.2 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : configuration editor via web
+    description          : configuration editor via web
  ***************************************************************************/
 
 /***************************************************************************
@@ -40,7 +40,9 @@ public:
 					~CfgData();
 
 	void			SocketEvent( Prom_SC_Reason reason, int data );
-			
+
+	string			DecodeArg( const char *arg );
+
 private:
 	CfgEditor		*Editor;
 	TcpSocket		*Peer;
@@ -84,7 +86,6 @@ private:
 
 	void			SendFile( string name );
 
-	string			DecodeArg( const char *arg );
 	string			UrlDecode( const string val );
 
 	void			UpdateSettings( PageMaker& pg );

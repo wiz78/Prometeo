@@ -1,7 +1,7 @@
 /***************************************************************************
                                 pagemaker.cpp
                              -------------------
-    revision             : $Id: pagemaker.cpp,v 1.1.1.1 2002-10-10 09:59:29 tellini Exp $
+    revision             : $Id: pagemaker.cpp,v 1.2 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -33,15 +33,17 @@ static const struct {
 		const char *label;
 } 	Pages[] = {
 	{ "general", "General" },
+	{ "acl",     "Access Control" },
 	{ "dns",     "DNS Cache" },
-	{ "mods",    "Modules" }
+	{ "mods",    "Modules" },
 };
 
 #define NUM_PAGES	( sizeof( Pages ) / sizeof( Pages[0] ))
 
 //---------------------------------------------------------------------------
-PageMaker::PageMaker()
+PageMaker::PageMaker( CfgData *cfg )
 {
+	Cfg    = cfg;
 	DocDOM = NULL;
 
 	SablotCreateProcessor( &Processor );
@@ -337,6 +339,23 @@ void PageMaker::AddBoolOption( const StringList& args, string& result )
 			  "</tr>";
 }
 //---------------------------------------------------------------------------
+void PageMaker::AddListOption( const StringList& args, string& result, const string& page )
+{
+	string	url;
+
+	url = "/listedit?page=" + UrlEncode( page ) + "&list=" + UrlEncode( args[ OP_NAME ]);
+
+	result += "<tr>"
+			  "  <td class=\"label\">" + string( args[ OP_LABEL ]) + "</td>"
+			  "  <td class=\"value\">"
+			  "    <a href=\"" + url + "\">Edit</a>"
+			  "  </td>"
+			  "</tr>"
+			  "<tr>"
+			  "  <td colspan=\"2\" class=\"help\">" + string( args[ OP_DESCR ]) + "</td>"
+			  "</tr>";
+}
+//---------------------------------------------------------------------------
 void PageMaker::BuildPage( const string& page, string& result )
 {
 	if( page == "mods" )
@@ -344,6 +363,9 @@ void PageMaker::BuildPage( const string& page, string& result )
 
 	else if( page == "apply" )
 		BuildApplyPage( result );
+
+	else if( page == "listedit" )
+		BuildListEditPage( result );
 
 	else if( ParseDoc() ) {
 		string			query;
@@ -369,10 +391,9 @@ void PageMaker::BuildPage( const string& page, string& result )
 				BeginOptionsTable( ValueOf( "Label", node ).c_str(), result );
 
 				for( int i = 0; i < options.Count(); i++ ) {
-					MyString	str = options[ i ];
 					StringList	tmp;
 
-					str.Explode( "|", tmp );
+					tmp.Explode( options[ i ], "|" );
 
 					if( !strcmp( tmp[ OP_TYPE ], "string" ))
 						AddTextOption( tmp, result );
@@ -380,6 +401,8 @@ void PageMaker::BuildPage( const string& page, string& result )
 						AddIntegerOption( tmp, result );
 					else if( !strcmp( tmp[ OP_TYPE ], "bool" ))
 						AddBoolOption( tmp, result );
+					else if( !strcmp( tmp[ OP_TYPE ], "list" ))
+						AddListOption( tmp, result, page );
 				}
 
 				EndOptionsTable( result );
@@ -509,6 +532,51 @@ void PageMaker::BuildApplyPage( string& result )
 {
 	AddPageHeader( "apply", result );
 	BeginOptionsTable( "Settings applied.", result );
+	EndOptionsTable( result );
+	AddPageFooter( result, false );
+}
+//---------------------------------------------------------------------------
+void PageMaker::BuildListEditPage( string& result )
+{
+	string	page, list, descr;
+
+	page = Cfg->DecodeArg( "page" );
+	list = Cfg->DecodeArg( "list" );
+
+	StringList&	options = GetOptions( page );
+
+	for( int i = 0; i < options.Count(); i++ ) {
+		StringList	tmp;
+
+		tmp.Explode( options[ i ], "|" );
+
+		if( list == tmp[ OP_NAME ] ) {
+
+			descr = tmp[ OP_DESCR ];
+
+			break;
+		}
+	}
+
+	AddPageHeader( "listedit", result );
+
+	BeginOptionsTable( descr, result );
+
+	result +=	"<tr>"
+				"  <td>"
+				"    <form action=\"/listitem\" method=\"POST\">"
+				"      <input type=\"hidden\" name=\"page\" value=\"" + page + "\">"
+				"      <input type=\"hidden\" name=\"item\" value=\"\">"
+				"      <table class=\"modules\" width=\"100%\">"
+				"        <tr>"
+				"          <td align=\"center\"><input type=\"submit\" value=\"Add a new item\" class=\"maxwidth\"></td>"
+				"          <td> &nbsp; </td>"
+				"        </tr>"
+				"      </table>"
+				"    </form>";
+				"  </td>"
+				"</tr>";
+
 	EndOptionsTable( result );
 	AddPageFooter( result, false );
 }

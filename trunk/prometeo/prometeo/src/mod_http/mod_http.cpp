@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mod_http.cpp
                              -------------------
-	revision             : $Id: mod_http.cpp,v 1.2 2002-10-15 14:53:08 tellini Exp $
+	revision             : $Id: mod_http.cpp,v 1.3 2002-11-07 14:49:40 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -343,7 +343,6 @@ void HTTPProxy::Error( HTTPData *data, int err, TcpSocket *sock )
 
 			case S_CONNECTING:
 				SendError( data, HTTP_GATEWAY_TIMEOUT, "Cannot connect to the requested host." );
-App->Log->Log( LOG_ERR, "HTTPProxy::Error( %08x, %d, %d ) - Host: %s", data, err, sock->GetFD(), TcpSocket::AddrToName( &data->Addr ));
 				break;
 
 			case S_SERVER_RESPONSE:
@@ -353,7 +352,7 @@ App->Log->Log( LOG_ERR, "HTTPProxy::Error( %08x, %d, %d ) - Host: %s", data, err
 			case S_BODY:
 				StoreObj *obj;
 
-				if( data->Cached && ( obj = data->Cached->GetStoreObj() ))
+				if( data->Cached && ( obj = data->Cached->GetStoreObj( false )))
 					obj->WriteComplete( false );
 				else
 					closeit = !CloseServerSocket( data );
