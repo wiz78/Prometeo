@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.2 2003-05-24 12:31:09 tellini Exp $
+    revision             : $Id: client.cpp,v 1.3 2003-06-20 20:13:41 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -211,7 +211,9 @@ void Client::Dispatch( void )
 				
 		} else
 			User->Printf( "-ERR Cannot connect to the mail server\r\n" );
-	}
+		
+	} else
+		User->Printf( "+OK POP3 proxy ready\r\n" );
 	
 
 	do {
@@ -279,6 +281,8 @@ void Client::ConnectToServer( void )
 
 		server.erase( pos );
 	}
+
+	App->Log->Log( LOG_INFO, "mod_pop3: connecting to %s:%d", server.c_str(), port );
 
 	CFlags.Clear( POPF_CONNECTED );
 
@@ -348,20 +352,30 @@ void Client::ForwardCmd( void )
 		"LIST", "RETR", "TOP", "UIDL"
 	};
 #define NUM_CMDS	( sizeof( Multi ) / sizeof( Multi[ 0 ] ))
-	bool multiline = false;
-		
-	Server->Printf( "%s", Command.c_str() );
 
-	if( !Args.empty() )
-		Server->Printf( " %s", Args.c_str() );
-		
-	Server->Send( "\r\n", 2 );
-
-	for( int i = 0; !multiline && ( i < NUM_CMDS ); i++ )
-		if( Command == Multi[ i ] )
-			multiline = true;
+	DBG( App->Log->Log( LOG_INFO, "mod_pop3: cmd = %s, args = %s", Command.c_str(), Args.c_str() ));
 	
-	ForwardReply( multiline );
+	if( !CFlags.IsSet( POPF_TRANSPARENT ) && ( Command == "USER" ))
+		ConnectToServer();
+	
+	else if( CFlags.IsSet( POPF_CONNECTED )) {
+		bool multiline = false;
+		
+		Server->Printf( "%s", Command.c_str() );
+
+		if( !Args.empty() )
+			Server->Printf( " %s", Args.c_str() );
+		
+		Server->Send( "\r\n", 2 );
+
+		for( int i = 0; !multiline && ( i < NUM_CMDS ); i++ )
+			if( Command == Multi[ i ] )
+				multiline = true;
+	
+		ForwardReply( multiline );
+		
+	} else
+		User->Printf( "-ERR not connected to the server\r\n" );
 #undef NUM_CMDS
 }
 //---------------------------------------------------------------------------
