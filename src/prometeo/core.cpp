@@ -1,7 +1,7 @@
 /***************************************************************************
                                   core.cpp
                              -------------------
-    revision             : $Id: core.cpp,v 1.8 2003-03-01 19:55:20 tellini Exp $
+    revision             : $Id: core.cpp,v 1.9 2003-05-24 12:28:54 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -145,7 +145,8 @@ bool Core::Daemonize( void )
 	else if( pid == 0 ) { // child
 
 		if( CheckPid() ) {
-			int	fds[2];
+			int		fds[2];
+			const char	*spool = SPOOL_DIR;
 #endif
 			child = true;
 
@@ -178,8 +179,17 @@ bool Core::Daemonize( void )
 #endif
 			umask( 022 );
 
-			mkdir( SPOOL_DIR, 0700 );
-			chdir( SPOOL_DIR );
+			Cfg->Load();
+
+			if( Cfg->OpenKey( "root/General", false )) {
+
+				spool = Cfg->GetString( "spooldir", spool );
+
+				Cfg->CloseKey();
+			}
+
+			mkdir( spool, 0700 );
+			chdir( spool );
 
 			signal( SIGCHLD, SigChildExit );
 			signal( SIGHUP,  SigReloadCfg );
