@@ -1,0 +1,1 @@
+ - logger.cpp: nodes inside <Note> should be treated as strings

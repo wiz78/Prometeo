@@ -1,0 +1,98 @@
+form
+{
+	margin:					0px;
+	padding:				0px;
+}
+
+table.nav td
+{
+	font-family:			Arial, sans-serif;
+	font-size:				95%;
+	padding-left:			10px;
+	padding-right:			10px;
+}
+
+table.options
+{
+	width:					790px;
+	border-collapse:		collapse;
+	border-style:			solid;
+	border-color:			silver;
+	border-width:			1px;
+	margin-bottom:			5px;
+}
+
+.options th
+{
+	font-size:				120%;
+	color:					black;
+	background-color:		#bbccff;
+	padding:				5px;
+	border-bottom-style:	solid;
+	border-bottom-width:	1px;
+	border-bottom-color:	#111111;
+}
+
+td.spacer
+{
+	height:					5px;
+	border-left-style:		none;
+	border-right-style:		none;
+	border-top-style:		none;
+	border-bottom-style:	solid;
+	border-bottom-color:	black;
+	border-bottom-width:	1px;
+}
+
+.options td
+{
+	font-family:			Arial, sans-serif;
+	font-size:				90%;
+}
+
+td.label
+{
+	width:					50%;
+}
+
+td.value
+{
+	width:					50%;
+	padding:				0px;
+}
+
+td.value input, .maxwidth
+{
+	width:					100%;
+}
+
+td.help
+{
+	font-size:				80%;
+	color:					black;
+	background-color:		#dddddd;
+	border-bottom-style:	solid;
+	border-bottom-width:	1px;
+	border-bottom-color:	black;
+	padding-bottom:			5px;
+}
+
+table.modules td
+{
+	width:					20%;
+}
+
+div.footer
+{
+	border-top-style:		solid;
+	border-top-color:		black;
+	border-top-width:		2px;
+	margin-top:				10px;
+	padding-top:			4px;
+	width:					100%;
+	font-family;			Arial, sans-serif;
+	font-size:				70%;
+	font-style:				italic;
+	color:					black;
+	background-color:		#eeeeee;
+}

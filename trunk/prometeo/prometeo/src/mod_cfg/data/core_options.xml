@@ -1,0 +1,37 @@
+<Page name="general">
+	<Label>General options</Label>
+
+	<Option type="string" name="spooldir" default="/var/spool/prometeo">
+		<Label>Spool directory</Label>
+		<Descr>The directory where all the cache or data files are kept.</Descr>
+		<Key name="root/General/spooldir"/>
+	</Option>
+
+	<Option type="string" name="ident" default="prometeo">
+		<Label>Log Ident</Label>
+		<Descr>Syslog identification string.</Descr>
+		<Key name="root/Log/ident"/>
+	</Option>
+</Page>
+
+<Page name="dns">
+	<Label>DNS Options</Label>
+
+	<Option type="integer" name="children" default="3">
+		<Label>Children</Label>
+		<Descr>The number of helper processes spawned to resolve the DNS queries.</Descr>
+		<Key name="root/DNSCache/children"/>
+	</Option>
+
+	<Option type="integer" name="slots" default="512">
+		<Label>Slots</Label>
+		<Descr>How many responses are kept in cache.</Descr>
+		<Key name="root/DNSCache/slots"/>
+	</Option>
+
+	<Option type="integer" name="ttl" default="300">
+		<Label>TTL</Label>
+		<Descr>This is the lifetime in seconds of a cached response.</Descr>
+		<Key name="root/DNSCache/ttl"/>
+	</Option>
+</Page>
