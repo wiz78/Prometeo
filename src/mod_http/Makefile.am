@@ -7,6 +7,7 @@ CPPFLAGS = @CPPFLAGS@
 CXXFLAGS = @CXXFLAGS@
 
 pkglib_LTLIBRARIES = mod_http.la
+noinst_HEADERS     = *.h
 
 mod_http_la_SOURCES = mod_http.cpp url.cpp connectionmgr.cpp netdate.cpp \
 					  http.cpp md5.c cache.cpp cacheobj.cpp \

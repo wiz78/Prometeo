@@ -7,6 +7,7 @@ CPPFLAGS = @CPPFLAGS@
 CXXFLAGS = @CXXFLAGS@
 
 pkglib_LTLIBRARIES = mod_tunnel.la
+noinst_HEADERS     = *.h
 
 mod_tunnel_la_SOURCES = mod_tunnel.cpp
 mod_tunnel_la_LDFLAGS = -no-undefined -module -avoid-version
