@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.1 2002-10-30 14:48:50 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.2 2002-11-13 15:42:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -21,6 +21,21 @@
 
 #include <string.h>
 #include <arpa/inet.h>
+#if defined(HAVE_NETINET_IP_COMPAT_H)
+#include <netinet/ip_compat.h>
+#endif
+#if defined(HAVE_NETINET_IP_FIL_COMPAT_H)
+#include <netinet/ip_fil_compat.h>
+#endif
+#if defined(HAVE_NETINET_IP_FIL_H)
+#include <netinet/ip_fil.h>
+#endif
+#if defined(HAVE_NETINET_IP_NAT_H)
+#include <netinet/ip_nat.h>
+#endif
+#if defined(HAVE_LINUX_NETFILTER_IPV4_H)
+#include <linux/netfilter_ipv4.h>
+#endif
 
 #include "tcpsocket.h"
 
@@ -340,5 +355,98 @@ int TcpSocket::GetLocalPort( void )
 	}
 
 	return( port );
+}
+//---------------------------------------------------------------------------
+bool TcpSocket::GetOriginalDest( Prom_Addr *addr, short *port )
+{
+	bool	ret = false;
+
+#if !HAVE_IPV6
+
+	struct sockaddr_in name;
+	socklen_t          len = sizeof( name );
+
+	if( getsockname( FD, (struct sockaddr *)&name, &len ) == 0 ) {
+
+#if defined(HAVE_LINUX_NETFILTER_IPV4_H) && defined(SO_ORIGINAL_DST)
+		struct sockaddr_in	dest;
+
+		// Linux netfilter
+		len = sizeof( dest );
+
+		ret = getsockopt( FD, SOL_IP, SO_ORIGINAL_DST, &dest, &len ) == 0;
+
+		// loop?
+		if(( name.sin_port == dest.sin_port ) &&
+		( name.sin_addr.s_addr == dest.sin_addr.s_addr ))
+			ret = false;
+
+		*((struct in_addr *)addr) = dest.sin_addr;
+		*port 					  = dest.sin_port;
+
+#elif defined(HAVE_NETINET_IP_NAT_H) && defined(SIOCGNATL)
+		int 		natfd;
+		natlookup_t	natlook, *nlptr = &natlook;
+
+		// BSD ipnat table lookup
+		nat_fd = open( IPL_NAT, O_RDONLY, 0 );
+
+		if( natfd >= 0 ) {
+			struct sockaddr_in	peer;
+			int					rc;
+
+			len = sizeof( peer );
+
+			getpeername( FD, (struct sockaddr *)&peer, &len );
+
+			memset( &natlook, 0, sizeof( natlook ));
+
+			natlook.nl_flags        = IPN_TCP;
+			natlook.nl_inip.s_addr  = name.sin_addr.s_addr;
+			natlook.nl_inport       = name.sin_port;
+			natlook.nl_outip.s_addr = peer.sin_addr.s_addr;
+			natlook.nl_outport      = peer.sin_port;
+
+			// handle versions differences...
+			rc = 0;
+
+			if( 63 == ( SIOCGNATL & 0xff ))
+				rc = ioctl( nat_fd, SIOCGNATL, &nlptr );
+			else
+				rc = ioctl( nat_fd, SIOCGNATL, &natlook );
+
+			close( nat_fd );
+
+			ret = rc >= 0;
+
+			if( ret ) {
+
+				// loop?
+				if(( name.sin_port == natlook.nl_realport ) &&
+				( name.sin_addr.s_addr == natlook.nl_realip.s_addr ))
+					ret = false;
+
+				if( ret ) {
+
+					*((struct in_addr *)addr) = natlook.nl_realip;
+					*port                     = natlook.nl_realport;
+				}
+			}
+		}
+
+#else /* !BSD-IPNAT */
+
+		// IP-Chains uses getsockname, as "transparent address"
+
+		ret = true;
+
+		*((struct in_addr *)addr) = name.sin_addr;
+		*port                     = name.sin_port;
+#endif
+	}
+
+#endif /* HAVE_IPV6 */
+
+	return( ret );
 }
 //---------------------------------------------------------------------------

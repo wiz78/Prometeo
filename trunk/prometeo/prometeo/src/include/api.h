@@ -1,6 +1,7 @@
 /***************************************************************************
                                     api.h
                              -------------------
+    revision             : $Id: api.h,v 1.2 2002-11-13 15:42:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -49,10 +50,9 @@ typedef void *HANDLE; /* Generic handle */
 /*
  * Modules types
  */
-#define PROM_MT_LOGGER		1	/* the module adds functions to log events */
-#define PROM_MT_CUSTOM		2	/* everything which doesn't match the previous
-								   descriptions
-								*/
+#define PROM_MT_CUSTOM		65000	/* everything which doesn't match
+									   any previous description
+									*/
 
 /*
  * Use the following macro to define the module structure
@@ -60,12 +60,6 @@ typedef void *HANDLE; /* Generic handle */
  */
 #define PROM_MODULE			Prom_Module PrometeoModule
 #define PROM_MODINFO_NAME	"PrometeoModule"
-
-/* Functions to be provided by PROM_MT_LOGGER modules */
-typedef struct prometeo_loggerfuncs
-{
-	void			( *Log )( HANDLE mod, int level, char *fmt, ... );
-} Prom_LoggerFuncs;
 
 /*
  * The current definition of the module structure.
@@ -78,13 +72,13 @@ typedef struct prometeo_module
 	unsigned short	Type;			// module type
 
 	// returns the XML manifest of the module
-	// 
+	//
 	// key is the registry key containing the module configuration
-	// 
+	//
 	// name is the name assigned by the user to the module (it's possible
 	// to load the same module several times with different names and
 	// settings)
-	// 
+	//
 	// REQUIRED
 	const char		*( *GetManifest )( const char *key, const char *name );
 
@@ -117,9 +111,9 @@ typedef struct prometeo_module
 	// can be NULL
 	void			( *OnTimer )( HANDLE mod, time_t now );
 
-	union {
-		Prom_LoggerFuncs	*Logger;
-	}				Funcs;
+	// handle custom commands sent via prometeoctl/mod_cfg
+	// can be NULL
+	void			( *ParseCmd )( HANDLE mod, const char *cmd );
 
 } Prom_Module;
 
@@ -143,7 +137,7 @@ API_EXPORT( void ) Prom_Log( int level, char *fmt, ... );
  * some resources.
  *
  * ident is an identifier of the process
- * 
+ *
  */
 API_EXPORT( pid_t ) Prom_Fork( char *ident );
 
