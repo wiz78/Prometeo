@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.3 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.4 2002-10-23 17:54:25 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -299,6 +299,8 @@ bool Socket::AsyncRecv( void *data, int size, int flags, int timeout )
 			AsyncReadFlags	= flags;
 			ReadSize        = size;
 
+			Flags.Set( PROM_SOCKF_RECVING );
+
 			SetTimeout( timeout );
 
 			if( Dispatcher )
@@ -382,7 +384,7 @@ void Socket::HandleRead( void )
 		Callback( PROM_SOCK_ACCEPT, (int)Accept() );
 
 	} else if( Flags.IsSet( PROM_SOCKF_NOTIFY_DISCONN )) {
-		
+
 		if( !StillConnected() ) {
 
 			if( Dispatcher )
@@ -391,11 +393,13 @@ void Socket::HandleRead( void )
 			Callback( PROM_SOCK_READ, 0 );
 		}
 
-	} else {
+	} else if( Flags.IsSet( PROM_SOCKF_RECVING )) {
 		int len;
 
 		if( Dispatcher )
 			Dispatcher->RemFD( this, PROM_IOF_READ );
+
+		Flags.Clear( PROM_SOCKF_RECVING );
 
 		len = recv( FD, AsyncReadBuffer, ReadSize, AsyncReadFlags );
 
@@ -405,9 +409,13 @@ void Socket::HandleRead( void )
 		else if(( errno != EWOULDBLOCK ) && ( errno != EINTR ))
 			Callback( PROM_SOCK_ERROR, errno );
 
-		else if( Dispatcher )
+		else if( Dispatcher ) {
 			Dispatcher->AddFD( this, PROM_IOF_READ );
-	}
+			Flags.Set( PROM_SOCKF_RECVING );
+		}
+
+	} else
+		Callback( PROM_SOCK_READ, -1 );
 }
 //---------------------------------------------------------------------------
 void Socket::HandleWrite( void )

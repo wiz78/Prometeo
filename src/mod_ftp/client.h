@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.3 2002-10-17 18:03:14 tellini Exp $
+    revision             : $Id: client.h,v 1.4 2002-10-23 17:54:26 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,7 @@ public:
 	virtual void		OnFork( void );
 
 	void				Serve( TcpSocket *sock, bool forked );
+	void				SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data );
 
 private:
 	TcpSocket			*User;
@@ -57,8 +58,13 @@ private:
 	bool				ForwardCmd( void );
 
 	virtual void		Dispatch( void );
+
+	void				DispatchCmd( void );
 	void				ConnectToServer( void );
 	bool				ServerLogin( const string& user );
+
+	void				AcceptUserData( TcpSocket *sock );
+	void				AcceptServerData( TcpSocket *sock );
 
 	void				CmdFeat( void );
 	void				CmdPbsz( void );
