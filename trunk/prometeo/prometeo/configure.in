@@ -5,14 +5,14 @@ dnl                              configure.in
 dnl							 -------------------
 dnl	copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.1.1.1 2002-10-10 09:55:49 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.2 2002-10-10 10:39:46 tellini Exp $
 dnl
 
 dnl -----------------------------------
 dnl Setup
 dnl -----------------------------------
 
-AC_INIT(src/prometeo/main.cpp)
+AC_INIT(src/Makefile.am)
 
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(src/include/config.h:src/include/config-h.in)
