@@ -1,7 +1,7 @@
 /***************************************************************************
                                 procpool.cpp
                              -------------------
-    revision             : $Id: procpool.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
+    revision             : $Id: procpool.cpp,v 1.3 2002-11-01 22:23:51 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -51,7 +51,7 @@ void ProcPool::Setup( void )
 	if( MinChildren > Children.Count() ) {
 
 		while( MinChildren > Children.Count() ) {
-			Client	*proc = new Client();
+			Client	*proc = new Client( Key );
 
 			if( proc->Spawn( "FTP proxy" ))
 				AddChild( proc );
@@ -84,7 +84,7 @@ void ProcPool::ServeClient( TcpSocket *sock )
 
 	if( !proc && ( Children.Count() < MaxChildren )) {
 
-		proc   = new Client();
+		proc   = new Client( Key );
 		forked = proc->Spawn( "FTP proxy" );
 
 		if( forked )

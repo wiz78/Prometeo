@@ -1,7 +1,7 @@
 /***************************************************************************
                                   process.h
                              -------------------
-	revision             : $Id: process.h,v 1.1.1.1 2002-10-10 09:59:14 tellini Exp $
+	revision             : $Id: process.h,v 1.2 2002-11-01 22:23:44 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -40,7 +40,9 @@ public:
 
 	bool				Spawn( char *ident );
 	void				Terminate( void );
+	
 	virtual void		OnFork( void ) {}
+	virtual void		ReloadCfg( void ) {} 
 
 	virtual void		SocketEvent( Prom_SC_Reason reason, int data );
 
@@ -53,6 +55,7 @@ public:
 	void				SetGroup( ProcessGroup *group ) { Group = group; }
 	void				UseDispatcher( IODispatcher *io );
 
+	pid_t				GetChildPid( void ) const { return( ChildPid ); }
 	time_t				GetLastReqTime( void ) const { return( LastReqTime ); }
 	
 protected:

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.6 2002-11-01 19:01:01 tellini Exp $
+    revision             : $Id: client.cpp,v 1.7 2002-11-01 22:23:47 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,6 +20,7 @@
 #include <ctype.h>
 
 #include "main.h"
+#include "registry.h"
 #include "iodispatcher.h"
 #include "unixsocket.h"
 #include "tcpsocket.h"
@@ -69,8 +70,9 @@ static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userd
 	((Client *)userdata )->SocketEvent( sock, reason, data );
 }
 //---------------------------------------------------------------------------
-Client::Client() : Process()
+Client::Client( const string& key ) : Process()
 {
+	CfgKey     = key;
 	User       = NULL;
 	Server     = NULL;
 	UserData   = NULL;
@@ -79,6 +81,8 @@ Client::Client() : Process()
 	ClientCtx  = new SSLCtx( SSLCtx::CLIENT );
 	ServerCtx  = new SSLCtx( SSLCtx::SERVER );
 #endif
+
+	FTPFlags.Set( FTPF_CFG_TRY_TLS );
 }
 //---------------------------------------------------------------------------
 Client::~Client()
@@ -116,6 +120,24 @@ void Client::Cleanup( void )
 	ServerData = NULL;
 }
 //---------------------------------------------------------------------------
+void Client::ReloadCfg( void )
+{
+	App->Cfg->Load();
+	Setup();
+}
+//---------------------------------------------------------------------------
+void Client::Setup( void )
+{
+	if( App->Cfg->OpenKey( CfgKey.c_str(), false )) {
+
+		FTPFlags.Set( FTPF_CFG_TRY_TLS,     App->Cfg->GetInteger( "trytls", true ));
+		FTPFlags.Set( FTPF_CFG_REQUIRE_TLS, App->Cfg->GetInteger( "requiretls", false ));
+		FTPFlags.Set( FTPF_CFG_DATA_TLS,    App->Cfg->GetInteger( "datatls", false ));
+			
+		App->Cfg->CloseKey();
+	}
+}
+//---------------------------------------------------------------------------
 void Client::Serve( TcpSocket *sock, bool forked )
 {
 	// this method is called in the parent context
@@ -140,9 +162,11 @@ void Client::WaitRequest( void )
 	int		FD = Socket->GetFD();
 	fd_set	fds;
 
+	Setup();
+		
 	FD_ZERO( &fds );
 	FD_SET( FD, &fds );
-
+	
 	Prom_set_ps_display( "idle" );
 
 	// loop until we recv some requests or we get killed
@@ -168,7 +192,7 @@ void Client::WaitRequest( void )
 
 		Socket->Send( &num, sizeof( num ));
 
-		FTPFlags.Clear();
+		FTPFlags.Clear( ~FTPF_CFG_MASK );
 
 		Prom_set_ps_display( "idle" );
 	}
@@ -435,7 +459,7 @@ bool Client::ServerLogin( const string& user )
 
 	if( RecvStatus() == 220 ) {
 
-		if( AttemptTLSLogin() ) {
+		if( !FTPFlags.IsSet( FTPF_CFG_TRY_TLS ) || AttemptTLSLogin() ) {
 
 			Server->Printf( "USER %s\r\n", user.c_str() );
 
@@ -466,7 +490,7 @@ bool Client::ServerLogin( const string& user )
 //---------------------------------------------------------------------------
 bool Client::AttemptTLSLogin( void )
 {
-	bool	ret = true;
+	bool	ret = false;
 
 #if USE_SSL
 	Server->Printf( "AUTH TLS\r\n" );
@@ -482,6 +506,7 @@ bool Client::AttemptTLSLogin( void )
 			delete Server;
 
 			Server = (TcpSocket *)ssl;
+			ret    = true;
 
 			Flags.Set( FTPF_TLS );
 
@@ -493,13 +518,19 @@ bool Client::AttemptTLSLogin( void )
 			ssl->SetFD( -1 );
 
 			delete ssl;
-
-			ret = false;
 		}
 	}
 
-	if( !ret )
-		User->Printf( "421 Cannot login.\r\n" );
+	if( !ret ) {
+		
+		if( FTPFlags.IsSet( FTPF_CFG_REQUIRE_TLS ))
+			User->Printf( "421 Cannot setup TLS connection to the remote server, give up.\r\n" );
+		else
+			ret = true;
+	}
+#else
+	
+	ret = true;
 
 #endif /* USE_SSL */
 

@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.7 2002-11-01 19:01:01 tellini Exp $
+    revision             : $Id: client.h,v 1.8 2002-11-01 22:23:49 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -33,15 +33,17 @@ class TcpSocket;
 class Client : public Process
 {
 public:
-						Client();
+						Client( const string& key );
 						~Client();
 
 	virtual void		OnFork( void );
+	virtual void		ReloadCfg( void );
 
 	void				Serve( TcpSocket *sock, bool forked );
 	void				SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data );
 
 private:
+	string				CfgKey;
 	TcpSocket			*User;
 	TcpSocket			*Server;
 	TcpSocket			*UserData;
@@ -58,6 +60,7 @@ private:
 	char				PortAddress[ 32 ];
 	char				DataBuffer[ 4 * 1024 ];
 
+	void				Setup();
 	void				Cleanup();
 
 	virtual void		WaitRequest( void );
@@ -109,5 +112,11 @@ private:
 #define FTPF_BLOCK_DATA_CONN	(1 << 7)	// EPSV ALL
 #define FTPF_SERVER_ACCEPT		(1 << 8)
 #define FTPF_CLIENT_ACCEPT		(1 << 9)
+
+#define FTPF_CFG_TRY_TLS		(1 << 31)
+#define FTPF_CFG_REQUIRE_TLS	(1 << 30)
+#define FTPF_CFG_DATA_TLS		(1 << 29)
+
+#define FTPF_CFG_MASK			( FTPF_CFG_TRY_TLS | FTPF_CFG_REQUIRE_TLS | FTPF_CFG_DATA_TLS )
 
 #endif
