@@ -1,7 +1,7 @@
 /***************************************************************************
                               popupblocker.cpp
                              -------------------
-    revision             : $Id: popupblocker.cpp,v 1.3 2003-04-08 17:44:41 tellini Exp $
+    revision             : $Id: popupblocker.cpp,v 1.4 2003-04-08 19:44:08 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -59,9 +59,7 @@ bool PopupBlocker::Process( void )
 	open_pre = Replace( "window.open(", "_prometeo_window_open(" );
 	
 	html_pre = Replace( "</html>",
-						"<script language=\"JavaScript\"><!--\n"
-						" _prometeo_loaded = true;\n"
-						"//--></script></html>" );
+						"<script language=\"JavaScript\">_prometeo_loaded = true;</script></html>" );
 
 	if(( head_pre >= 0 ) && ( open_pre >= 0 ))
 		Ready = ( head_pre < open_pre ) ? head_pre : open_pre;
