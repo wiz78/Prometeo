@@ -6,3 +6,4 @@ autoheader
 automake --add-missing --copy
 autoconf
 
+[ ! -f mkinstalldirs ] && ln -s config/mkinstalldirs mkinstalldirs
