@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.8 2002-11-01 22:23:49 tellini Exp $
+    revision             : $Id: client.h,v 1.9 2002-11-02 17:19:11 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -58,7 +58,6 @@ private:
 	BitField			FTPFlags;
 	int					PortPort;
 	char				PortAddress[ 32 ];
-	char				DataBuffer[ 4 * 1024 ];
 
 	void				Setup();
 	void				Cleanup();
@@ -104,14 +103,15 @@ private:
 
 #define FTPF_CONNECTED			(1 << 0)
 #define FTPF_LOGGED_IN			(1 << 1)
-#define FTPF_DATA_TLS			(1 << 2)	// TLS required for data channel
+#define FTPF_CLI_DATA_TLS		(1 << 2)	// TLS required for data channel
 #define FTPF_PBSZ				(1 << 3)
-#define FTPF_TLS				(1 << 4)
-#define FTPF_CLIENT_PASV		(1 << 5)
-#define FTPF_CLIENT_PORT		(1 << 6)
-#define FTPF_BLOCK_DATA_CONN	(1 << 7)	// EPSV ALL
-#define FTPF_SERVER_ACCEPT		(1 << 8)
-#define FTPF_CLIENT_ACCEPT		(1 << 9)
+#define FTPF_SRV_TLS			(1 << 4)
+#define FTPF_SRV_DATA_TLS		(1 << 5)
+#define FTPF_CLIENT_PASV		(1 << 6)
+#define FTPF_CLIENT_PORT		(1 << 7)
+#define FTPF_BLOCK_DATA_CONN	(1 << 8)	// EPSV ALL
+#define FTPF_SERVER_ACCEPT		(1 << 9)
+#define FTPF_CLIENT_ACCEPT		(1 << 10)
 
 #define FTPF_CFG_TRY_TLS		(1 << 31)
 #define FTPF_CFG_REQUIRE_TLS	(1 << 30)
