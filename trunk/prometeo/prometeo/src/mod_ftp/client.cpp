@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.2 2002-10-23 17:54:26 tellini Exp $
+    revision             : $Id: client.cpp,v 1.3 2002-10-29 18:01:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -19,27 +19,48 @@
 
 #include <ctype.h>
 
+#include "main.h"
 #include "iodispatcher.h"
 #include "unixsocket.h"
 #include "tcpsocket.h"
 #include "dnscache.h"
+#include "stringlist.h"
 #include "client.h"
 
-#define TIMEOUT_CMD		30
-#define TIMEOUT_REPLY	60
+#define TIMEOUT_CMD			30
+#define TIMEOUT_REPLY		60
+#define TIMEOUT_IDLE		120
+#define TIMEOUT_DATA_CONN	60
+
+#define MAX_REPLY_SIZE	(1024 * 1024)
 
 static const char *ForwardableCmds[] = {
 	"ACCT", "CWD", "CDUP",
 	"SMNT", "REIN", "TYPE",
 	"STRU", "MODE", "ALLO",
 	"REST", "RNFR", "RNTO",
-	"ABOR", "DELE", "RMD",
+	"DELE", "RMD", "PASS",
 	"MKD", "PWD", "SITE",
-	"SYST", "STAT", "HELP",
-	"NOOP"
+	"SYST", "STAT", "NOOP",
 };
 
 #define NUM_FWD_CMDS	( sizeof( ForwardableCmds ) / sizeof( ForwardableCmds[0] ))
+
+enum { TO_CLIENT, TO_SERVER };
+
+static struct {
+	const char *cmd;
+	int			dir;
+} DataCmds[] = {
+	{ "LIST", TO_CLIENT },
+	{ "NLST", TO_CLIENT },
+	{ "RETR", TO_CLIENT },
+	{ "STOR", TO_SERVER },
+	{ "APPE", TO_SERVER },
+	{ "STOU", TO_SERVER },
+};
+
+#define NUM_DATA_CMDS	( sizeof( DataCmds ) / sizeof( DataCmds[0] ))
 
 //---------------------------------------------------------------------------
 static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userdata )
@@ -49,8 +70,10 @@ static void SocketCB( SOCKREF sock, Prom_SC_Reason reason, int data, void *userd
 //---------------------------------------------------------------------------
 Client::Client() : Process()
 {
-	User   = NULL;
-	Server = NULL;
+	User       = NULL;
+	Server     = NULL;
+	UserData   = NULL;
+	ServerData = NULL;
 }
 //---------------------------------------------------------------------------
 Client::~Client()
@@ -131,6 +154,8 @@ void Client::WaitRequest( void )
 
 		Socket->Send( &num, sizeof( num ));
 
+		FTPFlags.Clear();
+
 		Prom_set_ps_display( "idle" );
 	}
 }
@@ -154,7 +179,9 @@ bool Client::RecvCommand( void )
 
 		Command = buf;
 		Args    = ptr;
-	}
+
+	} else
+		FTPFlags.Clear( FTPF_CONNECTED );
 
 	return( ok );
 }
@@ -162,14 +189,21 @@ bool Client::RecvCommand( void )
 int Client::RecvStatus( void )
 {
 	bool	loop, info = false;
-	int		status = 421;
+	int		status = 221;
+
+	LastReply.erase();
 
 	do {
 		char	buf[512];
+		int		len;
 
-		loop = Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 4;
+		len  = Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY );
+		loop = len > 0;
 
 		if( loop ) {
+
+			LastReply += buf;
+			LastReply += "\r\n";
 
 			if( info ) {
 
@@ -178,21 +212,25 @@ int Client::RecvStatus( void )
 					loop   = false;
 				}
 
-			} else if( buf[3] == '-' )
+			} else if(( len >= 4 ) && ( buf[3] == '-' ))
 				info = true;
 			else {
 				status = atoi( buf );
 				loop   = false;
 			}
-		}
 
-	} while( loop );
+		} else
+			status = 221;
+
+	} while( loop && ( LastReply.length() <= MAX_REPLY_SIZE ));
 
 	return( status );
 }
 //---------------------------------------------------------------------------
 void Client::Dispatch( void )
 {
+	time_t	timeout;
+
 	User->Printf( "220 Welcome\r\n" );
 
 	User->UseDispatcher( App->IO );
@@ -200,13 +238,26 @@ void Client::Dispatch( void )
 
 	App->IO->AddFD( User, PROM_IOF_READ );
 
-	Flags.Set( FTPF_CONNECTED );
+	FTPFlags.Set( FTPF_CONNECTED );
+
+	timeout = time( NULL ) + TIMEOUT_IDLE;
 
 	do {
 
-		App->IO->WaitEvents();
+		if( !App->IO->WaitEvents( TIMEOUT_IDLE )){
 
-	} while( Flags.IsSet( FTPF_CONNECTED ));
+		 	if( time( NULL ) > timeout ) {
+
+				User->Printf( "221 Connection idle for %d seconds. Get lost.\r\n",
+							  TIMEOUT_IDLE );
+
+				FTPFlags.Clear( FTPF_CONNECTED );
+			}
+
+		} else
+			timeout = time( NULL ) + TIMEOUT_IDLE;
+
+	} while( FTPFlags.IsSet( FTPF_CONNECTED ));
 
 	delete User;
 	delete Server;
@@ -234,12 +285,16 @@ void Client::DispatchCmd( void )
 			else
 				User->Printf( "501 This is a proxy: you must login with user@host[:port] as username\r\n" );
 
+		} else if( Command == "PASS" ) {
+
+			CmdPass();
+
 		} else if( Command == "QUIT" ) {
 
 			User->Printf( "221 Goodbye.\r\n" );
-			Flags.Clear( FTPF_CONNECTED );
+			FTPFlags.Clear( FTPF_CONNECTED );
 
-		} else if( Flags.IsSet( FTPF_LOGGED_IN )) {
+		} else if( FTPFlags.IsSet( FTPF_LOGGED_IN )) {
 
 			if( Command == "FEAT" )
 				CmdFeat();
@@ -247,7 +302,17 @@ void Client::DispatchCmd( void )
 				CmdPbsz();
 			else if( Command == "PROT" )
 				CmdProt();
-			else if( !ForwardCmd() )
+			else if( Command == "PASV" )
+				CmdPasv();
+			else if( Command == "EPSV" )
+				CmdEpsv();
+			else if( Command == "PORT" )
+				CmdPort();
+			else if( Command == "EPRT" )
+				CmdEprt();
+			else if( Command == "ABOR" )
+				CmdAbor();
+			else if( !ForwardCmd() && !DataConnectionCmd() )
 				User->Printf( "502 Command not implemented\r\n" );
 
 		} else
@@ -262,8 +327,8 @@ void Client::SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data )
 		case PROM_SOCK_READ:
 			if( sock == User )
 				DispatchCmd();
-//			else if( sock == Server )
-//				ForwardData();
+			else if(( sock == ServerData ) || ( sock == UserData ))
+				ForwardData((TcpSocket *)sock, data );
 			break;
 
 
@@ -276,21 +341,21 @@ void Client::SocketEvent( SOCKREF sock, Prom_SC_Reason reason, int data )
 
 		case PROM_SOCK_TIMEOUT:
 		case PROM_SOCK_ERROR:
-//			HandleError( sock, data );
+			HandleError((TcpSocket *)sock, data );
 			break;
 	}
 }
 //---------------------------------------------------------------------------
 void Client::AcceptUserData( TcpSocket *sock )
 {
+	FTPFlags.Set( FTPF_CLIENT_ACCEPT );
+
 	delete UserData;
 
 	if( sock->IsValid() ) {
 
 		sock->UseDispatcher( App->IO );
 		sock->SetAsyncCallback( SocketCB, this );
-
-		App->IO->AddFD( sock, PROM_IOF_READ );
 
 		UserData = sock;
 
@@ -300,6 +365,8 @@ void Client::AcceptUserData( TcpSocket *sock )
 //---------------------------------------------------------------------------
 void Client::AcceptServerData( TcpSocket *sock )
 {
+	FTPFlags.Set( FTPF_SERVER_ACCEPT );
+
 	delete ServerData;
 
 	if( sock->IsValid() ) {
@@ -307,23 +374,17 @@ void Client::AcceptServerData( TcpSocket *sock )
 		sock->UseDispatcher( App->IO );
 		sock->SetAsyncCallback( SocketCB, this );
 
-		App->IO->AddFD( sock, PROM_IOF_READ );
-
 		ServerData = sock;
 
-	} else {
-
-		// XXX report error to user
-
+	} else
 		ServerData = NULL;
-	}
 }
 //---------------------------------------------------------------------------
 void Client::ConnectToServer( void )
 {
 	string::size_type	pos;
 	string				server, user;
-	int					port = 21;
+	short				port = 21;
 	Prom_Addr			addr;
 
 	pos    = Args.find( "@" );
@@ -338,18 +399,20 @@ void Client::ConnectToServer( void )
 		server.erase( pos );
 	}
 
+	FTPFlags.Clear( FTPF_CONNECTED );
+
 	if( App->DNS->Resolve( server.c_str(), &addr )) {
 
 		Server = new TcpSocket();
 
 		Prom_set_ps_display( "connecting to server..." );
 
-		if( Server->Connect( &addr, sizeof( addr ))) {
+		if( Server->Connect( &addr, port )) {
 
 			Prom_set_ps_display( "connected" );
 
-			if( !ServerLogin( user ))
-				Flags.Clear( FTPF_CONNECTED );
+			if( ServerLogin( user ))
+				FTPFlags.Set( FTPF_CONNECTED );
 
 		} else
 			User->Printf( "421 Cannot connect to the requested host\r\n" );
@@ -362,22 +425,43 @@ bool Client::ServerLogin( const string& user )
 {
 	bool	ret = false;
 
-	if( Flags.IsSet( FTPF_TLS )) {
-		bool	ok = false;
+	if( RecvStatus() == 220 ) {
 
-		Server->Printf( "AUTH TLS\r\n" );
+		if( FTPFlags.IsSet( FTPF_TLS )) {
+			bool	ok = false;
 
-		if( RecvStatus() == 234 ) {
+			Server->Printf( "AUTH TLS\r\n" );
+
+			if( RecvStatus() == 234 ) {
+			}
+
+			if( !ok )
+				User->Printf( "421 Cannot login.\r\n" );
+
+		} else {
+
+			Server->Printf( "USER %s\r\n", user.c_str() );
+
+			ret = true;
+
+			switch( RecvStatus() ) {
+
+				case 331:
+					User->Printf( "331 Password required for %s.\r\n", user.c_str() );
+					break;
+
+				case 230:
+					User->Send( LastReply.c_str(), LastReply.length() );
+					FTPFlags.Set( FTPF_LOGGED_IN );
+					break;
+
+				default:
+					User->Send( LastReply.c_str(), LastReply.length() );
+					break;
+			}
+
+			ret = true;
 		}
-
-		if( !ok )
-			User->Printf( "421 Cannot login.\r\n" );
-
-	} else {
-
-		Server->Printf( "USER %s\r\n", user.c_str() );
-
-		ForwardReply();
 	}
 
 	return( ret );
@@ -389,13 +473,13 @@ void Client::ForwardReply( void )
 
 	do {
 		char	buf[1204];
-		bool	ret;
+		int		ret;
 
 		ret = Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 0;
 
-		if( ret ) {
+		if( ret > 0 ) {
 
-			User->Printf( "%s", buf );
+			User->Printf( "%s\r\n", buf );
 
 			if( info )
 				loop = buf[0] == ' ';
@@ -426,10 +510,22 @@ bool Client::ForwardCmd( void )
 	return( ok );
 }
 //---------------------------------------------------------------------------
+void Client::CmdPass( void )
+{
+	Server->Printf( "PASS %s\r\n", Args.c_str() );
+
+	if( RecvStatus() == 230 )
+		FTPFlags.Set( FTPF_LOGGED_IN );
+
+	User->Send( LastReply.c_str(), LastReply.length() );
+}
+//---------------------------------------------------------------------------
 void Client::CmdFeat( void )
 {
 	User->Printf( "211-Extensions supported\r\n"
 				  " AUTH TLS\r\n"
+				  " EPRT\r\n"
+				  " EPSV\r\n"
 				  " PBSZ\r\n"
 				  " PROT\r\n"
 				  "211 END\r\n" );
@@ -439,7 +535,7 @@ void Client::CmdPbsz( void )
 {
 	if( Args == "0" ) {
 
-		Flags.Set( FTPF_PBSZ );
+		FTPFlags.Set( FTPF_PBSZ );
 		User->Printf( "200 Yessir.\r\n" );
 
 	} else
@@ -448,10 +544,10 @@ void Client::CmdPbsz( void )
 //---------------------------------------------------------------------------
 void Client::CmdProt( void )
 {
-	if( Flags.IsSet( FTPF_PBSZ )) {
+	if( FTPFlags.IsSet( FTPF_PBSZ )) {
 
-		Flags.Set( FTPF_DATA_TLS, toupper( Args.c_str()[0] ) == 'P' );
-		Flags.Clear( FTPF_PBSZ );
+		FTPFlags.Set( FTPF_DATA_TLS, toupper( Args.c_str()[0] ) == 'P' );
+		FTPFlags.Clear( FTPF_PBSZ );
 
 		User->Printf( "200 Yessir.\r\n" );
 
@@ -461,32 +557,427 @@ void Client::CmdProt( void )
 //---------------------------------------------------------------------------
 void Client::CmdPasv( void )
 {
-	UserData = new TcpSocket();
+	char	*ip = User->GetLocalName();
 
-	UserData->UseDispatcher( App->IO );
-	UserData->SetAsyncCallback( SocketCB, this );
+	if( strchr( ip, ':' )) {
+		// uh-oh, is the user connected from an IPv6 interface
+		// or via an IPv4-Mapped socket?
 
-	if( UserData->IsValid() && UserData->MakeIPv4() &&
-		UserData->Bind() && UserData->Listen() ) {
-		int		port = UserData->GetLocalPort();
-		char	*ip = UserData->GetLocalName(), *ptr;
+		if( !strncmp( ip, "::ffff:", 7 ))
+			ip += 7;
+
+		else if( !strcmp( ip, "::1" ))
+			strcpy( ip, "127,0,0,1" );
+
+		else {
+
+			User->Printf( "425 Sorry, I can't find a way to listen on an IPv4 interface for you.\r\n" );
+
+			*ip = '\0';
+		}
+	}
+
+	if( *ip && SetupServerDataConnection() ) {
+		char	*ptr;
 
 		ptr = ip;
 
 		while( ptr = strchr( ptr, '.' ))
 			*ptr++ = ',';
 
-		User->Printf( "227 Entering passive mode (%s,%d,%d).\r\n",
-					  ip, port >> 8, port & 0xff );
+		delete UserData;
 
-		Flags.Set( FTPF_CLIENT_PASV );
+		UserData = new TcpSocket();
+
+		UserData->UseDispatcher( App->IO );
+		UserData->SetAsyncCallback( SocketCB, this );
+
+		if( UserData->IsValid() &&
+			UserData->Bind() && UserData->Listen( 1 )) {
+			int		port = UserData->GetLocalPort();
+
+			User->Printf( "227 Entering passive mode (%s,%d,%d).\r\n",
+						  ip, port >> 8, port & 0xff );
+
+			FTPFlags.Set( FTPF_CLIENT_PASV );
+
+		} else {
+
+			User->Printf( "425 Cannot setup the socket for data connection.\r\n" );
+
+			delete UserData;
+			UserData = NULL;
+		}
+
+	} else if( *ip )
+		User->Printf( "425 Cannot setup the data connection to the server.\r\n" );
+}
+//---------------------------------------------------------------------------
+void Client::CmdEpsv( void )
+{
+	delete UserData;
+
+	if( Args == "ALL" )
+		FTPFlags.Set( FTPF_BLOCK_DATA_CONN );
+	else {
+		int	family = AF_INET;
+
+		if( Args.length() )
+			family = atoi( Args.c_str() );
+
+		if(( family == AF_INET )
+#if HAVE_IPV6
+			|| ( family == AF_INET6 )
+#endif
+			) {
+
+			if( SetupServerDataConnection() ) {
+
+				UserData = new TcpSocket();
+
+				UserData->UseDispatcher( App->IO );
+				UserData->SetAsyncCallback( SocketCB, this );
+
+				if( UserData->IsValid() && UserData->Bind() && UserData->Listen( 1 )) {
+
+					User->Printf( "229 Entering extended passive mode (|||%d|)\r\n",
+								  UserData->GetLocalPort() );
+
+					FTPFlags.Set( FTPF_CLIENT_PASV );
+
+				} else {
+
+					User->Printf( "425 Cannot setup the socket for data connection.\r\n" );
+
+					delete UserData;
+					UserData = NULL;
+				}
+
+			} else
+				User->Printf( "425 Cannot setup the data connection to the server.\r\n" );
+
+		} else
+#if HAVE_IPV6
+			User->Printf( "522 Unsupported protocol family (%d,%d)", AF_INET, AF_INET6 );
+#else
+			User->Printf( "522 Unsupported protocol family (%d)", AF_INET );
+#endif
+	}
+}
+//---------------------------------------------------------------------------
+void Client::CmdPort( void )
+{
+	int	a1, a2, a3, a4, p1, p2;
+
+	if( sscanf( Args.c_str(), "%d,%d,%d,%d,%d,%d",
+				&a1, &a2, &a3, &a4, &p1, &p2 ) == 6 ) {
+
+		sprintf( PortAddress, "%d.%d.%d.%d", a1, a2, a3, a4 );
+
+		PortPort = ( p1 << 8 ) | p2;
+
+		if( SetupServerDataConnection() ) {
+
+			FTPFlags.Set( FTPF_CLIENT_PORT );
+
+			User->Printf( "200 Ok\r\n" );
+
+		} else
+			User->Printf( "451 Cannot setup data connection to server\r\n" );
+
+	} else
+		User->Printf( "501 Cannot parse the argument\r\n" );
+}
+//---------------------------------------------------------------------------
+void Client::CmdEprt( void )
+{
+	StringList	list;
+
+	list.Explode( Args, Args.substr( 0, 1 ).c_str() );
+
+	if( list.Count() == 5 ) {
+		int	family;
+
+		strncpy( PortAddress, list[2], sizeof( PortAddress ));
+		PortAddress[ sizeof( PortAddress ) - 1 ] = '\0';
+
+		PortPort = atoi( list[3] );
+		family   = atoi( list[1] );
+
+		if(( family == AF_INET )
+#if HAVE_IPV6
+			|| ( family == AF_INET6 )
+#endif
+			) {
+
+			if( SetupServerDataConnection() ) {
+
+				FTPFlags.Set( FTPF_CLIENT_PORT );
+
+				User->Printf( "200 Ok\r\n" );
+
+			} else
+				User->Printf( "451 Cannot setup data connection to server\r\n" );
+
+		} else
+#if HAVE_IPV6
+			User->Printf( "522 Unsupported protocol family (%d,%d)", AF_INET, AF_INET6 );
+#else
+			User->Printf( "522 Unsupported protocol family (%d)", AF_INET );
+#endif
+
+	} else
+		User->Printf( "501 Cannot parse the argument\r\n" );
+}
+//---------------------------------------------------------------------------
+void Client::CmdAbor( void )
+{
+	FTPFlags.Clear( FTPF_CLIENT_PORT | FTPF_CLIENT_PASV );
+
+	if( Server ) {
+		Server->Printf( "ABOR\r\n" );
+		RecvStatus();
+	}
+
+	delete UserData;
+	delete ServerData;
+
+	UserData   = NULL;
+	ServerData = NULL;
+}
+//---------------------------------------------------------------------------
+bool Client::SetupServerDataConnection( void )
+{
+	bool	ok = false;
+
+	ServerData = new TcpSocket();
+
+	ServerData->UseDispatcher( App->IO );
+	ServerData->SetAsyncCallback( SocketCB, this );
+
+	if( ServerData->IsValid() &&
+		ServerData->Bind() &&
+		ServerData->Listen( 1 )) {
+		char	*ip = Server->GetLocalName();
+		int		port = ServerData->GetLocalPort();
+
+#if HAVE_IPV6
+		if( strchr( ip, ':' ) && strncmp( ip, "::ffff:", 7 ))
+			Server->Printf( "EPRT |%d|%s|%d|\r\n",
+							AF_INET6, ip, port );
+
+		else
+#endif
+		{
+			char	*ptr;
+
+			if( ip[0] == ':' )
+				ip += 7;
+
+			ptr = ip;
+
+			while( ptr = strchr( ptr, '.' ))
+				*ptr++ = ',';
+
+			Server->Printf( "PORT %s,%d,%d\r\n",
+							ip, port >> 8, port & 0xff );
+		}
+
+		ok = RecvStatus() == 200;
+	}
+
+	if( !ok ) {
+		delete ServerData;
+		ServerData = NULL;
+	}
+
+	return( ok );
+}
+//---------------------------------------------------------------------------
+bool Client::OpenServerDataConnection( void )
+{
+	bool	ok = false, loop = true;
+
+	Server->Printf( "%s %s\r\n", Command.c_str(), Args.c_str() );
+
+	if( RecvStatus() == 150 ) {
+		time_t	timeout = time( NULL ) + TIMEOUT_DATA_CONN;
+
+		// wait for data connection
+		do {
+
+			if( !App->IO->WaitEvents( TIMEOUT_DATA_CONN ) &&
+			   ( time( NULL ) > timeout ))
+				loop = false;
+
+			else if( FTPFlags.IsSet( FTPF_SERVER_ACCEPT )) {
+
+				loop = false;
+				ok   = ServerData != NULL;
+
+				FTPFlags.Clear( FTPF_SERVER_ACCEPT );
+			}
+
+		} while( ServerData && loop );
+
+		if( !ok ) {
+			Server->Printf( "ABOR\r\n" );
+			delete ServerData;
+			ServerData = NULL;
+		}
+	}
+
+	return( ok );
+}
+//---------------------------------------------------------------------------
+bool Client::OpenClientDataConnection( void )
+{
+	bool		ok;
+	Prom_Addr	addr;
+
+	delete UserData;
+
+	UserData = new TcpSocket();
+
+	UserData->UseDispatcher( App->IO );
+	UserData->SetAsyncCallback( SocketCB, this );
+
+	ok = TcpSocket::NameToAddr( PortAddress, &addr ) &&
+		 UserData->IsValid() &&
+		 UserData->Connect( &addr, PortPort );
+
+	return( ok );
+}
+//---------------------------------------------------------------------------
+bool Client::WaitClientDataConnection( void )
+{
+	bool	ok;
+
+	if( FTPFlags.IsSet( FTPF_CLIENT_ACCEPT ))
+		ok = UserData != NULL;
+
+	else {
+		bool	loop = true;
+		time_t	timeout = time( NULL ) + TIMEOUT_DATA_CONN;
+
+		ok = false;
+
+		// wait for data connection
+		do {
+
+			if( !App->IO->WaitEvents( TIMEOUT_DATA_CONN ) &&
+			   ( time( NULL ) > timeout ))
+				loop = false;
+
+			else if( FTPFlags.IsSet( FTPF_CLIENT_ACCEPT )) {
+
+				loop = false;
+				ok   = UserData != NULL;
+			}
+
+		} while( UserData && loop );
+	}
+
+	FTPFlags.Clear( FTPF_CLIENT_ACCEPT );
+
+	return( ok );
+}
+//---------------------------------------------------------------------------
+bool Client::DataConnectionCmd( void )
+{
+	bool	ret = false;
+	int		dir;
+
+	for( int i = 0; !ret && ( i < NUM_DATA_CMDS ); i++ )
+		if( Command == DataCmds[ i ].cmd ) {
+			ret = true;
+			dir = DataCmds[ i ].dir;
+		}
+
+	if( ret ) {
+
+		if( FTPFlags.IsSet( FTPF_BLOCK_DATA_CONN ))
+			User->Printf( "425 Cannot open data connection after EPSV ALL\r\n" );
+
+		else if( FTPFlags.IsSet( FTPF_CLIENT_PORT | FTPF_CLIENT_PASV )) {
+
+			if( !OpenServerDataConnection() )
+				User->Printf( "425 Cannot open data connection\r\n" );
+
+			else {
+				bool ok = false;
+
+				if( FTPFlags.IsSet( FTPF_CLIENT_PORT ))
+					ok = OpenClientDataConnection();
+				else if( FTPFlags.IsSet( FTPF_CLIENT_PASV ))
+					ok = WaitClientDataConnection();
+
+				if( ok ) {
+
+					User->Printf( "150 Data connection open\r\n" );
+
+					if( dir == TO_CLIENT )
+						ServerData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
+					else
+						UserData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
+
+				} else {
+
+					Server->Printf( "ABOR\r\n" );
+					RecvStatus();
+
+					User->Printf( "425 Cannot open data connection\r\n" );
+
+					delete ServerData;
+					delete UserData;
+
+					ServerData = NULL;
+					UserData   = NULL;
+				}
+			}
+
+		} else
+			User->Printf( "503 No PORT nor PASV has been issued.\r\n" );
+	}
+
+	return( ret );
+}
+//---------------------------------------------------------------------------
+void Client::ForwardData( TcpSocket *sock, int len )
+{
+	if( len == 0 ) {
+
+		delete ServerData;
+		delete UserData;
+
+		RecvStatus();
+		User->Printf( "226 Closing data connection\r\n" );
+
+		ServerData = NULL;
+		UserData   = NULL;
+
+	} else if( sock == ServerData ) {
+
+		UserData->Send( DataBuffer, len );
+		ServerData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
 
 	} else {
 
-		User->Printf( "425 Cannot setup the socket for data connection.\r\n" );
+		ServerData->Send( DataBuffer, len );
+		UserData->AsyncRecv( DataBuffer, sizeof( DataBuffer ));
+	}
+}
+//---------------------------------------------------------------------------
+void Client::HandleError( TcpSocket *sock, int err )
+{
+	if(( sock == UserData ) || ( sock == ServerData ))
+		ForwardData( sock, 0 );
+	else {
 
-		delete UserData;
-		UserData = NULL;
+		if( sock == Server )
+			User->Printf( "221 The server connection dropped.\r\n" );
+
+		FTPFlags.Clear( FTPF_CONNECTED );
 	}
 }
 //---------------------------------------------------------------------------

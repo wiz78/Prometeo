@@ -1,7 +1,7 @@
 /***************************************************************************
                                 stringlist.h
                              -------------------
-    revision             : $Id: stringlist.h,v 1.1.1.1 2002-10-10 09:59:18 tellini Exp $
+    revision             : $Id: stringlist.h,v 1.2 2002-10-29 18:01:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,9 @@ public:
 	char				*operator[]( int index ) const { return( Get( index )); }
 
 	virtual void		Clear( void );
+
+	// splits the string with 'separator'
+	void				Explode( const string& str, const char *separator );
 };
 
 #endif

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 storeobj.cpp
                              -------------------
-    revision             : $Id: storeobj.cpp,v 1.2 2002-10-22 14:31:28 tellini Exp $
+    revision             : $Id: storeobj.cpp,v 1.3 2002-10-29 18:01:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -142,7 +142,7 @@ void StoreObj::Write( const void *data, int len )
 
 	AvailSize += len;
 
-	if( !Flags.IsSet( PROM_STOREF_DONT_WRITE )) {
+	if( !StoreObj::Flags.IsSet( PROM_STOREF_DONT_WRITE )) {
 
 		File::Write( data, len );
 
@@ -168,7 +168,7 @@ void StoreObj::Write( const string& str )
 
 	NotifyListeners( ptr, len );
 
-	if( !Flags.IsSet( PROM_STOREF_DONT_WRITE )) {
+	if( !StoreObj::Flags.IsSet( PROM_STOREF_DONT_WRITE )) {
 
 		File::Write( ptr, len );
 

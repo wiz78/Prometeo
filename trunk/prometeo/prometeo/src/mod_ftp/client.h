@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.4 2002-10-23 17:54:26 tellini Exp $
+    revision             : $Id: client.h,v 1.5 2002-10-29 18:01:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -47,7 +47,11 @@ private:
 	TcpSocket			*ServerData;
 	string				Command;
 	string				Args;
-	BitField			Flags;
+	string				LastReply;
+	BitField			FTPFlags;
+	int					PortPort;
+	char				PortAddress[ 32 ];
+	char				DataBuffer[ 4 * 1024 ];
 
 	virtual void		WaitRequest( void );
 
@@ -56,6 +60,14 @@ private:
 
 	void				ForwardReply( void );
 	bool				ForwardCmd( void );
+
+	bool				SetupServerDataConnection( void );
+	bool				OpenServerDataConnection( void );
+	bool				OpenClientDataConnection( void );
+	bool				WaitClientDataConnection( void );
+	bool				DataConnectionCmd( void );
+	void				ForwardData( TcpSocket *sock, int len );
+	void				HandleError( TcpSocket *sock, int err );
 
 	virtual void		Dispatch( void );
 
@@ -66,17 +78,26 @@ private:
 	void				AcceptUserData( TcpSocket *sock );
 	void				AcceptServerData( TcpSocket *sock );
 
+	void				CmdPass( void );
 	void				CmdFeat( void );
 	void				CmdPbsz( void );
 	void				CmdProt( void );
 	void				CmdPasv( void );
+	void				CmdEpsv( void );
+	void				CmdPort( void );
+	void				CmdEprt( void );
+	void				CmdAbor( void );
 };
 
-#define FTPF_CONNECTED		(1 << 0)
-#define FTPF_LOGGED_IN		(1 << 1)
-#define FTPF_DATA_TLS		(1 << 2)	// TLS required for data channel
-#define FTPF_PBSZ			(1 << 3)
-#define FTPF_TLS			(1 << 4)
-#define FTPF_CLIENT_PASV	(1 << 5)
+#define FTPF_CONNECTED			(1 << 0)
+#define FTPF_LOGGED_IN			(1 << 1)
+#define FTPF_DATA_TLS			(1 << 2)	// TLS required for data channel
+#define FTPF_PBSZ				(1 << 3)
+#define FTPF_TLS				(1 << 4)
+#define FTPF_CLIENT_PASV		(1 << 5)
+#define FTPF_CLIENT_PORT		(1 << 6)
+#define FTPF_BLOCK_DATA_CONN	(1 << 7)	// EPSV ALL
+#define FTPF_SERVER_ACCEPT		(1 << 8)
+#define FTPF_CLIENT_ACCEPT		(1 << 9)
 
 #endif

@@ -1,7 +1,7 @@
 /***************************************************************************
                                  dnscache.h
                              -------------------
-	revision             : $Id: dnscache.h,v 1.1.1.1 2002-10-10 09:59:10 tellini Exp $
+	revision             : $Id: dnscache.h,v 1.2 2002-10-29 18:01:13 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -45,11 +45,9 @@ public:
 	// removes the pending request that matches the args
 	void			CancelRequest( const char *hostname, Prom_DNS_Callback callback, void *userdata );
 
-	void			SetResolverStatus( int status );
 	void 			IPCAnswer( void *answer, int len );
 
 	void			ReloadCfg( void );
-
 	void			Flush( time_t now );
 
 private:
@@ -58,8 +56,6 @@ private:
 	unsigned int	FreeSlot;
 	DNSItem			*Items;
 	StrHash			Hash;
-	bool			Resolving;
-	int				ResolverStatus;
 	StrHash			Pending;
 
 	void			Clear( void );

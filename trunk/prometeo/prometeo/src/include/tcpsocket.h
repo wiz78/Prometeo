@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.h
                              -------------------
-	revision             : $Id: tcpsocket.h,v 1.2 2002-10-17 18:03:14 tellini Exp $
+	revision             : $Id: tcpsocket.h,v 1.3 2002-10-29 18:01:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -38,6 +38,7 @@ public:
 #else
 	bool				MakeIPv4( void ) { return( true ); }
 #endif
+	bool				IsIPv4( void ) const { return( Family == AF_INET ); }
 
 	bool				Bind( unsigned short port = 0 );
 	virtual Socket		*Accept( void );
@@ -51,6 +52,7 @@ public:
 	int					GetLocalPort( void );
 
 	static char			*AddrToName( Prom_Addr *addr );
+	static bool			NameToAddr( const char *name, Prom_Addr *addr );
 
 protected:
 #if HAVE_IPV6

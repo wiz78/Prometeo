@@ -1,7 +1,7 @@
 /***************************************************************************
                                 resolver.cpp
                              -------------------
-	revision             : $Id: resolver.cpp,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: resolver.cpp,v 1.3 2002-10-29 18:01:16 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -43,39 +43,62 @@ void Resolver::OnFork( void )
 void Resolver::Dispatch( void )
 {
 	struct ResolverRequest *req = (struct ResolverRequest *)Data.GetData();
-	bool					ok = false;
+	bool					ok;
+	Prom_Addr				addr;
+	unsigned int			len;
 
 	Prom_set_ps_display( "resolving %s", req->HostName );
 
-	if( req->Family == AF_INET ) {
-		struct in_addr	addr;
+	ok = Resolve( req->HostName, &addr, req->Family );
+
+	len = sizeof( addr ) + strlen( req->HostName ) + 1 + sizeof( len );
+	Socket->Send( &len, sizeof( len ));
+
+	len = sizeof( addr );
+
+#if HAVE_IPV6
+	// Prom_Addr is struct in6_addr
+	if( req->Family == AF_INET )
+		len = sizeof( struct in_addr );
+#endif
+
+	Socket->Send( &len, sizeof( len ));
+	Socket->Send( req->HostName, strlen( req->HostName ) + 1 );
+	Socket->Send( &addr, len );
+
+	if( !ok )
+		App->Log->Log( LOG_ERR, "resolver: failed to resolve %s (%d: %s)",
+					   req->HostName, errno, strerror( errno ));
+}
+//---------------------------------------------------------------------------
+bool Resolver::Resolve( const char *host, Prom_Addr *addr, int family )
+{
+	bool	ok = false;
+
+	if( family == AF_INET ) {
 		unsigned int	len;
 		struct hostent	*ent;
 
-		if( ent = gethostbyname( req->HostName )) {
-			memcpy( &addr.s_addr, ent->h_addr, sizeof( addr.s_addr ));
-			ok = true;
-		} else
-			addr.s_addr = INADDR_NONE;
+		if( ent = gethostbyname( host )) {
 
-		len = sizeof( addr ) + strlen( req->HostName ) + 1 + sizeof( len );
-		Socket->Send( &len, sizeof( len ));
-		len = sizeof( addr );
-		Socket->Send( &len, sizeof( len ));
-		Socket->Send( req->HostName, strlen( req->HostName ) + 1 );
-		Socket->Send( &addr, len );
+			memcpy( &((struct in_addr *)addr )->s_addr, ent->h_addr, sizeof( ent->h_addr ));
+
+			ok = true;
+
+		} else
+			((struct in_addr *)addr )->s_addr = INADDR_NONE;
 
 	} else {
 #if HAVE_IPV6
-		struct in6_addr	addr = IN6ADDR_ANY_INIT;
+		struct in6_addr	tmpaddr = IN6ADDR_ANY_INIT;
 		unsigned int	len;
 		struct hostent	*ent;
 		int				error_num;
 
 #if HAVE_GETIPNODEBYNAME
-		if( ent = getipnodebyname( req->HostName, AF_INET6, AI_DEFAULT, &error_num )) {
+		if( ent = getipnodebyname( host, AF_INET6, AI_DEFAULT, &error_num )) {
 
-			memcpy(( char * )&addr.s6_addr, ent->h_addr, sizeof( addr.s6_addr ));
+			memcpy(( char * )&tmpaddr.s6_addr, ent->h_addr, sizeof( tmpaddr.s6_addr ));
 			freehostent( ent );
 
 			ok = true;
@@ -83,23 +106,23 @@ void Resolver::Dispatch( void )
 #else /* !HAVE_GETIPNODEBYNAME */
 		struct addrinfo	*res;
 
-		if( getaddrinfo( req->HostName, NULL, NULL, &res ) == 0 ) {
+		if( getaddrinfo( host, NULL, NULL, &res ) == 0 ) {
 
 			switch( res->ai_family ) {
 
 				case AF_INET:
 					// create an IPv6 V4MAPPED address
-					memcpy( &((uint32_t *)addr.s6_addr)[3], 
-							&((struct sockaddr_in *)res->ai_addr )->sin_addr, 
+					memcpy( &((uint32_t *)tmpaddr.s6_addr)[3],
+							&((struct sockaddr_in *)res->ai_addr )->sin_addr,
 							sizeof( uint32_t ));
 
-					((uint32_t *)&addr.s6_addr)[2] = htonl( 0xffff );
+					((uint32_t *)&tmpaddr.s6_addr)[2] = htonl( 0xffff );
 					break;
 
 				case AF_INET6:
-					memcpy( &addr.s6_addr, 
+					memcpy( &tmpaddr.s6_addr,
 							&((struct sockaddr_in6 *)res->ai_addr )->sin6_addr,
-							sizeof( addr.s6_addr ));
+							sizeof( tmpaddr.s6_addr ));
 					break;
 			}
 
@@ -109,29 +132,11 @@ void Resolver::Dispatch( void )
 		}
 #endif /* HAVE_GETIPNODEBYNAME */
 
-		len = sizeof( addr ) + strlen( req->HostName ) + 1 + sizeof( len );
-		Socket->Send( &len, sizeof( len ));
-		len = sizeof( addr );
-		Socket->Send( &len, sizeof( len ));
-		Socket->Send( req->HostName, strlen( req->HostName ) + 1 );
-		Socket->Send( &addr, len );
-
-#else /* !HAVE_IPV6 */
-		
-		// AF_INET6 but no usable function available, so just return
-		// an empty answer
-		unsigned int len = strlen( req->HostName ) + 1 + sizeof( len );
-
-		Socket->Send( &len, sizeof( len ));
-		len = 0;
-		Socket->Send( &len, sizeof( len ));
-		Socket->Send( req->HostName, strlen( req->HostName ) + 1 );
-
+		if( ok )
+			memcpy( addr, &tmpaddr, sizeof( tmpaddr ));
 #endif /* HAVE_IPV6 */
 	}
 
-	if( !ok )
-		App->Log->Log( LOG_ERR, "resolver: failed to resolve %s (%d: %s)", 
-					   req->HostName, errno, strerror( errno ));
+	return( ok );
 }
 //---------------------------------------------------------------------------

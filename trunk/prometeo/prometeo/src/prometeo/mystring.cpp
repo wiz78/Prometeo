@@ -1,7 +1,7 @@
 /***************************************************************************
                                  mystring.cpp
                              -------------------
-	revision             : $Id: mystring.cpp,v 1.2 2002-10-13 15:40:12 tellini Exp $
+	revision             : $Id: mystring.cpp,v 1.3 2002-10-29 18:01:15 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -26,20 +26,5 @@
 int MyString::ToInt( void ) const
 {
 	return( atoi( c_str() ));
-}
-//--------------------------------------------------------------------------
-void MyString::Explode( const char *separator, StringList& list )
-{
-	const char	*cur = c_str(), *start = cur, *ptr;
-	int			len = strlen( separator );
-
-	while( ptr = strstr( cur, separator )) {
-
-		list.Add( "%s", substr( cur - start, ptr - cur ).c_str() );
-
-		cur = ptr + len;
-	}
-
-	list.Add( "%s", cur );
 }
 //--------------------------------------------------------------------------

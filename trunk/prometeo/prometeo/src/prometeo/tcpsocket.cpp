@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.2 2002-10-17 18:03:14 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.3 2002-10-29 18:01:17 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -24,7 +24,7 @@
 
 #include "tcpsocket.h"
 
-#if HAVE_IPV6
+#ifdef HAVE_IPV6
 #define PF	PF_INET6
 #else
 #define PF	PF_INET
@@ -34,7 +34,7 @@
 TcpSocket::TcpSocket() : Socket( PF, SOCK_STREAM, IPPROTO_TCP )
 {
 #if HAVE_IPV6
-	Family = PF;
+	Family = AF_INET6;
 #endif
 }
 //---------------------------------------------------------------------------
@@ -43,8 +43,9 @@ TcpSocket::TcpSocket( int fd ) : Socket( fd )
 #if HAVE_IPV6
 	socklen_t	len = sizeof( Family );
 
-	if( getsockopt( FD, IPPROTO_IPV6, IPV6_ADDRFORM, &Family, &len ))
-		Family = AF_INET6;
+	Family = AF_INET6;
+
+	getsockopt( FD, IPPROTO_IPV6, IPV6_ADDRFORM, &Family, &len );
 #endif
 }
 //---------------------------------------------------------------------------
@@ -176,12 +177,43 @@ bool TcpSocket::NameToAddr( const char *name, struct sockaddr **addr, socklen_t 
 	*addr = (struct sockaddr *)&AddrBuf6;
 	*len  = sizeof( AddrBuf6 );
 
-	ret = inet_pton( AF_INET6, name, &AddrBuf6.sin6_addr );
+	ret = inet_pton( AF_INET6, name, &AddrBuf6.sin6_addr ) > 0;
 #else
 	*addr = (struct sockaddr *)&AddrBuf;
 	*len  = sizeof( AddrBuf );
 
-	ret = inet_aton( name, &AddrBuf.sin_addr );
+	ret = inet_aton( name, &AddrBuf.sin_addr ) != 0;
+#endif
+
+	return( ret );
+}
+//---------------------------------------------------------------------------
+bool TcpSocket::NameToAddr( const char *name, Prom_Addr *addr )
+{
+	bool	ret;
+
+#if HAVE_IPV6
+	if( strchr( name, ':' )) {
+
+		ret = inet_pton( AF_INET6, name, addr ) > 0;
+
+	} else {
+		// create an IPv6 V4MAPPED address
+		struct in_addr	tmp;
+
+		ret = inet_aton( name, &tmp ) != 0;
+
+		if( ret ) {
+
+			memset( addr, 0, sizeof( *addr ));
+
+			memcpy( &((uint32_t *)addr->s6_addr)[3], &tmp, sizeof( uint32_t ));
+
+			((uint32_t *)&addr->s6_addr)[2] = htonl( 0xffff );
+		}
+	}
+#else
+	ret = inet_aton( name, addr ) != 0;
 #endif
 
 	return( ret );
@@ -194,7 +226,8 @@ char *TcpSocket::AddrToName( Prom_Addr *addr )
 #if HAVE_IPV6
 	if( name = (char *)malloc( INET6_ADDRSTRLEN )) {
 
-		inet_ntop( AF_INET6, addr, name, INET6_ADDRSTRLEN );
+		if( !inet_ntop( AF_INET6, addr, name, INET6_ADDRSTRLEN ))
+			strcpy( name, "***ERROR***" );
 
 	} else
 		name = strdup( "***ERROR***" );
@@ -214,7 +247,7 @@ char *TcpSocket::GetPeerName( void )
 		socklen_t	len = sizeof( AddrBuf6 );
 
 		if(( getpeername( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 ) &&
-		   ( !inet_ntop( AF_INET6, &AddrBuf6, NameBuf, sizeof( NameBuf ))))
+		   inet_ntop( AF_INET6, &AddrBuf6.sin6_addr, NameBuf, sizeof( NameBuf )))
 			ok = true;
 
 	} else
@@ -243,7 +276,7 @@ char *TcpSocket::GetLocalName( void )
 		socklen_t	len = sizeof( AddrBuf6 );
 
 		if(( getsockname( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 ) &&
-		   ( !inet_ntop( AF_INET6, &AddrBuf6, NameBuf, sizeof( NameBuf ))))
+			inet_ntop( AF_INET6, &AddrBuf6.sin6_addr, NameBuf, sizeof( NameBuf )))
 			ok = true;
 
 	} else
