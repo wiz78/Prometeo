@@ -1,8 +1,8 @@
 /***************************************************************************
                                    url.cpp
                              -------------------
-    revision             : $Id: url.cpp,v 1.4 2003-05-08 14:50:06 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+    revision             : $Id: url.cpp,v 1.5 2003-06-01 10:01:24 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
     description          : URL parser
@@ -58,7 +58,7 @@ void URL::Decode( const char *string )
 		return;
 
 	if( temp = strdup( string )) {
-		char   *string2 = temp, *ptr, *host = NULL;
+		char   *string2 = temp, *ptr, *host = temp;
 
 		if( ptr = strchr( string2, ' ' ))
 			*ptr = '\0';

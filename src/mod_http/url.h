@@ -1,8 +1,8 @@
 /***************************************************************************
                                    url.h
                              -------------------
-    revision             : $Id: url.h,v 1.2 2002-11-14 18:14:01 tellini Exp $
-    copyright            : (C) 2002 by Simone Tellini
+    revision             : $Id: url.h,v 1.3 2003-06-01 10:01:24 tellini Exp $
+    copyright            : (C) 2002-2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
     description          : URL parser
