@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.h
                              -------------------
-	revision             : $Id: socket.h,v 1.4 2002-10-23 17:54:25 tellini Exp $
+	revision             : $Id: socket.h,v 1.5 2002-10-30 16:53:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -51,8 +51,8 @@ public:
 	bool				Connect( const char *host );	// host is a dotted form name
 														// no name resolution is performed
 	bool				Connect( struct sockaddr *addr, socklen_t len );
-	bool				Send( const void *data, int size, int flags = 0 );
-	int					Recv( void *buffer, int size, int flags = 0, int timeout = -1 );
+	virtual bool		Send( const void *data, int size, int flags = 0 );
+	virtual int			Recv( void *buffer, int size, int flags = 0, int timeout = -1 );
 	// receive a CRLF, LF or \0 terminated line
 	int					RecvLine( char *buffer, int size, int timeout = -1 );
 	bool				Printf( const char *fmt, ... );
