@@ -1,6 +1,59 @@
+2003-04-11
+
+	* Release 1.2
+
+2003-04-06 12:57  tellini
+
+	* src/mod_http/: Makefile.am, http.cpp, http.h, mod_http.cpp,
+	mod_http.h, popupblocker.cpp, popupblocker.h, resizeblocker.cpp,
+	resizeblocker.h, streamfilter.cpp, streamfilter.h: Added popup &
+	browser resize blocking - it can't catch all these events, though
+	they are limited. It may have some other unwanted side effects on
+	some pages, as it works by search & replace on the text of the
+	document.
+
+2003-03-25 14:27  tellini
+
+	* src/mod_http/: http.cpp, http.h, mod_http.cpp, mod_http.h: 
+	- Cache objects won't ever be used to satify requests with  
+  	  "Cache-Control: no-cache" set (before it would send a	conditional
+	  request to the origin server, now it just asks for   the object). 
+	- Bumped the version reported by the module.
+
+2003-03-19 21:36  tellini
+
+	* src/libprom/socket.cpp: The callback is invoked with
+	PROM_SOCK_ERROR if SetNonBlocking() fails
+
+2003-03-01 21:22  tellini
+
+	* configure.in: Revision bump
+
+2003-03-01 20:55  tellini
+
+	* src/prometeo/core.cpp: Added default case to SigDie()
+
+2003-03-01 20:45  tellini
+
+	* src/mod_http/mod_http.cpp: Fixed a possible crash when the client
+	disconnects from the cache before a connection with the origin
+	server was established, when using PUT or POST methods.
+
+2003-02-16 21:31  tellini
+
+	* src/: include/file.h, prometeo/file.cpp: made some changes to
+	make it usable in a better way with pipes
+
+	* src/: include/core.h, prometeo/core.cpp: added a pipe to catch & 
+	log stderr output
+
+2003-02-14 17:10  tellini
+
+	* ChangeLog, configure.in: Release 1.1
+
 2003-02-14 16:50  tellini
 
-	* mod_http/gzipcodec.cpp: Removed zutil.h
+	* src/mod_http/gzipcodec.cpp: Removed zutil.h
 
 2003-02-13 12:11  tellini
 
