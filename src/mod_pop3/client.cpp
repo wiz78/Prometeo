@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.5 2003-07-20 13:23:08 tellini Exp $
+    revision             : $Id: client.cpp,v 1.6 2004-04-24 13:51:48 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -29,10 +29,11 @@
 #include "dnscache.h"
 #include "stringlist.h"
 #include "client.h"
+#include "cmdfilter.h"
+#include "spamdfilter.h"
 
 #define TIMEOUT_CMD			30
 #define TIMEOUT_REPLY		60
-#define TIMEOUT_SPAMD		60
 #define TIMEOUT_IDLE		120
 
 //---------------------------------------------------------------------------
@@ -72,6 +73,49 @@ void Client::Setup( void )
 {
 	string key = CfgKey + "/spamd";
 		
+	if( App->Cfg->OpenKey( CfgKey.c_str(), false )) {
+		string				tmp = App->Cfg->GetString( "filters", "" );
+		string::size_type	pos;
+
+		if(( pos = tmp.find_first_not_of( " " )) != string::npos )
+			tmp.erase( 0, pos );
+
+		pos = tmp.find( "\n" );
+
+		while( pos != string::npos ) {
+			string				f = tmp.substr( 0, pos );
+			string::size_type	p2 = f.find( "\r" );
+
+			if( p2 != string::npos )
+				f.erase( p2 );
+
+			Filters.Add( new CmdFilter( f ));
+
+			tmp.erase( 0, pos + 1 );
+				
+			pos = tmp.find( "\n" );
+			
+			if(( p2 = tmp.find_first_not_of( " " )) != string::npos )
+				tmp.erase( 0, p2 );
+		}
+
+		if( tmp.length() > 0 ) {
+			
+			pos = tmp.find( "\r" );
+
+			if( pos == string::npos )
+				pos = tmp.find( "\n" );
+
+			if( pos != string::npos )
+				tmp.erase( pos );
+
+			Filters.Add( new CmdFilter( tmp ));
+		}
+		
+
+		App->Cfg->CloseKey();
+	}
+	
 	if( App->Cfg->OpenKey( key.c_str(), false )) {
 
 		CFlags.Set( POPF_CFG_SPAMD, App->Cfg->GetInteger( "enabled", true ));
@@ -240,7 +284,8 @@ void Client::DispatchCmd( void )
 {
 	if( RecvCommand() ) {
 
-		if( CFlags.IsSet( POPF_CFG_SPAMD ) && ( Command == "RETR" ))
+		if(( Command == "RETR" ) &&
+		   ( CFlags.IsSet( POPF_CFG_SPAMD ) || ( Filters.Count() > 0 )))
 			FilterEMail();
 		else
 			ForwardCmd();
@@ -399,9 +444,31 @@ void Client::FilterEMail( void )
 
 			Server->Printf( "RETR %s\r\n", Args.c_str() );
 
-			if(( Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 0 ) && ( buf[0] == '+' ))		
-				FilterWithSpamd();
-			else
+			if(( Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 0 ) && ( buf[0] == '+' )) {
+				string msg = "";
+				
+				if( FetchMail( msg )) {
+
+					for( int i = 0; i < Filters.Count(); i++ ) {
+						Filter *f = reinterpret_cast<Filter *>( Filters.Get( i ));
+
+						if( f->Process( msg ))
+							msg = f->GetFilteredMsg();
+
+						f->Clean();
+					}
+
+					if( CFlags.IsSet( POPF_CFG_SPAMD )) {
+						SpamdFilter f( SpamdHost, SpamdPort );
+
+						if( f.Process( msg ))
+							msg = f.GetFilteredMsg();
+					}
+
+					SendMessage( msg );
+				}
+
+			} else
 				User->Printf( "%s\r\n", buf );
 
 		} else
@@ -415,96 +482,53 @@ void Client::FilterEMail( void )
 	}
 }
 //---------------------------------------------------------------------------
-bool Client::CreateTmpDir( string& dir )
+bool Client::FetchMail( string& msg )
 {
-	bool	ret;
-	char	path[] = "mod_pop3-XXXXXX";
-	
-	ret = mkdtemp( path ) != NULL;
+	bool	loop = true;
+	char	buf[ 1024 ];
 
-	if( ret ) {
+	while( loop && ( Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 0 )) {
 
-		dir = path;
+		if( buf[0] == '.' ) {
 
-		chmod( path, S_IRWXU | S_IRWXG );
-			
-	} else
-		App->Log->Log( LOG_ERR, 
-					   "mod_pop3: cannot created temporary directory \"%s\" (%d: %s)", 
-					   path, errno, strerror( errno ));
+			if( buf[1] == '\0' )
+				loop = false;
+			else
+				msg += string( &buf[1] ) + "\r\n";
 
-	return( ret );
+		} else
+			msg += string( buf ) + "\r\n";
+	}
+
+	if( loop )
+		User->Printf( "-ERR Connection error while retrieving the message\r\n" );
+
+	return( !loop );
 }
 //---------------------------------------------------------------------------
-void Client::FilterWithSpamd( void )
+void Client::SendMessage( string& msg )
 {
-	TcpSocket  *sock = new TcpSocket();
-	Prom_Addr	addr;
+	StringList	list;
 
-	if( sock->IsValid() && 
-		App->DNS->Resolve( SpamdHost.c_str(), &addr ) &&
-		sock->Connect( &addr, SpamdPort )) {
-		bool loop = true;
-		char buf[ 1024 ];
+	User->Printf( "+OK" );
 
-		sock->Printf( "PROCESS SPAMC/1.0\r\n" );
+	list.Explode( msg, "\n" );
 
-		// forward the message to spamd
-		while( loop && ( Server->RecvLine( buf, sizeof( buf ), TIMEOUT_REPLY ) > 0 )) {
-	
-			if( buf[0] == '.' ) {
-								
-				if( buf[1] == '\0' )
-					loop = false;
-				else {
-					sock->Send( &buf[1], strlen( &buf[1] ));
-					sock->Send( "\r\n", 2 );
-				}
-						
-			} else {
-					
-				sock->Send( buf, strlen( buf ));
-				sock->Send( "\r\n", 2 );
-			}
-		}
+	for( int i = 0; i < list.Count(); i++ ) {
+		char	*line = list.Get( i );
+		int		len = strlen( line );
 
-		if( loop )
-			User->Printf( "-ERR Connection error while retrieving the message\r\n" );
-		else {
-			// forward from spamd to the client
-			
-			sock->Shutdown( 1 ); // send EOF to spamd
+		if(( len > 0 ) && ( line[ len - 1 ] == '\r' ))
+			line[ --len ] = '\0';
 
-			if(( sock->RecvLine( buf, sizeof( buf ), TIMEOUT_SPAMD ) > 0 ) &&
-			   !strncmp( buf, "SPAMD/", 6 )) {
+		if( line[0] == '.' )
+			User->Printf( "." );
 
-				User->Printf( "+OK\r\n" );
-
-				while( sock->RecvLine( buf, sizeof( buf ), TIMEOUT_SPAMD ) > 0 ) {
-	
-					if( buf[0] == '.' )
-						User->Send( ".", 1 );
-
-					User->Send( buf, strlen( buf ));
-					User->Send( "\r\n", 2 );
-				}
-
-				User->Send( ".\r\n", 3 );
-
-			} else
-				User->Printf( "-ERR wrong answer from spamd\r\n" );
-		}
-			
-	} else {
-			
-		App->Log->Log( LOG_ERR, 
-					   "mod_pop3: cannot connect to spamd on %s:%d (%d: %s)", 
-					   SpamdHost.c_str(), SpamdPort, errno, strerror( errno ));
-
-		ForwardReply( true );
+		User->Send( line, len );
+		User->Printf( "\r\n" );
 	}
-	
-	delete sock;
+
+	User->Printf( ".\r\n" );
 }
 //---------------------------------------------------------------------------
 void Client::HandleError( TcpSocket *sock, int err )

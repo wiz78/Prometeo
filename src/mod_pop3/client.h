@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.2 2003-07-20 12:05:20 tellini Exp $
+    revision             : $Id: client.h,v 1.3 2004-04-24 13:51:48 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -26,6 +26,7 @@ using namespace std;
 
 #include "process.h"
 #include "bitfield.h"
+#include "list.h"
 
 class TcpSocket;
 
@@ -54,6 +55,7 @@ private:
 	BitField			CFlags;
 	string				Command;
 	string				Args;
+	List				Filters;
 
 	void				Setup();
 	void				Cleanup();
@@ -75,8 +77,8 @@ private:
 	void				HandleError( TcpSocket *sock, int err );
 
 	void				FilterEMail( void );
-	void				FilterWithSpamd( void );
-	bool				CreateTmpDir( string& dir );
+	bool				FetchMail( string& msg );
+	void				SendMessage( string& msg );
 };
 
 #define POPF_CONNECTED				(1 << 0)

@@ -1,7 +1,7 @@
 /***************************************************************************
                                 mod_pop3.cpp
                              -------------------
-    revision             : $Id: mod_pop3.cpp,v 1.2 2003-06-20 20:13:41 tellini Exp $
+    revision             : $Id: mod_pop3.cpp,v 1.3 2004-04-24 13:51:49 tellini Exp $
     copyright            : (C) 2003 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -109,6 +109,12 @@ static const char *GetManifest( const char *key, const char *name )
 				"		<Key name=\"" + basekey + "spamd/maxsize\"/>"
 				"	</Option>"
 				
+					"	<Option type=\"text\" name=\"filters\" default=\"\">"
+				"		<Label>Filter messages through these commands</Label>"
+				"		<Descr>A list of commands, one per line, which will be used to filter the messages.</Descr>"
+				"		<Key name=\"" + basekey + "filters\"/>"
+				"	</Option>"
+			
 				"</Page>";
 
 	return( Manifest.c_str() );
