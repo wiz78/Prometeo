@@ -1,1 +1,67 @@
+$Id: README,v 1.2 2002-10-13 23:43:56 tellini Exp $
+----------------------------------------------------------------------------
+
+
+           P R O M E T E O
+                                         bringing fire to your LAN
+
+
+----------------------------------------------------------------------------
+About
+----------------------------------------------------------------------------
+
+prometeo (Italian spelling for Prometheus) is a modular proxy, developed
+for his thesis in Computer Science by Simone Tellini,
+<tellini@users.sourceforget.net>
+
+It comes with the following modules:
+
+ - an HTTP caching proxy
+ - a FTP proxy with TLS support
+ - a simple TCP tunnel
+ - an SSL tunnel
+
+
+
+----------------------------------------------------------------------------
+Supporting the author
+----------------------------------------------------------------------------
+
+If you like prometeo and wish to show your support, you can order me
+something off my Amazon wish-list, located at:
+
+http://www.amazon.co.uk/exec/obidos/wishlist/1K4OWZ581SIRE/
+
+
+
+----------------------------------------------------------------------------
+Requirements
+----------------------------------------------------------------------------
+
+Compulsory:
+
+- a working C++ compiler
+- autoconf 2.52+
+- expat
+- sablotron
+
+Optional:
+
+- zlib (for gzip/deflate support in mod_http)
+
+
+
+----------------------------------------------------------------------------
+Installation
+----------------------------------------------------------------------------
+
+It follows the standard GNU guidelines, so read the INSTALL file for the
+generic install instructions.
+
+After you've compiled and installed prometeo, you can point your web browser
+to http://localhost:8081 to access the configuration panel (or you can
+manually edit the config file, prometeo.xml, which by default sits in
+/usr/local/prometeo/etc).
+
+Have fun. :)
 
