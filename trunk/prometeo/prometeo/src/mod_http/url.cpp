@@ -1,7 +1,7 @@
 /***************************************************************************
                                    url.cpp
                              -------------------
-    revision             : $Id: url.cpp,v 1.3 2002-11-14 18:14:01 tellini Exp $
+    revision             : $Id: url.cpp,v 1.4 2003-05-08 14:50:06 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,6 +23,7 @@ using namespace std;
 #include <stdio.h>
 
 #include "url.h"
+#include "main.h"
 
 //---------------------------------------------------------------------------
 URL::URL()
@@ -93,7 +94,7 @@ void URL::Decode( const char *string )
 		}
 
 		if( host ) {
-
+			
 			// port?
 			if( ptr = strchr( host, ':' )) {
 				*ptr = '\0';

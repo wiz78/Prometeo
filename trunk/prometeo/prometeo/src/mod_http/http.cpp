@@ -1,7 +1,7 @@
 /***************************************************************************
                                   http.cpp
                              -------------------
-    revision             : $Id: http.cpp,v 1.9 2003-04-06 10:57:37 tellini Exp $
+    revision             : $Id: http.cpp,v 1.10 2003-05-08 14:50:06 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -259,7 +259,7 @@ void HTTP::ParseHeader( char *str )
 
 		if( ptr = strchr( args, ':' )) {
 			*ptr++ = '\0';
-			MethodURL.SetPort( atoi( args ));
+			MethodURL.SetPort( atoi( ptr ));
 		}
 
 		MethodURL.SetHost( args );
