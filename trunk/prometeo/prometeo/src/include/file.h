@@ -1,7 +1,7 @@
 /***************************************************************************
                                    file.h
                              -------------------
-	revision             : $Id: file.h,v 1.1.1.1 2002-10-10 09:59:11 tellini Exp $
+	revision             : $Id: file.h,v 1.2 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -31,7 +31,7 @@ class File : public Fd
 public:
 						File();
 						File( const char *name, int flags );
-						~File();
+	virtual				~File();
 
 	bool				Open( const char *name, int flags );
 	// returns false if there are unwritten buffers pending

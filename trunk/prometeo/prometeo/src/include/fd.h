@@ -1,7 +1,7 @@
 /***************************************************************************
                                     fd.h
                              -------------------
-	revision             : $Id: fd.h,v 1.2 2002-10-15 13:03:42 tellini Exp $
+	revision             : $Id: fd.h,v 1.3 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -35,7 +35,7 @@ class Fd
 {
 public:
 						Fd();
-						~Fd();
+	virtual				~Fd();
 
 	int					GetFD( void ) const { return( FD ); }
 	void				SetFD( int fd ) { FD = fd; }

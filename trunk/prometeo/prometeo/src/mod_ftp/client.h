@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.9 2002-11-02 17:19:11 tellini Exp $
+    revision             : $Id: client.h,v 1.10 2003-02-07 14:10:59 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -34,7 +34,7 @@ class Client : public Process
 {
 public:
 						Client( const string& key );
-						~Client();
+	virtual				~Client();
 
 	virtual void		OnFork( void );
 	virtual void		ReloadCfg( void );

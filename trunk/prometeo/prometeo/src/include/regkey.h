@@ -1,7 +1,7 @@
 /***************************************************************************
                                   regkey.h
                              -------------------
-	revision             : $Id: regkey.h,v 1.1.1.1 2002-10-10 09:59:15 tellini Exp $
+	revision             : $Id: regkey.h,v 1.2 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -25,7 +25,7 @@ class RegKey : public RegNode
 {
 public:
 					RegKey( const char *name );
-					~RegKey();
+	virtual			~RegKey();
 
 	void			AddChild( RegNode *key );
 	void			RemoveChild( RegNode *key );

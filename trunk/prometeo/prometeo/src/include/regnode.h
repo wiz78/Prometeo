@@ -1,7 +1,7 @@
 /***************************************************************************
                                   regnode.h
                              -------------------
-	revision             : $Id: regnode.h,v 1.3 2002-11-08 14:32:31 tellini Exp $
+	revision             : $Id: regnode.h,v 1.4 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -29,7 +29,7 @@ class RegNode
 {
 public:
 					RegNode( const char *name, RegType type );
-					~RegNode();
+	virtual			~RegNode();
 
 	void			SetParent( RegKey *par ) { Parent = par; }
 	RegKey			*GetParent( void ) { return( Parent ); }

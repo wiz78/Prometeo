@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.h
                              -------------------
-    revision             : $Id: sslsocket.h,v 1.5 2003-01-18 21:58:23 tellini Exp $
+    revision             : $Id: sslsocket.h,v 1.6 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -34,7 +34,7 @@ public:
 					SSLSocket( SSLCtx *ctx );
 					SSLSocket( SSLCtx *ctx, int fd, bool dontclose = true );
 					SSLSocket( SSLCtx *ctx, TcpSocket *sock, bool dontclose = true );
-					~SSLSocket();
+	virtual			~SSLSocket();
 
 	bool			SSLInitSession( SSLCtx::SessionType type );
 	void			SSLEndSession( void );

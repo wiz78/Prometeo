@@ -1,7 +1,7 @@
 /***************************************************************************
                                  regstring.h
                              -------------------
-	revision             : $Id: regstring.h,v 1.1.1.1 2002-10-10 09:59:15 tellini Exp $
+	revision             : $Id: regstring.h,v 1.2 2003-02-07 14:10:58 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -24,7 +24,7 @@ class RegString : public RegNode
 {
 public:
 					RegString( const char *name );
-					~RegString();
+	virtual			~RegString();
 
 	char			*GetValue( void ) { return( Value ); }
 	void			SetValue( const char *val );
