@@ -1,7 +1,7 @@
 /***************************************************************************
                                  client.cpp
                              -------------------
-    revision             : $Id: client.cpp,v 1.3 2002-10-29 18:01:15 tellini Exp $
+    revision             : $Id: client.cpp,v 1.4 2002-10-30 16:53:01 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -23,6 +23,7 @@
 #include "iodispatcher.h"
 #include "unixsocket.h"
 #include "tcpsocket.h"
+#include "sslsocket.h"
 #include "dnscache.h"
 #include "stringlist.h"
 #include "client.h"
@@ -78,10 +79,7 @@ Client::Client() : Process()
 //---------------------------------------------------------------------------
 Client::~Client()
 {
-	delete User;
-	delete Server;
-	delete UserData;
-	delete ServerData;
+	Cleanup();
 }
 //---------------------------------------------------------------------------
 void Client::OnFork( void )
@@ -89,13 +87,20 @@ void Client::OnFork( void )
 	// avoid killing the process on deletion
 	Flags.Clear( PROM_PROCF_RUNNING );
 
+	Cleanup();
+
 	delete Socket;
+
+	Socket = NULL;
+}
+//---------------------------------------------------------------------------
+void Client::Cleanup( void )
+{
 	delete User;
 	delete Server;
 	delete UserData;
 	delete ServerData;
 
-	Socket     = NULL;
 	User       = NULL;
 	Server     = NULL;
 	UserData   = NULL;
@@ -259,15 +264,7 @@ void Client::Dispatch( void )
 
 	} while( FTPFlags.IsSet( FTPF_CONNECTED ));
 
-	delete User;
-	delete Server;
-	delete UserData;
-	delete ServerData;
-
-	User       = NULL;
-	Server     = NULL;
-	UserData   = NULL;
-	ServerData = NULL;
+	Cleanup();
 }
 //---------------------------------------------------------------------------
 void Client::DispatchCmd( void )
@@ -276,7 +273,7 @@ void Client::DispatchCmd( void )
 
 		if( Command == "AUTH" ) {
 
-//			TLSLogin();
+			CmdAuth();
 
 		} else if( Command == "USER" ) {
 
@@ -508,6 +505,37 @@ bool Client::ForwardCmd( void )
 	}
 
 	return( ok );
+}
+//---------------------------------------------------------------------------
+void Client::CmdAuth( void )
+{
+	if(( Args == "TLS" ) || ( Args == "TLS-C" ) || ( Args == "SSL" )) {
+		SSLSocket	*ssl;
+
+		User->Printf( "234 AUTH %s accepted.\r\n", Args.c_str() );
+
+		ssl = new SSLSocket( User );
+
+		if( ssl->SSLInitSession( SSLSocket::SERVER )) {
+
+			// avoid closing the socket
+			User->SetFD( -1 );
+
+			delete User;
+
+			User = (TcpSocket *)ssl;
+
+		} else {
+
+			User->Printf( "550 TLS handshake failed\r\n" );
+
+			ssl->SetFD( -1 );
+
+			delete ssl;
+		}
+
+	} else
+		User->Printf( "504 AUTH %s is not supported.\r\n", Args.c_str() );
 }
 //---------------------------------------------------------------------------
 void Client::CmdPass( void )

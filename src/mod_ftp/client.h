@@ -1,7 +1,7 @@
 /***************************************************************************
                                   client.h
                              -------------------
-    revision             : $Id: client.h,v 1.5 2002-10-29 18:01:15 tellini Exp $
+    revision             : $Id: client.h,v 1.6 2002-10-30 16:53:02 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -53,6 +53,8 @@ private:
 	char				PortAddress[ 32 ];
 	char				DataBuffer[ 4 * 1024 ];
 
+	void				Cleanup();
+
 	virtual void		WaitRequest( void );
 
 	bool				RecvCommand( void );
@@ -78,6 +80,7 @@ private:
 	void				AcceptUserData( TcpSocket *sock );
 	void				AcceptServerData( TcpSocket *sock );
 
+	void				CmdAuth( void );
 	void				CmdPass( void );
 	void				CmdFeat( void );
 	void				CmdPbsz( void );
