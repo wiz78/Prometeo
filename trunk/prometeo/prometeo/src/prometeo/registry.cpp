@@ -1,7 +1,7 @@
 /***************************************************************************
                                  Registry.cpp
                              -------------------
-	revision             : $Id: registry.cpp,v 1.3 2003-01-06 12:30:27 tellini Exp $
+	revision             : $Id: registry.cpp,v 1.4 2003-07-07 18:24:19 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -193,7 +193,7 @@ void Registry::StartElement( char *name, char **atts )
 
 			if( !strcmp( valtype, "integer" ))
 				val = new RegInteger( valname );
-			else if( !strcmp( valtype, "string" ))
+			else // everything not supported is treated as a string
 				val = new RegString( valname );
 
 			if( CurrentKey ) {
