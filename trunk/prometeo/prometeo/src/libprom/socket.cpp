@@ -1,7 +1,7 @@
 /***************************************************************************
                                   socket.cpp
                              -------------------
-	revision             : $Id: socket.cpp,v 1.5 2002-11-12 13:10:29 tellini Exp $
+	revision             : $Id: socket.cpp,v 1.6 2003-03-19 20:36:55 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -306,7 +306,9 @@ bool Socket::AsyncRecv( void *data, int size, int flags, int timeout )
 			if( Dispatcher )
 				Dispatcher->AddFD( this, PROM_IOF_READ );
 		}
-	}
+		
+	} else
+		Callback( PROM_SOCK_ERROR, errno );
 
 	return( ret );
 }
