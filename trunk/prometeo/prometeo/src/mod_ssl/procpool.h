@@ -1,11 +1,12 @@
 /***************************************************************************
-                                 mod_ftp.h
+                                 procpool.h
                              -------------------
-	revision             : $Id: mod_ftp.h,v 1.2 2002-11-09 18:25:12 tellini Exp $
+    revision             : $Id: procpool.h,v 1.1 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
-	description          : FTP proxy with TSL support
+    description          : handles the pool of processes which serve the
+                           clients
  ***************************************************************************/
 
 /***************************************************************************
@@ -17,38 +18,33 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef MOD_FTP_H
-#define MOD_FTP_H
-
-#include <string>
+#ifndef PROCPOOL_H
+#define PROCPOOL_H
 
 using namespace std;
 
-#include "main.h"
-#include "procpool.h"
+#include <string>
+
+#include "processgroup.h"
 
 class TcpSocket;
+class IODispatcher;
 
-class FTPProxy
+class SSLProcPool : public ProcessGroup
 {
 public:
-					FTPProxy( const char *key );
+					SSLProcPool( string key, IODispatcher *io );
 
-	bool			Cleanup( void );
-	void			ReloadCfg( void );
+	void			Setup();
+	void			OnFork();
 
-	void			Accept( TcpSocket *sock );
+	void			ServeClient( TcpSocket *sock );
 
-	void			OnFork( void );
-	void			OnTimer( time_t now );
+	bool			AreIdle( void );
 
 private:
 	string			Key;
-	short			Port;
-	TcpSocket		*ListeningSocket;
-	ProcPool		Children;
-
-	void			Setup( void );
+	int				MaxChildren;
 };
 
 #endif

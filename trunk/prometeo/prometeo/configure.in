@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.6 2002-11-03 17:28:45 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.7 2002-11-09 18:25:11 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -138,6 +138,7 @@ fi
 dnl -----------------------------------
 dnl Check for options
 dnl -----------------------------------
+use_ssl="no"
 AC_ARG_WITH( openssl,
 			[  --with-openssl[[=DIR]]    build with OpenSSL support [[/usr/local/ssl]]],
 			[
@@ -147,10 +148,12 @@ AC_ARG_WITH( openssl,
 					;;
 					yes)
 						openssl_prefix="/usr/local/ssl"
+						use_ssl="yes"
 						AC_DEFINE( USE_SSL, 1, [Define to build with OpenSSL support] )
 					;;
 					*)
 						openssl_prefix=$withval
+						use_ssl="yes"
 						AC_DEFINE( USE_SSL, 1, [Define to build with OpenSSL support] )
 				esac
 			],
@@ -252,12 +255,15 @@ AC_SUBST(INCLTDL)
 AC_SUBST(LIBLTDL)
 AC_SUBST(EXPAT_LIBS)
 
+AM_CONDITIONAL(BUILD_WITH_SSL, test "$use_ssl" = "yes" )
+
 dnl -----------------------------------
 dnl Genereate the output files
 dnl -----------------------------------
 AC_OUTPUT([Makefile src/Makefile src/libprom/Makefile src/prometeo/Makefile
            src/include/Makefile src/prometeoctl/Makefile src/mod_tunnel/Makefile
 		   src/mod_http/Makefile src/mod_ftp/Makefile
-		   src/mod_cfg/Makefile src/mod_cfg/data/Makefile],
+		   src/mod_cfg/Makefile src/mod_cfg/data/Makefile
+		   src/mod_ssl/Makefile],
 		  [test -z "$CONFIG_HEADERS" || echo timestamp > src/include/stamp-h.in])
 

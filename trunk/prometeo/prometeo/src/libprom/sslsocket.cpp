@@ -1,7 +1,7 @@
 /***************************************************************************
                                 sslsocket.cpp
                              -------------------
-    revision             : $Id: sslsocket.cpp,v 1.3 2002-11-01 19:01:00 tellini Exp $
+    revision             : $Id: sslsocket.cpp,v 1.4 2002-11-09 18:25:12 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -20,6 +20,8 @@
 #include "main.h"
 
 #if USE_SSL
+
+#include <openssl/err.h>
 
 #include "sslsocket.h"
 
@@ -104,6 +106,8 @@ void SSLSocket::SSLEndSession( void )
 //---------------------------------------------------------------------------
 bool SSLSocket::Send( const void *data, int size, int flags )
 {
+	SetNonBlocking( false );
+
 	return( SSL_write( Ssl, data, size ) == size );
 }
 //---------------------------------------------------------------------------
@@ -126,13 +130,22 @@ int SSLSocket::Recv( void *buffer, int size, int flags, int timeout )
 		else
 			TmpData.Clear();
 
-	} else
+	} else {
+
+		SetNonBlocking( false );
+
 		nread = SSL_read( Ssl, buffer, size );
+	}
 
 	if( flags & MSG_PEEK )
 		TmpData.SetContent((char *)buffer, nread );
 
 	return( nread );
+}
+//---------------------------------------------------------------------------
+const char *SSLSocket::SSLGetErrorStr( void )
+{
+	return( ERR_error_string( ERR_get_error(), NULL ));
 }
 //---------------------------------------------------------------------------
 #endif /* USE_SSL */
