@@ -1,5 +1,5 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
-## $Id: Makefile.am,v 1.7 2003-07-12 09:11:09 tellini Exp $
+## $Id: Makefile.am,v 1.8 2003-10-23 17:28:32 tellini Exp $
 
 auxdir			= @ac_aux_dir@
 AUX_DIST		= $(auxdir)/install-sh $(auxdir)/missing \
@@ -34,4 +34,4 @@ dist-hook:
 	cp docs/*.txt $(distdir)/docs
 
 	(cd $(distdir) && mkdir -p pam)
-	cp pam/* $(distdir)/pam
+	cp pam/prometeo $(distdir)/pam

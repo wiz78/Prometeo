@@ -1,4 +1,4 @@
-$Id: README,v 1.8 2003-02-09 11:36:11 tellini Exp $
+$Id: README,v 1.9 2003-10-23 17:28:32 tellini Exp $
 ----------------------------------------------------------------------------
 
 
@@ -20,7 +20,8 @@ It comes with the following modules:
  - a FTP proxy with TLS support
  - a simple TCP tunnel
  - an SSL tunnel
-
+ - a POP3 proxy with Spam Assassin support
+ - etc...
 
 
 ----------------------------------------------------------------------------

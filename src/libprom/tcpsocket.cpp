@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.3 2003-05-23 18:10:27 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.4 2003-10-23 17:28:33 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -47,6 +47,13 @@
 
 //---------------------------------------------------------------------------
 TcpSocket::TcpSocket() : Socket( PF, SOCK_STREAM, IPPROTO_TCP )
+{
+#if HAVE_IPV6
+	Family = AF_INET6;
+#endif
+}
+//---------------------------------------------------------------------------
+TcpSocket::TcpSocket( int type, int protocol ) : Socket( PF, type, protocol )
 {
 #if HAVE_IPV6
 	Family = AF_INET6;
@@ -449,4 +456,13 @@ bool TcpSocket::GetOriginalDest( Prom_Addr *addr, short *port )
 
 	return( ret );
 }
+//---------------------------------------------------------------------------
+#if HAVE_IPv6
+void TcpSocket::MapIPv4toIPv6( struct in_addr *v4, Prom_Addr *v6 )
+{
+	memcpy( &((uint32_t *)v6->s6_addr)[3], v4, sizeof( uint32_t ));
+
+	((uint32_t *)&v6->s6_addr)[2] = htonl( 0xffff );
+}
+#endif
 //---------------------------------------------------------------------------
