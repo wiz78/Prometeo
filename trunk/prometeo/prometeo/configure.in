@@ -5,7 +5,7 @@ dnl                              configure.in
 dnl                          -------------------
 dnl copyright            : (C) 2002-2003 by Simone Tellini
 dnl email                : tellini@users.sourceforge.net
-dnl revision             : $Id: configure.in,v 1.17 2003-06-20 20:19:17 tellini Exp $
+dnl revision             : $Id: configure.in,v 1.18 2003-06-28 10:40:30 tellini Exp $
 dnl
 
 dnl -----------------------------------
@@ -17,7 +17,9 @@ AC_INIT(src/Makefile.am)
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(src/include/config.h:src/include/config-h.in)
 
-AM_INIT_AUTOMAKE(prometeo, 1.4)
+AM_INIT_AUTOMAKE(prometeo, 1.5)
+
+AC_LANG([C++])
 
 dnl this doesn't work as I'd like it to
 dnl AC_PREFIX_DEFAULT(/usr/local/prometeo)
@@ -71,6 +73,8 @@ AC_CHECK_HEADER(security/pam_appl.h,
 				 [AC_DEFINE(HAVE_BSD_AUTH_H, 1, [Define to 1 if you have the <bsd_auth.h> header file])], 
 				 [AC_MSG_ERROR(No usable authentication library found!)])
 				])
+
+AC_CHECK_HEADER(sdom.h, [], [AC_MSG_ERROR(Cannot find sablotron headers!)])
 
 AC_CHECK_HEADERS(netinet/ip.h netinet/ip_fil.h netinet/ip_nat.h)
 AC_CHECK_HEADERS(netinet/ip_compat.h netinet/ip_fil_compat.h)
@@ -203,13 +207,24 @@ AC_CHECK_LIB(util, setproctitle, [AC_DEFINE(HAVE_SETPROCTITLE, 1, [Define if you
 AC_CHECK_LIB(socket, main)
 AC_CHECK_LIB(nsl, gethostent,, [AC_CHECK_LIB(resolv, gethostbyname)])
 AC_CHECK_LIB(z, deflate)
-AC_CHECK_LIB(pam, pam_start, [], [library 'pam' is required])
+AC_CHECK_LIB(pam, pam_start, [], [AC_MSG_ERROR([library 'pam' is required])])
 
 if test "x$openssl_prefix" != "x" ; then
   dnl Order matters!
   AC_CHECK_LIB(crypto, [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
   AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
 fi
+
+AC_MSG_CHECKING([for Sablotron])
+saved_libs=$LIBS
+LIBS="$LIBS -lsablot ${EXPAT_LIBS}"
+AC_TRY_LINK(
+ 	[#include <sdom.h>],
+	[SablotCreateProcessor( NULL );],
+	[AC_MSG_RESULT(ok)],
+	[AC_MSG_ERROR([library sablotron is required])]
+)
+LIBS=$saved_libs
 
 dnl -----------------------------------
 dnl Misc functions checks
