@@ -1,7 +1,7 @@
 /***************************************************************************
                                   cache.cpp
                              -------------------
-    revision             : $Id: cache.cpp,v 1.3 2002-10-22 14:31:26 tellini Exp $
+    revision             : $Id: cache.cpp,v 1.4 2002-10-22 17:43:22 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -110,14 +110,17 @@ void Cache::Delete( const char *id )
 //---------------------------------------------------------------------------
 void Cache::Delete( CacheObj *obj )
 {
-	Store.Delete( obj->GetFileName() );
-	Store.UpdateSize( -obj->GetSize() );
+	if( !obj->IsDeleted() ) {
 
-	Hash.Remove( obj->GetID() );
+		Store.Delete( obj->GetFileName() );
+		Store.UpdateSize( -obj->GetSize() );
 
-	obj->Delete();
+		Hash.Remove( obj->GetID() );
 
-	Modified = true;
+		obj->Delete();
+
+		Modified = true;
+	}
 }
 //---------------------------------------------------------------------------
 bool Cache::Prune( void )
