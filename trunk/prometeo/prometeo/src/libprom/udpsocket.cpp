@@ -1,7 +1,7 @@
 /***************************************************************************
                                 udpsocket.cpp
                              -------------------
-	revision             : $Id: udpsocket.cpp,v 1.1 2003-10-23 17:31:04 tellini Exp $
+	revision             : $Id: udpsocket.cpp,v 1.2 2003-12-29 21:40:21 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -50,7 +50,7 @@ UdpSocket::UdpSocket( int fd ) : TcpSocket( fd )
 //---------------------------------------------------------------------------
 int UdpSocket::SendTo( const void *msg, size_t len, int flags, Prom_Addr *addr )
 {
-	return( sendto( FD, msg, len, int flags, (struct sockaddr *)addr, sizeof( Prom_Addr )));
+	return( sendto( FD, msg, len, flags, (struct sockaddr *)addr, sizeof( Prom_Addr )));
 }
 //---------------------------------------------------------------------------
 
