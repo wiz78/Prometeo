@@ -1,7 +1,7 @@
 /***************************************************************************
                                  Registry.cpp
                              -------------------
-	revision             : $Id: registry.cpp,v 1.4 2003-07-07 18:24:19 tellini Exp $
+	revision             : $Id: registry.cpp,v 1.5 2003-12-29 22:25:39 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
  ***************************************************************************/
@@ -298,6 +298,8 @@ bool Registry::OpenKey( const char *path, bool create )
 	bool 	ret = true;
 	RegKey	*key;
 
+	OpenKeysStack.Add( CurrentKey );
+	
 	key = FindKey( path );
 
 	if( !key ) {
@@ -332,12 +334,15 @@ bool Registry::OpenKey( const char *path, bool create )
 	} else
 		CurrentKey = key;
 
+	if( !ret )
+		CurrentKey = (RegKey *)OpenKeysStack.RemoveLast();
+	
 	return( ret );
 }
 //--------------------------------------------------------------------------
 void Registry::CloseKey( void )
 {
-	CurrentKey = CurrentKey->GetParent();
+	CurrentKey = (RegKey *)OpenKeysStack.RemoveLast();
 }
 //--------------------------------------------------------------------------
 void Registry::DeleteKey( const char *path )
