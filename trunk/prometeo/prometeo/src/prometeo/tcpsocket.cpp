@@ -1,7 +1,7 @@
 /***************************************************************************
                                 tcpsocket.cpp
                              -------------------
-	revision             : $Id: tcpsocket.cpp,v 1.1 2002-10-10 10:22:59 tellini Exp $
+	revision             : $Id: tcpsocket.cpp,v 1.2 2002-10-17 18:03:14 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -33,45 +33,89 @@
 //---------------------------------------------------------------------------
 TcpSocket::TcpSocket() : Socket( PF, SOCK_STREAM, IPPROTO_TCP )
 {
+#if HAVE_IPV6
+	Family = PF;
+#endif
 }
 //---------------------------------------------------------------------------
 TcpSocket::TcpSocket( int fd ) : Socket( fd )
 {
+#if HAVE_IPV6
+	socklen_t	len = sizeof( Family );
+
+	if( getsockopt( FD, IPPROTO_IPV6, IPV6_ADDRFORM, &Family, &len ))
+		Family = AF_INET6;
+#endif
 }
 //---------------------------------------------------------------------------
-bool TcpSocket::Bind( unsigned short port )
-{           
 #if HAVE_IPV6
-	struct sockaddr_in6 sockadr;
+bool TcpSocket::MakeIPv4( void )
+{
+	bool		ok = false;
+	int			fam = AF_INET;
 
-	memset( &sockadr, 0, sizeof( sockadr ));
+	if( !setsockopt( FD, IPPROTO_IPV6, IPV6_ADDRFORM, &fam, sizeof( fam ))) {
+		Family = AF_INET;
+		ok = true;
+	}
 
-	sockadr.sin6_family   = AF_INET6;
-	sockadr.sin6_port     = htons( port );
-	sockadr.sin6_addr     = in6addr_any;
-#else
-	struct sockaddr_in sockadr;
-
-	memset( &sockadr, 0, sizeof( sockadr ));
-
-	sockadr.sin_family = AF_INET;
-	sockadr.sin_port   = htons( port );
+	return( ok );
+}
 #endif
+//---------------------------------------------------------------------------
+bool TcpSocket::Bind( unsigned short port )
+{
+	bool	ok;
+
+#if HAVE_IPV6
+	if( Family == AF_INET6 ) {
+		struct sockaddr_in6 sockadr;
+
+		memset( &sockadr, 0, sizeof( sockadr ));
+
+		sockadr.sin6_family   = AF_INET6;
+		sockadr.sin6_port     = htons( port );
+		sockadr.sin6_addr     = in6addr_any;
+
+		ok = bind( FD, (struct sockaddr *)&sockadr, sizeof( sockadr )) >= 0;
+
+	} else
+#endif
+	{
+		struct sockaddr_in sockadr;
+
+		memset( &sockadr, 0, sizeof( sockadr ));
+
+		sockadr.sin_family = AF_INET;
+		sockadr.sin_port   = htons( port );
+
+		ok = bind( FD, (struct sockaddr *)&sockadr, sizeof( sockadr )) >= 0;
+	}
 
 	SetLinger( false );
 
-	return( bind( FD, (struct sockaddr *)&sockadr, sizeof( sockadr )) >= 0 );
+	return( ok );
 }
 //---------------------------------------------------------------------------
 Socket *TcpSocket::Accept( void )
 {
+	int	sock;
+
 #if HAVE_IPV6
-	struct sockaddr_in6	addr;
-#else
-	struct sockaddr_in	addr;
+	if( Family == AF_INET6 ) {
+		struct sockaddr_in6	addr;
+		socklen_t			len = sizeof( addr );
+
+		sock = accept( FD, (struct sockaddr *)&addr, &len );
+
+	} else
 #endif
-	socklen_t			len = sizeof( addr );
-	int					sock = accept( FD, (struct sockaddr *)&addr, &len );
+	{
+		struct sockaddr_in	addr;
+		socklen_t			len = sizeof( addr );
+
+		sock = accept( FD, (struct sockaddr *)&addr, &len );
+	}
 
 	return( new TcpSocket( sock ));
 }
@@ -128,12 +172,15 @@ bool TcpSocket::NameToAddr( const char *name, struct sockaddr **addr, socklen_t 
 {
 	bool	ret;
 
+#if HAVE_IPV6
+	*addr = (struct sockaddr *)&AddrBuf6;
+	*len  = sizeof( AddrBuf6 );
+
+	ret = inet_pton( AF_INET6, name, &AddrBuf6.sin6_addr );
+#else
 	*addr = (struct sockaddr *)&AddrBuf;
 	*len  = sizeof( AddrBuf );
 
-#if HAVE_IPV6
-	ret = inet_pton( AF_INET6, name, &AddrBuf.sin6_addr );
-#else
 	ret = inet_aton( name, &AddrBuf.sin_addr );
 #endif
 
@@ -160,17 +207,28 @@ char *TcpSocket::AddrToName( Prom_Addr *addr )
 //---------------------------------------------------------------------------
 char *TcpSocket::GetPeerName( void )
 {
-	socklen_t	len = sizeof( AddrBuf );
-
-	if( getpeername( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 ) {
+	bool	ok = false;
 
 #if HAVE_IPV6
-		if( !inet_ntop( AF_INET6, &AddrBuf, NameBuf, sizeof( NameBuf )))
-			strcpy( NameBuf, "ERROR" );
-#else
-		strcpy( NameBuf, inet_ntoa( AddrBuf.sin_addr ));
-#endif
+	if( Family == AF_INET6 ) {
+		socklen_t	len = sizeof( AddrBuf6 );
+
+		if(( getpeername( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 ) &&
+		   ( !inet_ntop( AF_INET6, &AddrBuf6, NameBuf, sizeof( NameBuf ))))
+			ok = true;
+
 	} else
+#endif
+	{
+		socklen_t	len = sizeof( AddrBuf );
+
+		ok = getpeername( FD, (struct sockaddr *)&AddrBuf, &len ) == 0;
+
+		if( ok )
+			strcpy( NameBuf, inet_ntoa( AddrBuf.sin_addr ));
+	}
+
+	if( !ok )
 		strcpy( NameBuf, "ERROR" );
 
 	return( NameBuf );
@@ -178,17 +236,28 @@ char *TcpSocket::GetPeerName( void )
 //---------------------------------------------------------------------------
 char *TcpSocket::GetLocalName( void )
 {
-	socklen_t	len = sizeof( AddrBuf );
-
-	if( getsockname( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 ) {
+	bool	ok = false;
 
 #if HAVE_IPV6
-		if( !inet_ntop( AF_INET6, &AddrBuf, NameBuf, sizeof( NameBuf )))
-			strcpy( NameBuf, "ERROR" );
-#else
-		strcpy( NameBuf, inet_ntoa( AddrBuf.sin_addr ));
-#endif
+	if( Family == AF_INET6 ) {
+		socklen_t	len = sizeof( AddrBuf6 );
+
+		if(( getsockname( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 ) &&
+		   ( !inet_ntop( AF_INET6, &AddrBuf6, NameBuf, sizeof( NameBuf ))))
+			ok = true;
+
 	} else
+#endif
+	{
+		socklen_t	len = sizeof( AddrBuf );
+
+		ok = getsockname( FD, (struct sockaddr *)&AddrBuf, &len ) == 0;
+
+		if( ok )
+			strcpy( NameBuf, inet_ntoa( AddrBuf.sin_addr ));
+	}
+
+	if( !ok )
 		strcpy( NameBuf, "ERROR" );
 
 	return( NameBuf );
@@ -196,15 +265,22 @@ char *TcpSocket::GetLocalName( void )
 //---------------------------------------------------------------------------
 int TcpSocket::GetPeerPort( void )
 {
-	socklen_t	len = sizeof( AddrBuf );
-	int			port = 0;
+	int	port = 0;
 
-	if( getpeername( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 ) {
 #if HAVE_IPV6
-		port = ntohs( AddrBuf.sin6_port );
-#else
-		port = ntohs( AddrBuf.sin_port );
+	if( Family == AF_INET6 ) {
+		socklen_t	len = sizeof( AddrBuf6 );
+
+		if( getpeername( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 )
+			port = ntohs( AddrBuf6.sin6_port );
+
+	} else
 #endif
+	{
+		socklen_t	len = sizeof( AddrBuf );
+
+		if( getpeername( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 )
+			port = ntohs( AddrBuf.sin_port );
 	}
 
 	return( port );
@@ -212,15 +288,22 @@ int TcpSocket::GetPeerPort( void )
 //---------------------------------------------------------------------------
 int TcpSocket::GetLocalPort( void )
 {
-	socklen_t	len = sizeof( AddrBuf );
-	int			port = 0;
+	int	port = 0;
 
-	if( getsockname( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 ) {
 #if HAVE_IPV6
-		port = ntohs( AddrBuf.sin6_port );
-#else
-		port = ntohs( AddrBuf.sin_port );
+	if( Family == AF_INET6 ) {
+		socklen_t	len = sizeof( AddrBuf6 );
+
+		if( getsockname( FD, (struct sockaddr *)&AddrBuf6, &len ) == 0 )
+			port = ntohs( AddrBuf6.sin6_port );
+
+	} else
 #endif
+	{
+		socklen_t	len = sizeof( AddrBuf );
+
+		if( getsockname( FD, (struct sockaddr *)&AddrBuf, &len ) == 0 )
+			port = ntohs( AddrBuf.sin_port );
 	}
 
 	return( port );
