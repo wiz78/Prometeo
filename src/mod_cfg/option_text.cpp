@@ -1,7 +1,7 @@
 /***************************************************************************
                                option_text.cpp
                              -------------------
-    revision             : $Id: option_text.cpp,v 1.2 2002-11-21 18:36:55 tellini Exp $
+    revision             : $Id: option_text.cpp,v 1.3 2002-11-22 17:35:49 tellini Exp $
     copyright            : (C) 2002 by Simone Tellini
     email                : tellini@users.sourceforge.net
 
@@ -56,7 +56,7 @@ void TextOption::Render( string& result )
 	result += "<tr>"
 			  "  <td class=\"label\">" + Label + "</td>"
 			  "  <td class=\"value\">"
-			  "    <textarea rows=5 name=\"" + Name + "\">" + value + "</textarea>"
+			  "    <textarea rows=5 name=\"" + Name + "\" class=\"maxwidth\">" + value + "</textarea>"
 			  "  </td>"
 			  "</tr>"
 			  "<tr>"
